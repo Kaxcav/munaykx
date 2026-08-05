@@ -60,8 +60,29 @@ model Event {
   gratuito    Boolean   @default(true)
   demo        Boolean   @default(false)
   ativo       Boolean   @default(true)
+  rsvps       Rsvp[]
 
   @@index([communityId])
   @@index([startsAt])
   @@map("events")
+}
+
+enum RsvpStatus {
+  confirmado
+  lista_espera
+}
+
+model Rsvp {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now()) @map("created_at")
+  eventId   String     @map("event_id")
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  nome      String
+  email     String
+  whatsapp  String?
+  status    RsvpStatus @default(confirmado)
+
+  @@unique([eventId, email])
+  @@index([eventId])
+  @@map("rsvps")
 }

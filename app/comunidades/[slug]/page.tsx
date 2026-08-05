@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCommunityBySlug } from "@/lib/communities";
+import {
+  formatarDataEvento,
+  getUpcomingEventsByCommunity,
+} from "@/lib/events";
 
 // Detalhe vem do banco a cada request — nada de pré-render no build.
 export const dynamic = "force-dynamic";
@@ -28,6 +32,8 @@ export default async function ComunidadePage({ params }: { params: Params }) {
   const { slug } = await params;
   const c = await getCommunityBySlug(slug);
   if (!c) notFound();
+
+  const eventos = await getUpcomingEventsByCommunity(c.id);
 
   const detalhes: Array<{ rotulo: string; valor: string }> = [
     { rotulo: "Modalidade", valor: c.modalidade },
@@ -75,6 +81,39 @@ export default async function ComunidadePage({ params }: { params: Params }) {
             </div>
           ))}
         </dl>
+
+        {eventos.length > 0 && (
+          <section className="mt-16 max-w-3xl">
+            <p className="eyebrow mb-3">Próximos eventos</p>
+            <div className="grid gap-5">
+              {eventos.map((e) => (
+                <Link
+                  key={e.id}
+                  href={`/eventos/${e.slug}`}
+                  className="group rounded-card border border-petroleo/10 bg-white/70 p-6 transition-colors hover:border-petroleo/30"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h2 className="font-display text-xl font-bold">
+                      {e.titulo}
+                    </h2>
+                    {e.gratuito && (
+                      <span className="shrink-0 rounded-full border border-petroleo/15 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-petroleo/60">
+                        Gratuito
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
+                    {formatarDataEvento(e.startsAt)}
+                    {e.local ? ` — ${e.local}` : ""}
+                  </p>
+                  <p className="mt-3 text-sm font-semibold text-petroleo/70 group-hover:text-petroleo">
+                    Confirmar presença →
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-12">
           <Link

@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Bricolage Grotesque";
+  --font-sans: "Instrument Sans";
+  --font-mono: "IBM Plex Mono";
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-areia text-petroleo font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-lime text-petroleo;
+  }
+
+  /* Foco visível consistente em todo o site */
+  :focus-visible {
+    outline: 3px solid #c6ff3d;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Eyebrow: etiqueta mono que abre cada seção */
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.22em] text-petroleo/60;
+  }
+  .eyebrow-dark {
+    @apply font-mono text-xs uppercase tracking-[0.22em] text-areia/60;
+  }
+}
+
+/* Respeita usuários que preferem menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-ticker,
+  .animate-pin-pulse {
+    animation: none !important;
+  }
+}

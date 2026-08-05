@@ -1,0 +1,28 @@
+export default function Footer() {
+  return (
+    <footer className="border-t border-petroleo/10 bg-areia">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-12 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="font-display text-3xl font-extrabold tracking-tight">
+            MUNAY<span className="text-coral">.</span>
+          </p>
+          <p className="mt-2 max-w-sm text-sm text-petroleo/70">
+            Comunidades, eventos e experiências esportivas e culturais de
+            Brasília — em um só lugar.
+          </p>
+        </div>
+
+        <div className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/50">
+          <p>Brasília · DF</p>
+          {/* TODO: trocar pelo e-mail oficial quando o domínio for registrado */}
+          <p className="mt-1">
+            <a href="mailto:contato@munay.app.br" className="hover:text-petroleo">
+              contato@munay.app.br
+            </a>
+          </p>
+          <p className="mt-1">© 2026 MUNAY</p>
+        </div>
+      </div>
+    </footer>
+  );
+}

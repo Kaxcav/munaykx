@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 import { getCommunities } from "@/lib/communities";
 import { getUpcomingEvents } from "@/lib/events";
+import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://munay.app.br";
+  const base = SITE_URL;
 
   const entries: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), priority: 1 },

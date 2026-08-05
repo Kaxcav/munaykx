@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { leadSchema } from "@/lib/leads";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { prisma } from "@/lib/db";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -24,12 +25,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = getSupabaseAdmin();
-  if (!supabase) {
+  if (!process.env.DATABASE_URL) {
     return NextResponse.json(
       {
         error:
-          "Captação ainda não configurada. Defina NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ver README).",
+          "Captação ainda não configurada. Defina DATABASE_URL (ver .env.example).",
       },
       { status: 503 },
     );
@@ -38,24 +38,32 @@ export async function POST(req: Request) {
   const { tipo, nome, email, whatsapp, modalidades, regiao, organizacao, modalidade } =
     parsed.data;
 
-  const { error } = await supabase.from("leads").insert({
-    tipo,
-    nome,
-    email,
-    whatsapp: whatsapp ?? null,
-    modalidades: modalidades || null,
-    regiao: regiao || null,
-    organizacao: organizacao || null,
-    modalidade: modalidade || null,
-    origem: "site",
-  });
-
-  if (error) {
-    // 23505 = unique_violation (email já cadastrado para o mesmo tipo)
-    if (error.code === "23505") {
+  try {
+    await prisma.lead.create({
+      data: {
+        tipo,
+        nome,
+        email: email.trim().toLowerCase(),
+        whatsapp: whatsapp ?? null,
+        modalidades: modalidades || null,
+        regiao: regiao || null,
+        organizacao: organizacao || null,
+        modalidade: modalidade || null,
+        origem: "site",
+      },
+    });
+  } catch (error) {
+    // P2002 = unique violation (email já cadastrado para o mesmo tipo)
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       return NextResponse.json({ ok: true, jaExistia: true });
     }
-    console.error("[leads] erro ao gravar:", error.message);
+    console.error(
+      "[leads] erro ao gravar:",
+      error instanceof Error ? error.message : error,
+    );
     return NextResponse.json(
       { error: "Não foi possível salvar agora. Tenta de novo em instantes." },
       { status: 500 },

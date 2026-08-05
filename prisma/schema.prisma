@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadTipo {
+  participante
+  organizador
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  tipo        LeadTipo
+  nome        String
+  email       String
+  whatsapp    String?
+  modalidades String?
+  regiao      String?
+  organizacao String?
+  modalidade  String?
+  origem      String   @default("site")
+
+  @@unique([email, tipo])
+  @@map("leads")
+}
+
+model Community {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now()) @map("created_at")
+  slug       String   @unique
+  nome       String
+  modalidade String
+  regiao     String
+  descricao  String?
+  horarios   String?
+  local      String?
+  nivel      String?
+  demo       Boolean  @default(false)
+  ativo      Boolean  @default(true)
+  events     Event[]
+
+  @@map("communities")
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  communityId String    @map("community_id")
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  slug        String    @unique
+  titulo      String
+  startsAt    DateTime  @map("starts_at")
+  local       String?
+  capacidade  Int?
+  gratuito    Boolean   @default(true)
+  demo        Boolean   @default(false)
+  ativo       Boolean   @default(true)
+
+  @@index([communityId])
+  @@index([startsAt])
+  @@map("events")
+}

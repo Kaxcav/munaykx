@@ -22,6 +22,7 @@ export async function salvarComunidade(
     slug: formData.get("slug") ?? "",
     modalidade: formData.get("modalidade") ?? "",
     regiao: formData.get("regiao") ?? "",
+    city: formData.get("city") ?? "",
     descricao: formData.get("descricao") ?? "",
     horarios: formData.get("horarios") ?? "",
     local: formData.get("local") ?? "",

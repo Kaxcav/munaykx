@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Community } from "@prisma/client";
 import { slugify, type AdminFormState } from "@/lib/admin";
+import { REGIOES_COM_OUTRA } from "@/lib/regioes";
 
 const campo =
   "mt-1 w-full rounded-lg border border-petroleo/20 bg-white/80 px-3 py-2 text-sm focus:border-petroleo/50 focus:outline-none";
@@ -83,14 +84,40 @@ export default function CommunityForm({
         </div>
         <div>
           <label className={rotulo} htmlFor="regiao">
-            Região
+            Região (RA oficial)
           </label>
-          <input
+          <select
             id="regiao"
             name="regiao"
             required
-            defaultValue={community?.regiao}
-            placeholder="Asa Norte, Noroeste…"
+            defaultValue={community?.regiao ?? ""}
+            className={campo}
+          >
+            <option value="" disabled>
+              Escolha…
+            </option>
+            {/* Dado legado (ex.: "Asa Sul" das demos) fora da lista oficial:
+                entra como opção extra pra edição não corromper o valor. */}
+            {community && !REGIOES_COM_OUTRA.includes(community.regiao) && (
+              <option value={community.regiao}>
+                {community.regiao} (valor atual, fora da lista oficial)
+              </option>
+            )}
+            {REGIOES_COM_OUTRA.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={rotulo} htmlFor="city">
+            Cidade
+          </label>
+          <input
+            id="city"
+            name="city"
+            defaultValue={community?.city ?? "Brasília"}
             className={campo}
           />
         </div>

@@ -121,7 +121,7 @@ export default function EventForm({
             className={campo}
           />
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <label className={rotulo} htmlFor="local">
             Local
           </label>
@@ -130,6 +130,17 @@ export default function EventForm({
             name="local"
             defaultValue={event?.local ?? ""}
             placeholder="Eixão Norte, altura da 208"
+            className={campo}
+          />
+        </div>
+        <div>
+          <label className={rotulo} htmlFor="city">
+            Cidade
+          </label>
+          <input
+            id="city"
+            name="city"
+            defaultValue={event?.city ?? "Brasília"}
             className={campo}
           />
         </div>

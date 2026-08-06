@@ -6,13 +6,16 @@ import { z } from "zod";
  * server (action). Este arquivo não importa Prisma — é seguro no client.
  */
 
+// Vazio vira undefined (as actions gravam null) — não fica "" no banco.
+// Nota: o padrão .optional().or(literal("")) das libs públicas deixa ""
+// passar direto, porque .optional() aceita string vazia antes do .or.
 const textoOpcional = (max: number) =>
   z
     .string()
     .trim()
     .max(max)
-    .optional()
-    .or(z.literal("").transform(() => undefined));
+    .transform((v) => (v === "" ? undefined : v))
+    .optional();
 
 const slugSchema = z
   .string()
@@ -24,11 +27,19 @@ const slugSchema = z
     "Slug: só letras minúsculas, números e hífens (ex.: corrida-asa-norte)",
   );
 
+// Vazio cai no default do banco — mesmo comportamento do schema Prisma.
+const citySchema = z
+  .string()
+  .trim()
+  .max(80)
+  .transform((v) => v || "Brasília");
+
 export const communityAdminSchema = z.object({
   nome: z.string().trim().min(2, "Nome muito curto").max(120),
   slug: slugSchema,
   modalidade: z.string().trim().min(2, "Informe a modalidade").max(80),
-  regiao: z.string().trim().min(2, "Informe a região").max(80),
+  regiao: z.string().trim().min(2, "Escolha a região").max(80),
+  city: citySchema,
   descricao: textoOpcional(2000),
   horarios: textoOpcional(200),
   local: textoOpcional(200),
@@ -45,6 +56,7 @@ export const eventAdminSchema = z.object({
   slug: slugSchema,
   // Vem do <input type="datetime-local"> — interpretado como hora de Brasília.
   startsAt: z.string().trim().min(1, "Informe data e hora"),
+  city: citySchema,
   local: textoOpcional(200),
   capacidade: z.preprocess(
     (v) => (v === "" || v == null ? null : Number(v)),

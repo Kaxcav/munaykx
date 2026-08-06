@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "tema": "tsx scripts/gerar-tema.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -18,11 +19,15 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "better-auth": "1.6.26",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.29.0",
     "next": "^15.1.0",
     "nodemailer": "^9.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.18.1",
+    "tailwind-merge": "^3.6.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {
@@ -37,6 +42,7 @@
     "postcss": "^8.4.49",
     "prisma": "^6.19.0",
     "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.23.8",
     "typescript": "^5.7.0"
   }

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BuscaIA from "@/components/BuscaIA";
 import { getCommunities, getCommunityFacets } from "@/lib/communities";
 import { recortesComDado, tituloDoRecorte } from "@/lib/descoberta";
+import { iaDisponivel } from "@/lib/ia";
 
 export const metadata: Metadata = {
   title: "Comunidades",
@@ -14,7 +16,13 @@ export const metadata: Metadata = {
 // A listagem depende do banco e dos filtros — nunca pré-renderizar no build.
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ modalidade?: string; regiao?: string }>;
+type SearchParams = Promise<{
+  modalidade?: string;
+  regiao?: string;
+  /** O que a busca por descrição entendeu — só pra mostrar de volta. */
+  ia?: string;
+  iaObs?: string;
+}>;
 
 function filtroHref(params: { modalidade?: string; regiao?: string }) {
   const qs = new URLSearchParams();
@@ -29,7 +37,7 @@ export default async function ComunidadesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { modalidade, regiao } = await searchParams;
+  const { modalidade, regiao, ia, iaObs } = await searchParams;
   const [comunidades, facets, recortes] = await Promise.all([
     getCommunities({ modalidade, regiao }),
     getCommunityFacets(),
@@ -54,6 +62,34 @@ export default async function ComunidadesPage({
         <h1 className="max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
           Comunidades de Brasília, filtradas do seu jeito.
         </h1>
+
+        {iaDisponivel() && (
+          <div className="mt-8 max-w-2xl">
+            <BuscaIA
+              exemplos={[
+                "corrida de manhã em Taguatinga",
+                "jiu jitsu perto do centro",
+                "algo tranquilo pra começar",
+              ]}
+            />
+          </div>
+        )}
+
+        {ia && (
+          // Mostrar o que foi entendido é obrigatório, não enfeite: sem isso
+          // a pessoa não sabe POR QUE está vendo esses resultados, e não tem
+          // como corrigir se a interpretação errou.
+          <div className="mt-6 max-w-2xl rounded-card border border-lime/50 bg-lime/10 p-4">
+            <p className="text-sm font-semibold">{ia}</p>
+            {iaObs && <p className="mt-1 text-sm text-petroleo/70">{iaObs}</p>}
+            <Link
+              href="/comunidades"
+              className="mt-2 inline-block text-xs font-medium text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+            >
+              não era isso — limpar
+            </Link>
+          </div>
+        )}
 
         <div className="mt-10 space-y-4">
           <div className="flex flex-wrap items-center gap-2">

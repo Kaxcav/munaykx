@@ -9,6 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), priority: 1 },
     { url: `${base}/comunidades`, lastModified: new Date(), priority: 0.8 },
+    { url: `${base}/privacidade`, lastModified: new Date(), priority: 0.3 },
   ];
 
   // Sitemap roda no build — sem banco de pé, sai só com as rotas fixas.

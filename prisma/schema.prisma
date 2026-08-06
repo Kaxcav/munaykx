@@ -36,6 +36,9 @@ model Community {
   nome       String
   modalidade String
   regiao     String
+  // Multi-cidade no dado, não no código (Blueprint C1). Sem UI de seletor
+  // ainda — as queries de descoberta filtram pelo default.
+  city       String   @default("Brasília")
   descricao  String?
   horarios   String?
   local      String?
@@ -55,6 +58,7 @@ model Event {
   slug        String    @unique
   titulo      String
   startsAt    DateTime  @map("starts_at")
+  city        String    @default("Brasília")
   local       String?
   capacidade  Int?
   gratuito    Boolean   @default(true)

@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { rsvpSchema } from "@/lib/rsvps";
 
 type Status =
@@ -45,8 +47,13 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
       }
       if (typeof json.token === "string") setToken(json.token);
       if (json.jaExistia) setStatus("jaExistia");
-      else if (json.status === "lista_espera") setStatus("lista_espera");
-      else setStatus("confirmado");
+      else if (json.status === "lista_espera") {
+        setStatus("lista_espera");
+        track("rsvp_lista_espera");
+      } else {
+        setStatus("confirmado");
+        track("rsvp_confirmado");
+      }
     } catch {
       setErro("Falha de conexão. Tenta de novo em instantes.");
       setStatus("erro");
@@ -174,7 +181,15 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
           {status === "enviando" ? "Enviando…" : "Confirmar presença"}
         </button>
         <p className="mt-3 text-xs text-petroleo/50">
-          Usamos seu contato só pra falar deste evento e da MUNAY. Nada de spam.
+          Usamos seu contato só pra falar deste evento e da MUNAY. Nada de
+          spam. Ao enviar, você concorda com a{" "}
+          <Link
+            href="/privacidade"
+            className="underline underline-offset-2 hover:text-petroleo"
+          >
+            política de privacidade
+          </Link>
+          .
         </p>
       </div>
     </form>

@@ -14,7 +14,9 @@ services:
   # próprio não existe. (MailHog está sem manutenção desde 2020.)
   mailpit:
     image: axllent/mailpit:latest
-    ports: ["1025:1025", "8025:8025"]
+    # 1026/8026 no host: 1025 já está ocupada nesta máquina (mesmo motivo do
+    # Postgres na 5434). Dentro do container as portas seguem as padrão.
+    ports: ["1026:1025", "8026:8025"]
     environment:
       MP_MAX_MESSAGES: 500
       MP_SMTP_AUTH_ACCEPT_ANY: 1

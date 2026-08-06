@@ -67,8 +67,13 @@ export default async function AdminEventosPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {e._count.rsvps}
-                    {e.capacidade != null ? ` / ${e.capacidade}` : ""}
+                    <Link
+                      href={`/admin/rsvps?evento=${e.slug}`}
+                      className="underline underline-offset-4 hover:text-petroleo/70"
+                    >
+                      {e._count.rsvps}
+                      {e.capacidade != null ? ` / ${e.capacidade}` : ""}
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
                     <span className="flex flex-wrap gap-1">
@@ -90,12 +95,23 @@ export default async function AdminEventosPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/eventos/${e.id}`}
-                      className="font-semibold underline underline-offset-4 hover:text-petroleo/70"
-                    >
-                      Editar
-                    </Link>
+                    <span className="flex items-center justify-end gap-3">
+                      {e.ativo && (
+                        <Link
+                          href={`/eventos/${e.slug}`}
+                          target="_blank"
+                          className="text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+                        >
+                          Ver no site ↗
+                        </Link>
+                      )}
+                      <Link
+                        href={`/admin/eventos/${e.id}`}
+                        className="font-semibold underline underline-offset-4 hover:text-petroleo/70"
+                      >
+                        Editar
+                      </Link>
+                    </span>
                   </td>
                 </tr>
               ))}

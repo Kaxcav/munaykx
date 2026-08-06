@@ -6,15 +6,35 @@ import {
   isSerializationConflict,
   withSerializableRetry,
 } from "@/lib/serializable";
+import {
+  dispararEmail,
+  emailRsvpCancelado,
+  emailRsvpPromovido,
+} from "@/lib/emails-rsvp";
 
 // Cancelamento + promoção de waitlist (STORY-003). Transação Serializable:
 // cancelar e promover precisam enxergar o mesmo instante do mundo, senão
 // duas pessoas são promovidas pra mesma vaga.
 
+type DadosEvento = {
+  titulo: string;
+  startsAt: Date;
+  local: string | null;
+  slug: string;
+};
+
+type Pessoa = { nome: string; email: string; token: string };
+
 type Resultado =
   | { erro: 404 }
   | { jaCancelado: true }
-  | { cancelado: true };
+  | {
+      cancelado: true;
+      quemCancelou: Pessoa;
+      evento: DadosEvento;
+      /** quem saiu da fila nesta transação — precisa ser avisado (STORY-004) */
+      promovido: Pessoa | null;
+    };
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -67,6 +87,7 @@ export async function POST(req: Request) {
             rsvp.event.capacidade !== null &&
             rsvp.event.startsAt >= new Date();
 
+          let promovido: Pessoa | null = null;
           if (abreVaga) {
             const confirmados = await tx.rsvp.count({
               where: {
@@ -89,11 +110,30 @@ export async function POST(req: Request) {
                   where: { id: primeiroDaFila.id },
                   data: { status: "confirmado" },
                 });
+                promovido = {
+                  nome: primeiroDaFila.nome,
+                  email: primeiroDaFila.email,
+                  token: primeiroDaFila.token,
+                };
               }
             }
           }
 
-          return { cancelado: true };
+          return {
+            cancelado: true,
+            quemCancelou: {
+              nome: rsvp.nome,
+              email: rsvp.email,
+              token: rsvp.token,
+            },
+            evento: {
+              titulo: rsvp.event.titulo,
+              startsAt: rsvp.event.startsAt,
+              local: rsvp.event.local,
+              slug: rsvp.event.slug,
+            },
+            promovido,
+          };
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
@@ -105,6 +145,28 @@ export async function POST(req: Request) {
         { status: 404 },
       );
     }
+    // E-mails DEPOIS do commit — dentro da transação, o retry mandaria
+    // duplicado. Dois destinatários distintos: quem saiu e quem entrou.
+    if ("cancelado" in resultado) {
+      dispararEmail(
+        emailRsvpCancelado({
+          para: resultado.quemCancelou.email,
+          nome: resultado.quemCancelou.nome,
+          evento: resultado.evento,
+        }),
+      );
+      if (resultado.promovido) {
+        dispararEmail(
+          emailRsvpPromovido({
+            para: resultado.promovido.email,
+            nome: resultado.promovido.nome,
+            evento: resultado.evento,
+            token: resultado.promovido.token,
+          }),
+        );
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (isSerializationConflict(error)) {

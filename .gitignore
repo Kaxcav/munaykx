@@ -7,6 +7,11 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# Patches de entrega: chegam na raiz do repo pra serem aplicados e não
+# fazem parte do código. Sem esta linha, um `git add -A` depois do
+# `git apply` commita o próprio patch junto.
+*.patch
+
 # Environment & Secrets (AIOX)
 .env.local
 .env.*.local

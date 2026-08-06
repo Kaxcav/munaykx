@@ -2,19 +2,38 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatarDataAdmin } from "@/lib/admin";
+import {
+  PERIODOS,
+  desdeQuando,
+  fatia,
+  parseBusca,
+  parsePagina,
+  parsePeriodo,
+  query,
+} from "@/lib/admin-lista";
+import { BuscaAdmin } from "@/components/admin/BuscaAdmin";
+import { Paginacao } from "@/components/admin/Paginacao";
 
 const TIPOS = ["participante", "organizador"] as const;
 const ORIGENS = ["site", "rsvp"] as const;
 
-type SearchParams = Promise<{ tipo?: string; origem?: string }>;
+type Filtros = {
+  tipo?: string;
+  origem?: string;
+  q?: string;
+  periodo?: string;
+  p?: number;
+};
 
-function filtroHref(params: { tipo?: string; origem?: string }) {
-  const qs = new URLSearchParams();
-  if (params.tipo) qs.set("tipo", params.tipo);
-  if (params.origem) qs.set("origem", params.origem);
-  const s = qs.toString();
-  return s ? `/admin/leads?${s}` : "/admin/leads";
-}
+type SearchParams = Promise<{
+  tipo?: string;
+  origem?: string;
+  q?: string;
+  periodo?: string;
+  p?: string;
+}>;
+
+const href = (f: Filtros) => `/admin/leads${query({ ...f })}`;
 
 const chip = (ativo: boolean) =>
   `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
@@ -32,17 +51,39 @@ export default async function AdminLeadsPage({
   const params = await searchParams;
   const tipo = TIPOS.find((t) => t === params.tipo);
   const origem = ORIGENS.find((o) => o === params.origem);
+  const q = parseBusca(params.q);
+  const periodo = parsePeriodo(params.periodo);
+  const pagina = parsePagina(params.p);
+  const desde = desdeQuando(periodo);
 
   const where: Prisma.LeadWhereInput = {
     ...(tipo ? { tipo } : {}),
     ...(origem ? { origem } : {}),
+    ...(desde ? { createdAt: { gte: desde } } : {}),
+    // Busca no que a pessoa realmente digita procurando alguém: nome e
+    // e-mail. `insensitive` porque ninguém lembra a caixa do cadastro.
+    ...(q
+      ? {
+          OR: [
+            { nome: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
   };
+
   const [leads, total] = await Promise.all([
-    prisma.lead.findMany({ where, orderBy: { createdAt: "desc" } }),
+    prisma.lead.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      ...fatia(pagina),
+    }),
     prisma.lead.count({ where }),
   ]);
 
-  const exportHref = `/admin/leads/export${filtroHref({ tipo, origem }).replace("/admin/leads", "")}`;
+  // Export leva o recorte, nunca a página — ver nota em lib/admin-lista.ts.
+  const exportHref = `/admin/leads/export${query({ tipo, origem, q, periodo })}`;
+  const base = { tipo, origem, q, periodo };
 
   return (
     <>
@@ -62,75 +103,123 @@ export default async function AdminLeadsPage({
       </div>
 
       <div className="mt-6 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <BuscaAdmin
+          action="/admin/leads"
+          valor={q}
+          placeholder="Buscar por nome ou e-mail"
+          ocultos={{ tipo, origem, periodo }}
+        />
+
+        <div className="flex flex-wrap items-center gap-2 pt-2">
           <span className="eyebrow mr-1">Tipo</span>
-          <Link href={filtroHref({ origem })} className={chip(!tipo)}>
+          <Link href={href({ ...base, tipo: undefined })} className={chip(!tipo)}>
             Todos
           </Link>
           {TIPOS.map((t) => (
             <Link
               key={t}
-              href={filtroHref({ tipo: t, origem })}
+              href={href({ ...base, tipo: t })}
               className={chip(tipo === t)}
             >
               {t}
             </Link>
           ))}
         </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Origem</span>
-          <Link href={filtroHref({ tipo })} className={chip(!origem)}>
+          <Link
+            href={href({ ...base, origem: undefined })}
+            className={chip(!origem)}
+          >
             Todas
           </Link>
           {ORIGENS.map((o) => (
             <Link
               key={o}
-              href={filtroHref({ tipo, origem: o })}
+              href={href({ ...base, origem: o })}
               className={chip(origem === o)}
             >
               {o}
             </Link>
           ))}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow mr-1">Período</span>
+          <Link
+            href={href({ ...base, periodo: undefined })}
+            className={chip(!periodo)}
+          >
+            Desde sempre
+          </Link>
+          {PERIODOS.map((p) => (
+            <Link
+              key={p.valor}
+              href={href({ ...base, periodo: p.valor })}
+              className={chip(periodo === p.valor)}
+            >
+              Últimos {p.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {leads.length === 0 ? (
-        <p className="mt-10 text-petroleo/70">Nenhum lead com esse recorte.</p>
+        <p className="mt-10 text-petroleo/70">
+          {total > 0
+            ? "Essa página não existe nesse recorte."
+            : "Nenhum lead com esse recorte."}
+        </p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
-              <tr>
-                <th className="px-4 py-3">Quando</th>
-                <th className="px-4 py-3">Nome</th>
-                <th className="px-4 py-3">E-mail</th>
-                <th className="px-4 py-3">WhatsApp</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Origem</th>
-                <th className="px-4 py-3">Interesses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((l) => (
-                <tr key={l.id} className="border-b border-petroleo/5">
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {formatarDataAdmin(l.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{l.nome}</td>
-                  <td className="px-4 py-3">{l.email}</td>
-                  <td className="px-4 py-3">{l.whatsapp ?? "—"}</td>
-                  <td className="px-4 py-3">{l.tipo}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{l.origem}</td>
-                  <td className="px-4 py-3 text-petroleo/70">
-                    {[l.modalidades, l.regiao, l.organizacao, l.modalidade]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </td>
+        <>
+          <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
+                <tr>
+                  <th className="px-4 py-3">Quando</th>
+                  <th className="px-4 py-3">Nome</th>
+                  <th className="px-4 py-3">E-mail</th>
+                  <th className="px-4 py-3">WhatsApp</th>
+                  <th className="px-4 py-3">Tipo</th>
+                  <th className="px-4 py-3">Origem</th>
+                  <th className="px-4 py-3">Interesses</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {leads.map((l) => (
+                  <tr key={l.id} className="border-b border-petroleo/5">
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {formatarDataAdmin(l.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{l.nome}</td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={`mailto:${l.email}`}
+                        className="underline underline-offset-4 hover:text-petroleo/70"
+                      >
+                        {l.email}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3">{l.whatsapp ?? "—"}</td>
+                    <td className="px-4 py-3">{l.tipo}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{l.origem}</td>
+                    <td className="px-4 py-3 text-petroleo/70">
+                      {[l.modalidades, l.regiao, l.organizacao, l.modalidade]
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Paginacao
+            total={total}
+            pagina={pagina}
+            href={(p) => href({ ...base, p })}
+          />
+        </>
       )}
     </>
   );

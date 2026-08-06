@@ -30,7 +30,13 @@ Etapa 2 até **03/09** · Resultado preliminar **24/09** · Resultado final **15
 
 Meta: Etapa 2 enviada com link de produto real + captação rodando. **Não existe app pra estabilizar — a fase fica ainda mais focada.**
 
-**Status 06/08, fim do dia — ONDA 0 executável CONCLUÍDA:** STORY-003, STORY-005 (+ integração RAs/city) e STORY-006 mergeadas na main e **verificadas em produção** (site Online no Railway, `/admin` com Basic Auth ativo, migrations aplicadas). O deploy agora migra sozinho (Pre-Deploy Command `npx prisma migrate deploy` — fecha o item de pipeline do backlog). STORY-004 segue 🔒 aguardando o **domínio** (pendência nº 1 do PO). Chore pendente de fábrica: configurar ESLint no repo.
+**Status 06/08, fim do dia — ONDA 0 executável CONCLUÍDA:** STORY-003, STORY-005 (+ integração RAs/city) e STORY-006 mergeadas na main e **verificadas em produção** (site Online no Railway, `/admin` com Basic Auth ativo, migrations aplicadas). O deploy agora migra sozinho (Pre-Deploy Command `npx prisma migrate deploy` — fecha o item de pipeline do backlog).
+
+**Status 06/08, noite — ONDA 0 FECHADA + desvio confessado:** ✅ **STORY-004 destravada e escrita.** A premissa "e-mail só depois do domínio" era falsa: o adapter (`lib/email.ts`) fala SMTP ou Resend e o remetente vem de `EMAIL_FROM`, então domínio próprio virou troca de variável de ambiente. Isso fechava o buraco maior do produto — quem era promovido da lista de espera **não era avisado por ninguém**. ✅ Chore do ESLint feito (flat config; `next lint` está deprecado e some no Next 16). ✅ Melhorias de operação no `/admin` (paginação, busca, período, "ver no site") e ✅ SEO programático (`/descobrir/[recorte]`, dentro do "ajuste fino de SEO ok" do anti-meta).
+
+⚠️ **Desvio confessado (regra da fábrica):** **STORY-007 (auth por magic link, camada C2) foi construída agora**, e não na ONDA 2 pós-financiamento como o plano previa. Decisão do tech lead, com o racional de que C2 destrava metade do roadmap e o custo já estava pago pelo trabalho de e-mail. Não é feature de captação e **não** entra na narrativa da Etapa 2. Tudo em branch, buildando limpo, aguardando merge — sem risco pro que já está no ar.
+
+**Pendências que não são código (Kaxcav):** setar `BETTER_AUTH_SECRET` + `EMAIL_*` no Railway · **rotar a senha do Postgres** (vazou em chat) · criar o serviço Umami · apagar por SQL os 4 registros de teste que ficaram em produção.
 
 - **E1.1 · Etapa 2 do edital** — textos revisados (consistência MUNAY; inovação enfatizada — peso 4: matching por perfil/nível/rotina, dados do ecossistema local; experiência real do coordenador — critério E), vídeo com acesso liberado. *Mateus + Claude de revisão.*
 - **E1.2 · Site no ar + GTM de lista** — divulgação via parceiros-âncora e Instagram. Meta do PRD: caminhar pros 500 leads. *Mateus (relacionamento) + Kaxcav (medição).*

@@ -2,18 +2,38 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { formatarDataAdmin } from "@/lib/admin";
+import {
+  PERIODOS,
+  desdeQuando,
+  fatia,
+  parseBusca,
+  parsePagina,
+  parsePeriodo,
+  query,
+} from "@/lib/admin-lista";
+import { BuscaAdmin } from "@/components/admin/BuscaAdmin";
+import { Paginacao } from "@/components/admin/Paginacao";
+import { SeletorEvento } from "@/components/admin/SeletorEvento";
 
 const STATUS = ["confirmado", "lista_espera"] as const;
 
-type SearchParams = Promise<{ status?: string; evento?: string }>;
+type Filtros = {
+  status?: string;
+  evento?: string;
+  q?: string;
+  periodo?: string;
+  p?: number;
+};
 
-function filtroHref(params: { status?: string; evento?: string }) {
-  const qs = new URLSearchParams();
-  if (params.status) qs.set("status", params.status);
-  if (params.evento) qs.set("evento", params.evento);
-  const s = qs.toString();
-  return s ? `/admin/rsvps?${s}` : "/admin/rsvps";
-}
+type SearchParams = Promise<{
+  status?: string;
+  evento?: string;
+  q?: string;
+  periodo?: string;
+  p?: string;
+}>;
+
+const href = (f: Filtros) => `/admin/rsvps${query({ ...f })}`;
 
 const chip = (ativo: boolean) =>
   `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
@@ -31,26 +51,45 @@ export default async function AdminRsvpsPage({
 }) {
   const params = await searchParams;
   const status = STATUS.find((s) => s === params.status);
-  const evento = params.evento;
+  const q = parseBusca(params.q);
+  const periodo = parsePeriodo(params.periodo);
+  const pagina = parsePagina(params.p);
+  const desde = desdeQuando(periodo);
+
+  const eventos = await prisma.event.findMany({
+    orderBy: { startsAt: "desc" },
+    select: { slug: true, titulo: true },
+  });
+  // Slug da querystring só vale se existir de verdade — senão a tela diria
+  // "nenhum RSVP" pra um evento inventado, o que parece bug de dado.
+  const evento = eventos.find((e) => e.slug === params.evento)?.slug;
 
   const where: Prisma.RsvpWhereInput = {
     ...(status ? { status } : {}),
     ...(evento ? { event: { slug: evento } } : {}),
+    ...(desde ? { createdAt: { gte: desde } } : {}),
+    ...(q
+      ? {
+          OR: [
+            { nome: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
   };
-  const [rsvps, total, eventos] = await Promise.all([
+
+  const [rsvps, total] = await Promise.all([
     prisma.rsvp.findMany({
       where,
       orderBy: { createdAt: "desc" },
       include: { event: { select: { titulo: true, slug: true } } },
+      ...fatia(pagina),
     }),
     prisma.rsvp.count({ where }),
-    prisma.event.findMany({
-      orderBy: { startsAt: "desc" },
-      select: { slug: true, titulo: true },
-    }),
   ]);
 
-  const exportHref = `/admin/rsvps/export${filtroHref({ status, evento }).replace("/admin/rsvps", "")}`;
+  const exportHref = `/admin/rsvps/export${query({ status, evento, q, periodo })}`;
+  const base = { status, evento, q, periodo };
 
   return (
     <>
@@ -70,79 +109,126 @@ export default async function AdminRsvpsPage({
       </div>
 
       <div className="mt-6 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <BuscaAdmin
+          action="/admin/rsvps"
+          valor={q}
+          placeholder="Buscar por nome ou e-mail"
+          ocultos={{ status, evento, periodo }}
+        />
+
+        <div className="pt-2">
+          <SeletorEvento
+            action="/admin/rsvps"
+            eventos={eventos}
+            selecionado={evento}
+            ocultos={{ status, q, periodo }}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 pt-2">
           <span className="eyebrow mr-1">Status</span>
-          <Link href={filtroHref({ evento })} className={chip(!status)}>
+          <Link
+            href={href({ ...base, status: undefined })}
+            className={chip(!status)}
+          >
             Todos
           </Link>
           {STATUS.map((s) => (
             <Link
               key={s}
-              href={filtroHref({ status: s, evento })}
+              href={href({ ...base, status: s })}
               className={chip(status === s)}
             >
               {s === "lista_espera" ? "fila de espera" : s}
             </Link>
           ))}
         </div>
-        {eventos.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="eyebrow mr-1">Evento</span>
-            <Link href={filtroHref({ status })} className={chip(!evento)}>
-              Todos
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow mr-1">Período</span>
+          <Link
+            href={href({ ...base, periodo: undefined })}
+            className={chip(!periodo)}
+          >
+            Desde sempre
+          </Link>
+          {PERIODOS.map((p) => (
+            <Link
+              key={p.valor}
+              href={href({ ...base, periodo: p.valor })}
+              className={chip(periodo === p.valor)}
+            >
+              Últimos {p.label}
             </Link>
-            {eventos.map((e) => (
-              <Link
-                key={e.slug}
-                href={filtroHref({ status, evento: e.slug })}
-                className={chip(evento === e.slug)}
-              >
-                {e.titulo}
-              </Link>
-            ))}
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {rsvps.length === 0 ? (
-        <p className="mt-10 text-petroleo/70">Nenhum RSVP com esse recorte.</p>
+        <p className="mt-10 text-petroleo/70">
+          {total > 0
+            ? "Essa página não existe nesse recorte."
+            : "Nenhum RSVP com esse recorte."}
+        </p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
-              <tr>
-                <th className="px-4 py-3">Quando</th>
-                <th className="px-4 py-3">Nome</th>
-                <th className="px-4 py-3">E-mail</th>
-                <th className="px-4 py-3">Evento</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rsvps.map((r) => (
-                <tr key={r.id} className="border-b border-petroleo/5">
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {formatarDataAdmin(r.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{r.nome}</td>
-                  <td className="px-4 py-3">{r.email}</td>
-                  <td className="px-4 py-3">{r.event.titulo}</td>
-                  <td className="px-4 py-3">
-                    {r.canceledAt ? (
-                      <span className="font-mono text-xs uppercase text-petroleo/50">
-                        cancelado
-                      </span>
-                    ) : r.status === "confirmado" ? (
-                      "confirmado"
-                    ) : (
-                      "fila de espera"
-                    )}
-                  </td>
+        <>
+          <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
+                <tr>
+                  <th className="px-4 py-3">Quando</th>
+                  <th className="px-4 py-3">Nome</th>
+                  <th className="px-4 py-3">E-mail</th>
+                  <th className="px-4 py-3">Evento</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {rsvps.map((r) => (
+                  <tr key={r.id} className="border-b border-petroleo/5">
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {formatarDataAdmin(r.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{r.nome}</td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={`mailto:${r.email}`}
+                        className="underline underline-offset-4 hover:text-petroleo/70"
+                      >
+                        {r.email}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/eventos/${r.event.slug}`}
+                        target="_blank"
+                        className="underline underline-offset-4 hover:text-petroleo/70"
+                      >
+                        {r.event.titulo} ↗
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.canceledAt ? (
+                        <span className="font-mono text-xs uppercase text-petroleo/50">
+                          cancelado
+                        </span>
+                      ) : r.status === "confirmado" ? (
+                        "confirmado"
+                      ) : (
+                        "fila de espera"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Paginacao
+            total={total}
+            pagina={pagina}
+            href={(p) => href({ ...base, p })}
+          />
+        </>
       )}
     </>
   );

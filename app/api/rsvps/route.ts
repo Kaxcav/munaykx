@@ -6,14 +6,33 @@ import {
   isSerializationConflict,
   withSerializableRetry,
 } from "@/lib/serializable";
+import {
+  dispararEmail,
+  emailRsvpConfirmado,
+  emailRsvpListaEspera,
+} from "@/lib/emails-rsvp";
 
 // Serializable evita overbooking em RSVPs simultâneos; conflitos de
 // serialização (P2034) são retentados pelo withSerializableRetry (lib/).
 
+type DadosEvento = {
+  titulo: string;
+  startsAt: Date;
+  local: string | null;
+  slug: string;
+};
+
 type Resultado =
   | { erro: 404 | 410 }
   | { jaExistia: true }
-  | { status: RsvpStatus; token: string | null };
+  | {
+      status: RsvpStatus;
+      /** vai pro cliente só quando a inscrição é nova (ver comentário abaixo) */
+      token: string | null;
+      /** sempre presente — é por ele que o e-mail monta o link */
+      tokenEmail: string;
+      evento: DadosEvento;
+    };
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -80,6 +99,7 @@ export async function POST(req: Request) {
           }
 
           let token: string | null = null;
+          let tokenEmail: string;
           if (existente) {
             // Reinscrição após cancelamento: reativa a mesma linha. createdAt
             // vira "agora" de propósito — a posição na fila é de quem chega,
@@ -94,9 +114,11 @@ export async function POST(req: Request) {
                 createdAt: new Date(),
               },
             });
-            // token não volta na reinscrição: e-mail digitado não é e-mail
-            // provado — devolver o link aqui permitiria sequestrar a inscrição
-            // de outra pessoa. (STORY-004 manda o link por e-mail.)
+            // token não volta na RESPOSTA da reinscrição: e-mail digitado não
+            // é e-mail provado — devolver o link ali permitiria sequestrar a
+            // inscrição de outra pessoa. Já mandar POR E-MAIL é seguro: só
+            // chega em quem é dono da caixa. É o que a STORY-004 faz aqui.
+            tokenEmail = existente.token;
           } else {
             const novo = await tx.rsvp.create({
               data: {
@@ -108,6 +130,7 @@ export async function POST(req: Request) {
               },
             });
             token = novo.token;
+            tokenEmail = novo.token;
           }
 
           // Quem faz RSVP entra na base de leads (origem rsvp) — sem
@@ -124,7 +147,17 @@ export async function POST(req: Request) {
             },
           });
 
-          return { status, token };
+          return {
+            status,
+            token,
+            tokenEmail,
+            evento: {
+              titulo: evento.titulo,
+              startsAt: evento.startsAt,
+              local: evento.local,
+              slug: evento.slug,
+            },
+          };
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
@@ -141,6 +174,20 @@ export async function POST(req: Request) {
     if ("jaExistia" in resultado) {
       return NextResponse.json({ ok: true, jaExistia: true });
     }
+    // E-mail SÓ depois do commit: dentro da transação, o retry do
+    // withSerializableRetry mandaria o mesmo e-mail a cada tentativa.
+    const dados = {
+      para: email,
+      nome,
+      evento: resultado.evento,
+      token: resultado.tokenEmail,
+    };
+    dispararEmail(
+      resultado.status === "confirmado"
+        ? emailRsvpConfirmado(dados)
+        : emailRsvpListaEspera(dados),
+    );
+
     return NextResponse.json({
       ok: true,
       status: resultado.status,

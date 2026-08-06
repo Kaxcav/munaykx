@@ -16,7 +16,15 @@ type Status =
 const inputCls =
   "w-full rounded-xl border border-petroleo/15 bg-white/70 px-4 py-3 text-petroleo placeholder:text-petroleo/40 focus:border-petroleo";
 
-export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
+export default function RsvpForm({
+  eventSlug,
+  avisaPorEmail,
+}: {
+  eventSlug: string;
+  /** Só promete e-mail quando existe provedor configurado (STORY-004).
+   *  Sem isso, a copy viraria promessa falsa — o que a 003 mandou remover. */
+  avisaPorEmail: boolean;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [erro, setErro] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -68,16 +76,21 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
     const mensagens: Record<string, { titulo: string; corpo: string }> = {
       confirmado: {
         titulo: "Presença confirmada ✓",
-        corpo: "Sua vaga está garantida. Nos vemos lá!",
+        corpo: avisaPorEmail
+          ? "Sua vaga está garantida e o comprovante já saiu no seu e-mail, com o link pra gerenciar a inscrição. Nos vemos lá!"
+          : "Sua vaga está garantida. Nos vemos lá!",
       },
       lista_espera: {
         titulo: "Você está na lista de espera",
-        corpo:
-          "As vagas confirmadas acabaram, mas você entrou na fila — se abrir vaga, sua inscrição é confirmada automaticamente.",
+        corpo: avisaPorEmail
+          ? "As vagas confirmadas acabaram, mas você entrou na fila. Se alguém desistir, sua inscrição é confirmada automaticamente e a gente te avisa por e-mail — não precisa ficar conferindo."
+          : "As vagas confirmadas acabaram, mas você entrou na fila — se abrir vaga, sua inscrição é confirmada automaticamente.",
       },
       jaExistia: {
         titulo: "Você já estava inscrito ✓",
-        corpo: "Esse e-mail já tem inscrição neste evento. Nos vemos lá!",
+        corpo: avisaPorEmail
+          ? "Esse e-mail já tem inscrição neste evento — reenviamos o link de gerenciamento pra sua caixa. Nos vemos lá!"
+          : "Esse e-mail já tem inscrição neste evento. Nos vemos lá!",
       },
     };
     const m = mensagens[status];

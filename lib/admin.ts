@@ -73,16 +73,10 @@ export const eventAdminSchema = z.object({
 
 export type EventAdminInput = z.infer<typeof eventAdminSchema>;
 
-/** "Corrida Asa Norte à noite" → "corrida-asa-norte-a-noite". */
-export function slugify(texto: string): string {
-  return texto
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 160);
-}
+// Mudou de casa pra `lib/slug.ts` quando as páginas públicas de descoberta
+// passaram a precisar da MESMA função. Reexportado aqui só pra não quebrar
+// quem já importava de `@/lib/admin` — a implementação é uma só.
+export { slugify } from "@/lib/slug";
 
 /**
  * "2026-08-15T19:00" (datetime-local) → Date em UTC, assumindo Brasília.

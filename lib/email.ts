@@ -32,6 +32,22 @@ function remetente(): string {
   return process.env.EMAIL_FROM?.trim() || REMETENTE_PADRAO;
 }
 
+/**
+ * `onboarding@resend.dev` é o remetente de TESTE da Resend: ele só entrega
+ * para o e-mail dono da conta. Qualquer outro destinatário volta 403.
+ *
+ * Isso é uma armadilha de verdade, porque o nosso `sendEmail` engole erro
+ * de propósito (e-mail não pode derrubar inscrição). Sem esta checagem, o
+ * dono da conta testaria, receberia o e-mail, concluiria "funciona" — e
+ * todo participante real receberia silêncio, com o 403 escondido no log.
+ *
+ * Enquanto o remetente for de teste, o app se trata como SEM e-mail: a UI
+ * para de prometer aviso. Prometer o que não entrega é pior que não ter.
+ */
+function remetenteDeTeste(): boolean {
+  return /@resend\.dev\b/i.test(remetente());
+}
+
 async function viaSmtp(input: EmailInput): Promise<EmailResult> {
   const url = process.env.SMTP_URL;
   if (!url) {
@@ -105,6 +121,13 @@ export async function sendEmail(input: EmailInput): Promise<EmailResult> {
     return { ok: false, motivo: "nao-configurado" };
   }
 
+  if (remetenteDeTeste()) {
+    console.warn(
+      `[email] MODO TESTE: remetente ${remetente()} só entrega pro dono da conta Resend.`,
+      `O envio para ${input.to} vai falhar com 403 se não for esse endereço.`,
+    );
+  }
+
   try {
     return provider === "smtp" ? await viaSmtp(input) : await viaResend(input);
   } catch (error) {
@@ -116,12 +139,45 @@ export async function sendEmail(input: EmailInput): Promise<EmailResult> {
   }
 }
 
-/** True quando existe provedor configurado — a UI usa pra ser honesta. */
+/**
+ * True quando o e-mail chega em QUALQUER pessoa — a UI usa isto pra ser
+ * honesta. Não basta ter provedor: com o remetente de teste da Resend a
+ * entrega é só pro dono da conta, e prometer aviso ali seria mentira.
+ */
 export function emailConfigurado(): boolean {
   const p = process.env.EMAIL_PROVIDER?.trim().toLowerCase();
   if (p === "smtp") return Boolean(process.env.SMTP_URL);
-  if (p === "resend") return Boolean(process.env.RESEND_API_KEY);
+  if (p === "resend")
+    return Boolean(process.env.RESEND_API_KEY) && !remetenteDeTeste();
   return false;
+}
+
+/**
+ * Diagnóstico pro /admin e pro log de boot: em uma linha, o que o e-mail
+ * está fazendo agora. Existe porque "configurado" tem três estados, não
+ * dois, e o do meio (teste) é o que engana.
+ */
+export function statusEmail(): {
+  modo: "desligado" | "teste" | "producao";
+  detalhe: string;
+} {
+  const p = process.env.EMAIL_PROVIDER?.trim().toLowerCase();
+  if (p !== "smtp" && p !== "resend")
+    return {
+      modo: "desligado",
+      detalhe:
+        "EMAIL_PROVIDER não configurado — nenhum e-mail sai, e a UI não promete aviso.",
+    };
+  if (p === "resend" && !process.env.RESEND_API_KEY)
+    return { modo: "desligado", detalhe: "EMAIL_PROVIDER=resend sem RESEND_API_KEY." };
+  if (p === "smtp" && !process.env.SMTP_URL)
+    return { modo: "desligado", detalhe: "EMAIL_PROVIDER=smtp sem SMTP_URL." };
+  if (remetenteDeTeste())
+    return {
+      modo: "teste",
+      detalhe: `Remetente ${remetente()} só entrega pro dono da conta Resend. Verifique um domínio e troque EMAIL_FROM pra valer pra todo mundo.`,
+    };
+  return { modo: "producao", detalhe: `Enviando via ${p} como ${remetente()}.` };
 }
 
 /**

@@ -21,3 +21,10 @@ export const rsvpSchema = z.object({
 });
 
 export type RsvpInput = z.infer<typeof rsvpSchema>;
+
+/** Cancelamento via token (STORY-003) — o token É a autorização. */
+export const rsvpCancelSchema = z.object({
+  token: z.string().trim().min(1).max(160),
+});
+
+export type RsvpCancelInput = z.infer<typeof rsvpCancelSchema>;

@@ -81,6 +81,13 @@ Backend estável ──► Mobile (consome a mesma base; React Native, Onda 4)
 **ONDA 0 — agora → 03/09 (paralelo à Etapa 2):** fechar o ciclo do que existe.
 Cancelamento/promoção via token · admin interno mínimo (CRUD de communities/events protegido por senha de env — sem ele, cadastrar parceiro real = SQL na mão) · e-mail transacional (quando domínio sair) · OG image + analytics (Umami self-host no Railway) + política de privacidade (LGPD: leads/RSVPs são dados pessoais) · campo `city`.
 
+> **Fechada em 06/08/2026.** Tudo acima está escrito. Duas correções ao que estava previsto aqui:
+>
+> 1. **"e-mail transacional (quando domínio sair)" estava errado.** O adapter (`lib/email.ts`) fala SMTP ou Resend e o remetente vem de `EMAIL_FROM` — domínio próprio é troca de env, não de código. A dependência que travava metade do roadmap não existia. Enquanto ela era tratada como real, quem era promovido da lista de espera **não recebia aviso nenhum**: a fila andava em silêncio.
+> 2. **Regra que ficou do trabalho de e-mail:** disparo NUNCA acontece dentro da transação Serializable. Ela roda com retry — enviar lá dentro entregaria o mesmo e-mail a cada repetição. Envio é sempre pós-commit, fire-and-forget, e falha de e-mail não derruba inscrição.
+>
+> Entrou junto, fora da lista original: melhorias de operação no `/admin` (paginação, busca, período, "ver no site") e **SEO programático** por recorte modalidade+região (`/descobrir/[recorte]`) — este último cabe no "ajuste fino de SEO ok" do anti-meta do Master Plan. **C2 (auth) saiu da ONDA 2 e foi construída agora: desvio confessado, registrado no Master Plan.**
+
 **ONDA 1 — 03/09 → 15/10 (Fase 2: specs, pouco código):** especificar os módulos grandes via AIOX (`@pm` → `@architect` → `@qa *critique-spec`): Auth (C2), Pertencimento (C3), Painel organizador (C4), Conteúdo (C5). Decisões de PO colhidas em lote. Código só de débito leve.
 
 **ONDA 2 — pós-resultado (Fase 3, financiável):** construir C2→C3→C4 nessa ordem. Auth primeiro porque tudo pende dele; painel organizador em seguida porque destrava a operação dos 2 eventos-meta com parceiros reais.

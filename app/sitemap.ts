@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCommunities } from "@/lib/communities";
+import { recortesIndexaveis } from "@/lib/descoberta";
 import { getUpcomingEvents } from "@/lib/events";
 import { SITE_URL } from "@/lib/site";
 
@@ -15,9 +16,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Sitemap roda no build — sem banco de pé, sai só com as rotas fixas.
   if (process.env.DATABASE_URL) {
     try {
-      const [comunidades, eventos] = await Promise.all([
+      const [comunidades, eventos, recortes] = await Promise.all([
         getCommunities(),
         getUpcomingEvents(),
+        // Só os recortes com comunidade REAL — combinação que só tem demo
+        // fica de fora do sitemap de propósito (lib/descoberta.ts, regra 2).
+        recortesIndexaveis(),
       ]);
       entries.push(
         ...comunidades.map((c) => ({
@@ -29,6 +33,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           url: `${base}/eventos/${e.slug}`,
           lastModified: e.createdAt,
           priority: 0.5,
+        })),
+        ...recortes.map((r) => ({
+          url: `${base}/descobrir/${r.slug}`,
+          lastModified: new Date(),
+          priority: 0.7,
         })),
       );
     } catch {

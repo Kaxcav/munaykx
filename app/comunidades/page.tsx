@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCommunities, getCommunityFacets } from "@/lib/communities";
+import { recortesComDado, tituloDoRecorte } from "@/lib/descoberta";
 
 export const metadata: Metadata = {
   title: "Comunidades",
@@ -29,12 +30,21 @@ export default async function ComunidadesPage({
   searchParams: SearchParams;
 }) {
   const { modalidade, regiao } = await searchParams;
-  const [comunidades, facets] = await Promise.all([
+  const [comunidades, facets, recortes] = await Promise.all([
     getCommunities({ modalidade, regiao }),
     getCommunityFacets(),
+    recortesComDado(),
   ]);
 
   const temFiltro = Boolean(modalidade || regiao);
+
+  // O filtro aqui vive em querystring — o Google indexa isso mal e nunca com
+  // um título que case com "corrida em Ceilândia". Quando o recorte atual
+  // tem página própria em /descobrir, oferecemos o link: vira URL limpa,
+  // compartilhável e rastreável.
+  const paginaDoRecorte = temFiltro
+    ? recortes.find((r) => r.modalidade === modalidade && r.regiao === regiao)
+    : undefined;
 
   return (
     <>
@@ -151,6 +161,34 @@ export default async function ComunidadesPage({
               </Link>
             ))}
           </div>
+        )}
+
+        {paginaDoRecorte && (
+          <p className="mt-10">
+            <Link
+              href={`/descobrir/${paginaDoRecorte.slug}`}
+              className="text-sm font-semibold underline underline-offset-4 hover:text-petroleo/70"
+            >
+              Ver a página de {tituloDoRecorte(paginaDoRecorte).toLowerCase()} →
+            </Link>
+          </p>
+        )}
+
+        {recortes.length > 0 && (
+          <section className="mt-16 border-t border-petroleo/10 pt-10">
+            <h2 className="eyebrow mb-4">Buscas frequentes</h2>
+            <div className="flex flex-wrap gap-2">
+              {recortes.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/descobrir/${r.slug}`}
+                  className="rounded-full border border-petroleo/15 px-4 py-1.5 text-sm font-medium transition-colors hover:border-petroleo/40"
+                >
+                  {tituloDoRecorte(r)}
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         <p className="mt-10 font-mono text-xs text-petroleo/45">

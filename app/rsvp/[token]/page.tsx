@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CancelarInscricao from "@/components/CancelarInscricao";
 import { prisma } from "@/lib/db";
 import { formatarDataEvento } from "@/lib/events";
+import { emailConfigurado } from "@/lib/email";
 
 // Estado da inscrição vem do banco a cada visita; página é pessoal → noindex.
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function RsvpPage({ params }: { params: Params }) {
 
   const evento = rsvp.event;
   const jaPassou = evento.startsAt < new Date();
+  const avisaPorEmail = emailConfigurado();
   const situacao: "cancelado" | "confirmado" | "lista_espera" =
     rsvp.canceledAt !== null ? "cancelado" : rsvp.status;
 
@@ -84,7 +86,10 @@ export default async function RsvpPage({ params }: { params: Params }) {
           {situacao === "lista_espera" && (
             <p className="mt-3 text-petroleo/70">
               Você está na fila. Se abrir vaga, sua inscrição é confirmada
-              automaticamente — acompanha por este link.
+              automaticamente{" "}
+              {avisaPorEmail
+                ? "e a gente te avisa por e-mail — não precisa ficar conferindo."
+                : "— acompanha por este link."}
             </p>
           )}
           {situacao === "cancelado" && (

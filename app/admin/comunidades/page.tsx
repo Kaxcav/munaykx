@@ -74,12 +74,25 @@ export default async function AdminComunidadesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/comunidades/${c.id}`}
-                      className="font-semibold underline underline-offset-4 hover:text-petroleo/70"
-                    >
-                      Editar
-                    </Link>
+                    <span className="flex items-center justify-end gap-3">
+                      {/* Conferir o resultado sem sair do admin: o erro de
+                          cadastro quase sempre só aparece na página pública. */}
+                      {c.ativo && (
+                        <Link
+                          href={`/comunidades/${c.slug}`}
+                          target="_blank"
+                          className="text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+                        >
+                          Ver no site ↗
+                        </Link>
+                      )}
+                      <Link
+                        href={`/admin/comunidades/${c.id}`}
+                        className="font-semibold underline underline-offset-4 hover:text-petroleo/70"
+                      >
+                        Editar
+                      </Link>
+                    </span>
                   </td>
                 </tr>
               ))}

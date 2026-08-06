@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RsvpForm from "@/components/RsvpForm";
+import { emailConfigurado } from "@/lib/email";
 import {
   countConfirmados,
   formatarDataEvento,
@@ -122,7 +123,7 @@ export default async function EventoPage({ params }: { params: Params }) {
               <h2 className="mb-6 font-display text-2xl font-extrabold tracking-tight">
                 Garante sua vaga — leva menos de um minuto.
               </h2>
-              <RsvpForm eventSlug={evento.slug} />
+              <RsvpForm eventSlug={evento.slug} avisaPorEmail={emailConfigurado()} />
             </>
           )}
         </section>

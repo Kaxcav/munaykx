@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { assertAdmin } from "@/lib/admin-auth";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -17,9 +18,12 @@ const NAV = [
   { href: "/admin/rsvps", label: "RSVPs" },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Segunda barreira: o middleware não é ponto único de falha (STORY-007).
+  await assertAdmin();
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-petroleo/10 bg-petroleo text-areia">

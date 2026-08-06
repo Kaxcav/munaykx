@@ -1,0 +1,1 @@
+Os docs do projeto (Master Plan, Blueprint, stories, standards) moraram aqui ate 06/08/2026 e agora vivem em `docs/` na raiz do repo — fora da pasta do framework, que um update do AIOX pode sobrescrever.

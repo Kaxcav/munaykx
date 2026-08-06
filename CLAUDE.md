@@ -123,7 +123,16 @@ resumo operacional — em conflito, os docs acima mandam.
   e o sitemap sai só com rotas fixas (decisão consciente).
 - URL pública: fonte única em `lib/site.ts` — `NEXT_PUBLIC_SITE_URL`
   aceita domínio sem protocolo (Railway fornece assim); ninguém lê a env
-  direto.
+  direto. ⚠️ **`NEXT_PUBLIC_*` é assado no BUILD, não lido em runtime.**
+  Trocar essa variável exige **rebuild**, não restart — reiniciar o
+  container mantém o valor antigo embutido no bundle. (Descoberto em 06/08
+  por um teste que apontou pro domínio errado.)
+- **O site tem um domínio canônico e o middleware força ele.** O Railway
+  nunca desliga o `*.up.railway.app`, e no endereço secundário a Better
+  Auth compara a origem com `baseURL` e devolve **403** — o login morre sem
+  dizer por quê, e a mensagem de erro aponta pro lugar errado. O middleware
+  redireciona com **308** (preserva método e corpo; 301 viraria GET e
+  perderia POST). `/api/*`, assets e `localhost` ficam fora do redirect.
 - Assinatura visual: `components/PlanoPiloto.tsx` (SVG procedural — não
   substituir por mapa pago).
 - Fontes por `<link>` no layout (build sem rede); futuro: `next/font`.

@@ -106,11 +106,17 @@ Cancelamento/promoção via token · admin interno mínimo (CRUD de communities/
 | 004 | E-mail transacional (Resend): confirmação, promoção, cancelamento | 0 | Domínio | 🔒 bloqueada |
 | 005 | Admin interno mínimo: CRUD communities/events, rota protegida por senha env | 0 | — | ✅ mergeada 06/08 (+ integração RAs/city), em produção |
 | 006 | Produção redonda: OG image, Umami, página de privacidade, `city` no schema, 35 RAs oficiais como fonte única de regiões (`lib/regioes.ts`) | 0 | — | ✅ mergeada na main 06/08, em produção |
-| 007 | SPEC Auth + User (C2) — magic link, sessões, migração de RSVPs por e-mail | 1 | 004 no ar p/ executar | Fase 2 |
-| 008 | SPEC Pertencimento (C3) — membership, favoritos, minhas comunidades, agenda | 1 | 007 | Fase 2 |
-| 009 | SPEC Painel do organizador (C4) — self-service de eventos, lista de inscritos, check-in | 1 | 007 | Fase 2 |
-| 010 | SPEC Conteúdo (C5) — feed, fórum, cursos (recorte mínimo primeiro) | 1 | 007 | Fase 2 |
-| 011+ | Execuções das specs 007–010, na ordem C2→C3→C4→C5 | 2–3 | Resultado do edital | Fase 3 |
+| 007 | Auth + User (C2) — magic link, sessões, reivindicação de RSVPs por e-mail | 1 | — | ✅ **executada** e mergeada 06/08 (desvio confessado: spec e execução fundidas) |
+| 008 | SPEC Pertencimento (C3) — seguir comunidade, minhas comunidades, agenda | 1 | 007 | 📄 **spec escrita 06/08**, execução ONDA 2 |
+| 009 | SPEC Painel do organizador (C4) — self-service, lista de inscritos, check-in | 1 | 007 | 📄 **spec escrita 06/08**, execução ONDA 2 |
+| 010 | SPEC Conteúdo (C5) — feed de avisos por comunidade | 1 | 007 · 008 · 009 | 📄 **spec escrita 06/08**, execução ONDA 2/3 |
+| 011+ | Execuções das specs 008–010, na ordem C3→C4→C5 | 2–3 | Resultado do edital | Fase 3 |
+
+**Três decisões que as specs 008–010 tomaram onde este Blueprint deixou em aberto** — todas reversíveis, nenhuma implementada ainda:
+
+1. **`Favorite` deixa de existir** (008). Seguir e favoritar viram dois botões indistinguíveis na mesma tela; todo produto comparável tem um verbo só. Fica `Membership` com auto-serviço, sem aprovação. Separar depois é adicionar `status`, não criar tabela.
+2. **Comunidade cadastrada pelo organizador nasce `pendente`** (009), e reivindicação de comunidade **existente** sempre passa por aprovação humana — nunca automática, nem por domínio de e-mail. A assimetria é proposital: aprovar comunidade nova errado gera spam; aprovar reivindicação errada vaza nome, e-mail e WhatsApp de gente real.
+3. **Aviso de evento novo nasce ligado; aviso de post nasce desligado** (008/010). E-mail que a pessoa espera vem ligado, e-mail que ela não espera vem desligado — inverter isso é como se queima reputação de domínio.
 
 Regra da fábrica continua: 1 story = 1 branch, handoff obrigatório, desvio confessado, Kaxcav é o único merge na main.
 
@@ -120,8 +126,8 @@ Regra da fábrica continua: 1 story = 1 branch, handoff obrigatório, desvio con
 
 1. **Domínio** — registrar JÁ (bloqueia e-mail → auth → metade do roadmap)
 2. Cancelamento de RSVP: só via link/token (proposto) ou também mediado pelo organizador?
-3. Avaliações (Reviews): entram na primeira leva pós-auth ou depois da tração? (recomendação: depois — moderação custa)
-4. Conteúdo (C5): qual recorte mínimo primeiro — feed simples, fórum ou cursos? (recomendação: feed de avisos por comunidade; fórum e cursos depois)
+3. Avaliações (Reviews): entram na primeira leva pós-auth ou depois da tração? (recomendação: depois — moderação custa) — ⏳ **a STORY-008 adotou a recomendação e deixou Reviews fora**, com dois motivos a mais: volume baixo torna review pior que ausência de review (uma nota 2 sem amostra que corrija marca a comunidade pra sempre), e review é conteúdo de terceiro sobre negócio real, o que abre responsabilidade que a MUNAY não tem estrutura pra responder antes da tração. **Falta ratificar.**
+4. Conteúdo (C5): qual recorte mínimo primeiro — feed simples, fórum ou cursos? (recomendação: feed de avisos por comunidade; fórum e cursos depois) — ⏳ **a STORY-010 adotou a recomendação**: só `Post`, sem comentário. Fórum sem moderador é passivo (vazio comunica abandono, com spam comunica pior) e exige gente todo dia, que não existe até novembro; cursos exigem produção de conteúdo que ninguém tem tempo de fazer. O problema que o feed resolve é concreto: quando o treino muda de local, quem não está no grupo de WhatsApp — justamente o iniciante que a MUNAY trouxe — aparece no lugar errado. **Falta ratificar.**
 5. Monetização: ratificar gateway na spec da Onda 3 (sem pressa)
 6. Paleta e limpeza de memória — pendências antigas, seguem abertas
 7. **Ratificar (desvio 3 da STORY-003):** reinscrição após cancelamento volta pro FIM da fila (`createdAt` zerado) — quem cancela não guarda lugar. Implementado assim; reverter é 1 linha se o Mateus discordar

@@ -195,10 +195,15 @@ O que resta, e não é código:
    "cancelou → fim da fila" (desvio 3 da 003), limpeza de memória (0.2).
 3. **Operação**: cadastrar parceiros reais pelo `/admin` — só com
    autorização assinada (regra 3).
-4. **ONDA 1 (Fase 2, a partir de 04/09)**: specs dos módulos grandes
-   (pertencimento C3, painel B2B C4, conteúdo C5) via pipeline AIOX —
-   specs, não código de produto. C2 (auth) saiu na frente por decisão do
-   tech lead: **desvio confessado**, registrado aqui e no Master Plan.
+4. **ONDA 1 — specs escritas em 06/08**: `docs/stories/STORY-008`
+   (pertencimento C3), `STORY-009` (painel do organizador C4) e
+   `STORY-010` (conteúdo C5). **São specs: a execução é ONDA 2**, depois
+   do resultado do edital (15/10) — construir antes queima orçamento não
+   reembolsável. C2 (auth) saiu na frente por decisão do tech lead:
+   **desvio confessado**, registrado aqui e no Master Plan.
+   Três decisões dessas specs esperam ratificação do PO (Blueprint §7):
+   Reviews fora da primeira leva, `Favorite` fundido em `Membership`, e
+   conteúdo começando só por feed de avisos.
 
 Anti-meta: nenhuma feature nova fora disso antes da Etapa 2 (03/09);
 construção pesada é pós-resultado (15/10), como escopo financiável.

@@ -1,6 +1,5 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import Ticker from "@/components/Ticker";
 import ComoFunciona from "@/components/ComoFunciona";
 import Publicos from "@/components/Publicos";
 import Vitrine from "@/components/Vitrine";
@@ -13,7 +12,6 @@ export default function Page() {
       <Header />
       <main>
         <Hero />
-        <Ticker />
         <ComoFunciona />
         <Publicos />
         <Vitrine />

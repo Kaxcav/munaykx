@@ -31,7 +31,28 @@ Env vars do serviço: `DATABASE_URL` (Postgres do Railway) e
 `lib/site.ts` normaliza. Migrações em produção: `npx prisma migrate deploy`.
 
 Quando o domínio próprio sair, atualize `NEXT_PUBLIC_SITE_URL` (afeta
-SEO/sitemap) e o e-mail de contato no `components/Footer.tsx`.
+SEO/sitemap) e o e-mail de contato no `components/Footer.tsx` e em
+`app/privacidade/page.tsx`.
+
+## Analytics (Umami)
+
+Self-host no Railway, num serviço separado do site:
+
+1. No Railway: **New → Template → Umami** (o template sobe o Umami com um
+   Postgres próprio — separado do banco do site, de propósito).
+2. Acesse a URL do serviço, faça login (`admin`/`umami`, troque a senha),
+   e em **Settings → Websites → Add website** cadastre o site. Copie o
+   **Website ID**.
+3. No serviço do site, defina as envs e redeploy:
+   - `NEXT_PUBLIC_UMAMI_SCRIPT_URL` = `https://<serviço-umami>.up.railway.app/script.js`
+   - `NEXT_PUBLIC_UMAMI_WEBSITE_ID` = o ID copiado
+4. O painel fica na URL do serviço Umami (Dashboard). Eventos custom
+   rastreados: `lead_participante`, `lead_organizador`, `rsvp_confirmado`,
+   `rsvp_lista_espera` (aba **Events**).
+
+Sem as envs, o site funciona normalmente — só não carrega o script
+(`components/Analytics.tsx`). O analytics é anônimo e sem cookies de
+rastreio individual (ver `/privacidade`).
 
 ## Estrutura
 

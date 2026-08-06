@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="border-t border-petroleo/10 bg-areia">
@@ -19,6 +21,11 @@ export default function Footer() {
             <a href="mailto:contato@munay.app.br" className="hover:text-petroleo">
               contato@munay.app.br
             </a>
+          </p>
+          <p className="mt-1">
+            <Link href="/privacidade" className="hover:text-petroleo">
+              Política de privacidade
+            </Link>
           </p>
           <p className="mt-1">© 2026 MUNAY</p>
         </div>

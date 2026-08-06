@@ -1,11 +1,13 @@
 import type { Config } from "tailwindcss";
+import { brand } from "./lib/brand";
 
 /**
  * TOKENS DE MARCA — MUNAY ("Vitalidade Serena")
- * Fonte: ELO_Identidade_Visual.docx (paleta oficial).
- * Se o PO trocar a paleta (há uma alternativa petróleo/sage/coral em
- * ELO_Arquitetura_Frontend.docx), mude SOMENTE aqui — nenhum componente
- * usa cor hardcoded.
+ * Fonte: ELO_Identidade_Visual.docx (paleta oficial). Os hex vivem em
+ * lib/brand.ts (fonte única — as OG images também leem de lá). Se o PO
+ * trocar a paleta (há uma alternativa petróleo/sage/coral em
+ * ELO_Arquitetura_Frontend.docx), mude SOMENTE lib/brand.ts — nenhum
+ * componente usa cor hardcoded.
  */
 const config: Config = {
   content: [
@@ -15,13 +17,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        areia: "#F6F3EA",   // base clara predominante
+        areia: brand.areia,
         petroleo: {
-          DEFAULT: "#0F3B3C", // tinta / estrutura / seções escuras
-          soft: "#1C4E4F",
+          DEFAULT: brand.petroleo,
+          soft: brand.petroleoSoft,
         },
-        lime: "#C6FF3D",    // acento de energia — usar com parcimônia
-        coral: "#FF6B4A",   // acento secundário — raríssimo
+        lime: brand.lime,
+        coral: brand.coral,
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],

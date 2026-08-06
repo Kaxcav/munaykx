@@ -1,23 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { track } from "@/lib/analytics";
 import { leadSchema } from "@/lib/leads";
+import { REGIOES_COM_OUTRA } from "@/lib/regioes";
 
 type Tab = "participante" | "organizador";
 type Status = "idle" | "enviando" | "sucesso" | "erro";
-
-const REGIOES = [
-  "Asa Norte",
-  "Asa Sul",
-  "Noroeste",
-  "Sudoeste",
-  "Lago Norte",
-  "Lago Sul",
-  "Águas Claras",
-  "Taguatinga",
-  "Guará",
-  "Outra região",
-];
 
 const inputCls =
   "w-full rounded-xl border border-areia/25 bg-white/10 px-4 py-3 text-areia placeholder:text-areia/40 focus:border-lime";
@@ -62,6 +52,11 @@ export default function LeadSection() {
         return;
       }
       setStatus("sucesso");
+      track(
+        parsed.data.tipo === "participante"
+          ? "lead_participante"
+          : "lead_organizador",
+      );
     } catch {
       setErro("Falha de conexão. Tenta de novo em instantes.");
       setStatus("erro");
@@ -197,7 +192,7 @@ export default function LeadSection() {
                   </label>
                   <select id="regiao" name="regiao" className={inputCls}>
                     <option value="">Selecionar…</option>
-                    {REGIOES.map((r) => (
+                    {REGIOES_COM_OUTRA.map((r) => (
                       <option key={r} value={r} className="text-petroleo">
                         {r}
                       </option>
@@ -268,7 +263,15 @@ export default function LeadSection() {
                 {status === "enviando" ? "Enviando…" : "Entrar na lista"}
               </button>
               <p className="mt-3 text-xs text-areia/50">
-                Usamos seu contato só pra falar da MUNAY. Nada de spam.
+                Usamos seu contato só pra falar da MUNAY. Nada de spam. Ao
+                enviar, você concorda com a{" "}
+                <Link
+                  href="/privacidade"
+                  className="underline underline-offset-2 hover:text-areia"
+                >
+                  política de privacidade
+                </Link>
+                .
               </p>
             </div>
           </form>

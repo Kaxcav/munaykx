@@ -123,10 +123,17 @@ resumo operacional — em conflito, os docs acima mandam.
   e o sitemap sai só com rotas fixas (decisão consciente).
 - URL pública: fonte única em `lib/site.ts` — `NEXT_PUBLIC_SITE_URL`
   aceita domínio sem protocolo (Railway fornece assim); ninguém lê a env
-  direto. ⚠️ **`NEXT_PUBLIC_*` é assado no BUILD, não lido em runtime.**
-  Trocar essa variável exige **rebuild**, não restart — reiniciar o
-  container mantém o valor antigo embutido no bundle. (Descoberto em 06/08
-  por um teste que apontou pro domínio errado.)
+  direto. ⚠️ **`NEXT_PUBLIC_*` vale nos dois tempos, e isso confunde:** no
+  bundle de **cliente** o valor é assado no BUILD (trocar exige rebuild —
+  restart mantém o valor velho); em código de **servidor** (middleware,
+  route handler, RSC) é lido em **runtime**, então trocar no Railway e
+  reiniciar já muda o comportamento. Provado em 06/08 subindo o mesmo
+  `.next` com três valores e vendo o middleware mudar de destino nos três.
+- **Sem `NEXT_PUBLIC_SITE_URL` o middleware NÃO canonicaliza** (`hostCanonico()`
+  devolve string vazia). O fallback de `SITE_URL` existe só pro `metadataBase`
+  e as OG images — usar chute como canônico faria uma variável esquecida
+  derrubar o site inteiro, com todo visitante levando 308 pra um domínio que
+  talvez nem seja nosso.
 - **O site tem um domínio canônico e o middleware força ele.** O Railway
   nunca desliga o `*.up.railway.app`, e no endereço secundário a Better
   Auth compara a origem com `baseURL` e devolve **403** — o login morre sem

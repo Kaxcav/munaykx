@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { hostCanonico } from "@/lib/site";
 
 /**
  * Canonicalização de domínio.
@@ -32,6 +33,7 @@ test("host de desenvolvimento nunca é redirecionado", async ({ request }) => {
 
 test("host desconhecido é redirecionado com 308, preservando o caminho", async ({
   request,
+  baseURL,
 }) => {
   const resp = await request.get("/comunidades?modalidade=Corrida", {
     headers: { host: "munaykx-production.up.railway.app" },
@@ -40,12 +42,22 @@ test("host desconhecido é redirecionado com 308, preservando o caminho", async 
   });
   expect(resp.status()).toBe(308);
 
-  const destino = new URL(resp.headers()["location"]);
-  // NÃO se afirma QUAL é o host de destino aqui de propósito.
-  // `NEXT_PUBLIC_SITE_URL` é assado no BUILD, não lido em runtime — então o
-  // canônico depende de como a imagem foi construída, e fixar o valor faria
-  // este teste passar no CI e falhar na máquina de quem tem outro `.env`.
-  // O contrato é: saiu do host pedido, e caminho + querystring sobreviveram.
+  const location = resp.headers()["location"];
+  // O anti-regressão que importa de verdade: nunca apontar de volta pro host
+  // pedido. Isso não seria redirect, seria laço infinito.
+  expect(location).not.toContain("munaykx-production.up.railway.app");
+
+  // O Location pode vir ABSOLUTO ou RELATIVO — as duas formas estão certas.
+  // O Next relativiza o Location quando o destino cai na MESMA origem de
+  // quem respondeu, e é exatamente o caso aqui: a suíte sobe com
+  // NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3100, ou seja, o canônico É este
+  // servidor. Em produção, com domínio próprio, vem absoluto.
+  //
+  // A primeira versão deste teste fazia `new URL(location)` sem base e
+  // quebrava com "Invalid URL" — falha de ambiente disfarçada de falha de
+  // código. Também afirmava que `NEXT_PUBLIC_SITE_URL` era assada no build:
+  // é, no bundle de cliente; no servidor é lida em runtime (ver lib/site.ts).
+  const destino = new URL(location, baseURL);
   expect(destino.host).not.toBe("munaykx-production.up.railway.app");
   expect(destino.pathname).toBe("/comunidades");
   // Sem isto, link compartilhado perde o recorte no meio do caminho.
@@ -88,4 +100,40 @@ test("/admin continua exigindo credencial depois da mudança no matcher", async 
     expect([401, 404], rota).toContain(resp.status());
   }
   await ctx.close();
+});
+
+test.describe("quem pode virar host canônico", () => {
+  // Sem servidor: a decisão de canonicalizar ou não é uma função pura, e é
+  // ela que decide se um erro de variável derruba o site ou não.
+
+  test("sem a env configurada, NINGUÉM é redirecionado", () => {
+    // Este é o caso perigoso. O `SITE_URL` tem fallback (pro metadataBase e
+    // as OG images não explodirem), mas usar esse fallback como canônico
+    // significaria: esqueceu a variável no painel → todo visitante leva 308
+    // pra um domínio que talvez nem seja nosso. O site não some por falta
+    // de env; ele só deixa de canonicalizar.
+    expect(hostCanonico(undefined)).toBe("");
+    expect(hostCanonico("")).toBe("");
+    expect(hostCanonico("   ")).toBe("");
+  });
+
+  test("domínio sem protocolo funciona — é como o Railway entrega", () => {
+    expect(hostCanonico("sejamunay.com.br")).toBe("sejamunay.com.br");
+  });
+
+  test("caixa e barra no fim não criam host diferente", () => {
+    // O host da requisição chega minúsculo; se o canônico viesse com
+    // maiúscula, a comparação nunca casaria e o site entraria em laço.
+    expect(hostCanonico("https://SejaMunay.com.br/")).toBe("sejamunay.com.br");
+  });
+
+  test("porta faz parte do host — senão dev e preview quebram", () => {
+    expect(hostCanonico("http://127.0.0.1:3100")).toBe("127.0.0.1:3100");
+  });
+
+  test("valor sujo não vira redirect pra lugar nenhum", () => {
+    // Copiar e colar errado no painel acontece. O que não pode acontecer é
+    // virar um 308 pra um endereço inventado.
+    expect(hostCanonico("isto não é uma url")).toBe("");
+  });
 });

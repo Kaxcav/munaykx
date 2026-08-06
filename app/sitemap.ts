@@ -4,6 +4,20 @@ import { recortesIndexaveis } from "@/lib/descoberta";
 import { getUpcomingEvents } from "@/lib/events";
 import { SITE_URL } from "@/lib/site";
 
+/**
+ * Sitemap gerado A CADA REQUEST, não no build.
+ *
+ * Por padrão o Next pré-renderiza o sitemap junto do build — e aí comunidade
+ * ou evento cadastrado pelo `/admin` só aparecia pro Google no próximo push
+ * de código. Como o conteúdo entra pela operação e não pelo repositório, o
+ * sitemap ficava semanas desatualizado sem ninguém perceber.
+ *
+ * O custo é uma consulta por visita de robô — algumas por dia. Barato.
+ * (Encontrado pela suíte de testes em 06/08/2026: o teste do recorte
+ * indexável falhava porque o sitemap era o do build.)
+ */
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE_URL;
 

@@ -1,0 +1,86 @@
+name: CI
+
+# Roda em push na main e em toda PR. Não roda em push de branch qualquer:
+# a branch vira PR antes do merge, e rodar duas vezes só gasta minuto.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # Push novo na mesma ref cancela o run anterior — sem fila de builds mortos.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: typecheck · lint · build · e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: munay
+          POSTGRES_PASSWORD: munay
+          POSTGRES_DB: munay
+        ports: ["5432:5432"]
+        # Sem healthcheck o job começa antes do banco aceitar conexão e
+        # falha no migrate com "connection refused" — que parece bug de
+        # código e não é.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://munay:munay@localhost:5432/munay
+      # Credenciais do /admin só pro CI. O código nunca tem default
+      # (regra do projeto: senha default não existe), então sem isto o
+      # /admin responde 503 e os testes de listagem falham.
+      ADMIN_USER: teste
+      ADMIN_PASSWORD: senha-de-teste-longa-o-suficiente
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
+      # Segredo descartável: a auth se recusa a subir sem ele.
+      BETTER_AUTH_SECRET: ci-secret-descartavel-nao-usar-em-lugar-nenhum
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` roda `prisma generate` sozinho pelo postinstall.
+      - run: npm ci
+
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # Só o chromium: a suíte não testa compatibilidade de navegador, testa
+      # regra de negócio. Baixar 3 navegadores triplicaria o tempo à toa.
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Testes end-to-end
+        run: npm run test:e2e
+
+      - name: Guardar o relatório quando falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

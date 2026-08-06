@@ -32,9 +32,10 @@ resumo operacional — em conflito, os docs acima mandam.
    `Community` e `Event`; o seed só cria registro demo) — a flag existe
    para o fake ser isolável e removível sem dó. Não criar registro com
    `demo: false` sem autorização assinada.
-4. **Cores só via tokens** (`tailwind.config.ts`). Zero hex hardcoded em
-   componente. Há paleta alternativa em disputa (decisão 0.3 do PO) — se
-   trocar, a troca acontece num arquivo só.
+4. **Cores só via tokens.** Os hex moram em **`lib/brand.ts`** (fonte
+   única — `tailwind.config.ts` e as OG images importam de lá; next/og não
+   enxerga classes Tailwind). Zero hex hardcoded em componente. Paleta
+   alternativa em disputa (decisão 0.3 do PO) — a troca segue num arquivo só.
 5. **Prisma fixado na major v6** (`^6.x` no package.json). Não subir de
    major nem trocar ORM sem decisão explícita. Migrations only: nunca
    editar migration já aplicada.
@@ -76,7 +77,9 @@ resumo operacional — em conflito, os docs acima mandam.
   5432/5433 já pertencem a outros projetos). Produção: Railway.
 - Rotas: `/` (landing + captação) · `/comunidades` (descoberta com
   filtros via URL) · `/comunidades/[slug]` · `/eventos/[slug]` (detalhe +
-  RSVP). Não existe índice `/eventos` — evento se descobre pela comunidade.
+  RSVP) · `/rsvp/[token]` (gerenciar inscrição, noindex) · `/privacidade`
+  (LGPD) · `/admin/*` (interno: Basic Auth por env, noindex + robots).
+  Não existe índice `/eventos` — evento se descobre pela comunidade.
 - APIs: `POST /api/leads` · `POST /api/rsvps`. RSVP roda em transação
   **Serializable** com retry + backoff (P2034): capacidade cheia → entra
   como `lista_espera`; e-mail repetido no evento → `{ok, jaExistia}`.
@@ -86,8 +89,10 @@ resumo operacional — em conflito, os docs acima mandam.
 - Dados: `prisma/schema.prisma` (Lead, Community, Event, Rsvp), migrações
   em `prisma/migrations/`, client singleton em `lib/db.ts`, seed demo
   idempotente em `prisma/seed.ts` (tudo `demo: true`).
-- Validação compartilhada client/server em `lib/leads.ts` e `lib/rsvps.ts`
-  (fonte única, Zod).
+- Validação compartilhada client/server em `lib/leads.ts`, `lib/rsvps.ts`
+  e `lib/admin.ts` (fonte única, Zod). Regiões: **`lib/regioes.ts`** é a
+  fonte única das 35 RAs oficiais + "Outra região" — nenhuma lista de
+  região hardcoded fora dela.
 - Anti-spam: honeypot `site` nos dois forms — preenchido, a API responde
   `{ok:true}` falso sem gravar. Não "consertar" isso achando que é bug.
 - Sem `DATABASE_URL` o site sobe mesmo assim: APIs respondem 503 amigável
@@ -113,19 +118,24 @@ npm run typecheck       # só tipos
 Env local: copiar `.env.example` → `.env` (já vem com
 `DATABASE_URL=postgresql://munay:munay@localhost:5434/munay`).
 
-## Agora (ONDA 0 do Blueprint — fechar o ciclo do que existe)
+## Agora (pós-ONDA 0 — atualizado 06/08 fim do dia)
 
-1. **STORY-003** — ✅ concluída 06/08 (`ee928cb`, merge na main
-   pendente): cancelamento + promoção de waitlist via token.
-2. **STORY-005** — ⏳ em execução (worktree `C:\munay-005`): admin
-   interno mínimo (CRUD via Basic Auth de env).
-3. **STORY-006** — ⏳ em execução (worktree `C:\munay-006`): OG image,
-   Umami, `/privacidade` (LGPD), campo `city` (multi-cidade, sem UI) e as
-   **35 RAs oficiais** como fonte única de regiões (`lib/regioes.ts`).
-4. **STORY-004** — e-mail transacional (Resend): 🔒 bloqueada pelo
-   **domínio**, que é a pendência nº 1 do PO (domínio → e-mail → auth →
-   metade do roadmap).
+**ONDA 0 executável concluída e em produção**: STORY-003 (cancelamento +
+promoção via token), STORY-005 (admin interno + select das 35 RAs + city)
+e STORY-006 (OG, Umami, `/privacidade`, `city`, `lib/regioes.ts`) —
+mergeadas na main, deploy verificado. O que resta:
 
-Anti-meta da fase: nada de feature fora das stories da ONDA 0; specs dos
-módulos grandes (auth, membership, painel B2B, conteúdo) são a ONDA 1 e
+1. **STORY-004** — e-mail transacional (Resend): 🔒 bloqueada pelo
+   **domínio**, pendência nº 1 do PO (domínio → e-mail → auth → metade
+   do roadmap).
+2. **Decisões do PO** (Blueprint §7): domínio, paleta (0.3), ratificar
+   "cancelou → fim da fila" (desvio 3 da 003), limpeza de memória (0.2).
+3. **Operação**: cadastrar parceiros reais pelo `/admin` (só com
+   autorização assinada — regra 3) e criar o serviço Umami no Railway
+   (+ envs `NEXT_PUBLIC_UMAMI_*`). Chore de fábrica: configurar ESLint.
+4. **ONDA 1 (Fase 2, a partir de 04/09)**: specs dos módulos grandes
+   (auth C2, pertencimento C3, painel B2B C4, conteúdo C5) via pipeline
+   AIOX — specs, não código de produto.
+
+Anti-meta: nenhuma feature nova fora disso antes da Etapa 2 (03/09);
 construção pesada é pós-resultado (15/10), como escopo financiável.

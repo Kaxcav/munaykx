@@ -2,6 +2,7 @@
 
 **Repo:** munay-site · **Executor:** Claude Code (@dev) · **Review/merge:** Kaxcav
 **Branch:** `feat/rsvp-cancelamento` a partir da `main`.
+**Status:** ✅ concluída — mergeada na main em 06/08/2026 (`ee928cb`), em produção.
 
 ## Contexto
 

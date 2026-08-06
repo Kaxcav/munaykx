@@ -2,6 +2,7 @@
 
 **Repo:** munay-site · **Executor:** Claude Code (@dev) · **Review/merge:** Kaxcav
 **Branch:** `feat/producao-redonda`. Independente da 005 (podem rodar em worktrees paralelos).
+**Status:** ✅ concluída — mergeada na main em 06/08/2026 (`dfcf3ca`), incluindo a tarefa 6 (35 RAs), em produção.
 
 ## Contexto
 

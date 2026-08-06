@@ -30,7 +30,12 @@ Princípio de expansão: validar em Brasília → replicar por cidade (o modelo 
   inscrição cancelada; contagens de vaga ignoram cancelados; retry de
   conflito compartilhado em `lib/serializable.ts`
 - Captação de leads B2C/B2B com honeypot
-- Deploy contínuo: push na main → produção
+- Admin interno `/admin` (STORY-005): Basic Auth por env (sem default), CRUD
+  de comunidades/eventos com soft delete, leads/RSVPs read-only + export CSV
+- Produção redonda (STORY-006): OG images dinâmicas, Umami opcional por env,
+  `/privacidade` (LGPD), `city` no schema (C1) e as **35 RAs oficiais** como
+  fonte única de regiões (`lib/regioes.ts`)
+- Deploy contínuo: push na main → produção (pre-deploy roda `prisma migrate deploy`)
 
 ---
 
@@ -90,10 +95,10 @@ Cancelamento/promoção via token · admin interno mínimo (CRUD de communities/
 
 | # | Story | Onda | Depende de | Status |
 |---|-------|------|-----------|--------|
-| 003 | Cancelamento de RSVP + promoção de waitlist via token (`/rsvp/[token]`) | 0 | — | ✅ concluída 06/08 (`ee928cb` — merge na main pendente) |
+| 003 | Cancelamento de RSVP + promoção de waitlist via token (`/rsvp/[token]`) | 0 | — | ✅ mergeada na main 06/08, em produção |
 | 004 | E-mail transacional (Resend): confirmação, promoção, cancelamento | 0 | Domínio | 🔒 bloqueada |
-| 005 | Admin interno mínimo: CRUD communities/events, rota protegida por senha env | 0 | — | Em execução 06/08 (worktree `C:\munay-005`) |
-| 006 | Produção redonda: OG image, Umami, página de privacidade, `city` no schema, 35 RAs oficiais como fonte única de regiões (`lib/regioes.ts`) | 0 | — | Em execução 06/08 (worktree `C:\munay-006`) |
+| 005 | Admin interno mínimo: CRUD communities/events, rota protegida por senha env | 0 | — | ✅ mergeada 06/08 (+ integração RAs/city), em produção |
+| 006 | Produção redonda: OG image, Umami, página de privacidade, `city` no schema, 35 RAs oficiais como fonte única de regiões (`lib/regioes.ts`) | 0 | — | ✅ mergeada na main 06/08, em produção |
 | 007 | SPEC Auth + User (C2) — magic link, sessões, migração de RSVPs por e-mail | 1 | 004 no ar p/ executar | Fase 2 |
 | 008 | SPEC Pertencimento (C3) — membership, favoritos, minhas comunidades, agenda | 1 | 007 | Fase 2 |
 | 009 | SPEC Painel do organizador (C4) — self-service de eventos, lista de inscritos, check-in | 1 | 007 | Fase 2 |

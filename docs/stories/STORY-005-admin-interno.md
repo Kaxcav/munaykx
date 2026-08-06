@@ -2,6 +2,7 @@
 
 **Repo:** munay-site · **Executor:** Claude Code (@dev) · **Review/merge:** Kaxcav
 **Branch:** `feat/admin-interno` a partir da `main` (após merge da 003).
+**Status:** ✅ concluída — mergeada em 06/08/2026 (`14a4666` + follow-up `89bc74a`: select das 35 RAs e campo city), em produção.
 
 ## Contexto
 

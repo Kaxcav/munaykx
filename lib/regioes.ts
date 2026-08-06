@@ -3,9 +3,11 @@
  * lista de região na UI (select de leads, filtros de /comunidades, admin).
  * Nenhuma lista de região hardcoded fora deste arquivo.
  *
- * Lista verificada em fonte oficial em 06/08/2026: SEDUH (RA I–XXXIII) e
- * SINJ/LC 1.028/2023 (RA XXXIV Arapoanga e RA XXXV Água Quente, criadas
- * pelas Leis 7.190 e 7.191/2022). Fontes de 2020 ainda dizem "33 RAs".
+ * Lista verificada em 06/08/2026: o dossiê da SEDUH nomeia RA I–XX; a
+ * SINJ/LC 1.028/2023 confirma RA XXXIV Arapoanga e RA XXXV Água Quente
+ * (criadas pelas Leis 7.190 e 7.191/2022); as intermediárias (XXI–XXXIII)
+ * vieram do cruzamento dessas fontes. Atenção ao atualizar: material de
+ * 2020 ainda diz "33 RAs" — não é fonte válida.
  * Cobertura de todo o DF é requisito de produto (Blueprint §8): a MUNAY se
  * propõe a alcançar além do Plano Piloto.
  */

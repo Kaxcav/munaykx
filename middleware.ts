@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { igualSeguro } from "@/lib/admin-auth";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, hostCanonico } from "@/lib/site";
 
 /**
  * O middleware faz duas coisas, nesta ordem:
@@ -23,20 +23,17 @@ export const config = {
   matcher: ["/((?!_next/|api/|.*\\.[\\w]+$).*)"],
 };
 
-/** Host canônico, sem protocolo. Vazio = não canonicalizar. */
-const HOST_CANONICO = (() => {
-  try {
-    return new URL(SITE_URL).host.toLowerCase();
-  } catch {
-    return "";
-  }
-})();
-
 function canonicalizar(req: NextRequest): NextResponse | null {
-  if (!HOST_CANONICO) return null;
+  // Lido a cada request de propósito, e não uma vez no topo do módulo: esta
+  // env é lida em RUNTIME no servidor, então trocar no painel e reiniciar
+  // tem que valer sem rebuild. Vazio = ninguém configurou = não redireciona
+  // (ver o racional em lib/site.ts — canonicalizar contra chute derruba o
+  // site inteiro quando falta uma variável).
+  const canonico = hostCanonico();
+  if (!canonico) return null;
 
   const host = req.headers.get("host")?.toLowerCase();
-  if (!host || host === HOST_CANONICO) return null;
+  if (!host || host === canonico) return null;
 
   // Nunca redireciona em desenvolvimento nem em preview local — senão
   // `npm run dev` manda todo mundo pra produção.

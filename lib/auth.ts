@@ -27,6 +27,16 @@ import { SITE_URL } from "@/lib/site";
 
 const MINUTOS = 60;
 
+/**
+ * Sem BETTER_AUTH_SECRET, a Better Auth cai num segredo DEFAULT conhecido —
+ * ou seja, qualquer pessoa conseguiria forjar sessão. O projeto já tem regra
+ * pra isso no /admin ("NUNCA existe senha default"), e ela vale igual aqui:
+ * sem segredo, a auth simplesmente não atende. O resto do site continua de pé.
+ */
+export function authDisponivel(): boolean {
+  return Boolean(process.env.BETTER_AUTH_SECRET?.trim());
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   baseURL: SITE_URL,

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EntrarForm from "@/components/EntrarForm";
-import { auth } from "@/lib/auth";
+import { auth, authDisponivel } from "@/lib/auth";
 import { emailConfigurado } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,8 @@ export default async function EntrarPage() {
   const sessao = await auth.api.getSession({ headers: await headers() });
   if (sessao) redirect("/minhas-inscricoes");
 
-  const disponivel = emailConfigurado();
+  // Precisa das duas pontas: segredo de sessão E provedor de e-mail.
+  const disponivel = authDisponivel() && emailConfigurado();
 
   return (
     <>

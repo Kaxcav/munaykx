@@ -17,6 +17,7 @@ const inputCls =
 export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [erro, setErro] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,6 +43,7 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
         setStatus("erro");
         return;
       }
+      if (typeof json.token === "string") setToken(json.token);
       if (json.jaExistia) setStatus("jaExistia");
       else if (json.status === "lista_espera") setStatus("lista_espera");
       else setStatus("confirmado");
@@ -59,13 +61,12 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
     const mensagens: Record<string, { titulo: string; corpo: string }> = {
       confirmado: {
         titulo: "Presença confirmada ✓",
-        corpo:
-          "Sua vaga está garantida. Te mandamos um lembrete pelo contato que você deixou.",
+        corpo: "Sua vaga está garantida. Nos vemos lá!",
       },
       lista_espera: {
         titulo: "Você está na lista de espera",
         corpo:
-          "As vagas confirmadas acabaram, mas você entra na fila — se abrir espaço, a gente te avisa.",
+          "As vagas confirmadas acabaram, mas você entrou na fila — se abrir vaga, sua inscrição é confirmada automaticamente.",
       },
       jaExistia: {
         titulo: "Você já estava inscrito ✓",
@@ -73,10 +74,31 @@ export default function RsvpForm({ eventSlug }: { eventSlug: string }) {
       },
     };
     const m = mensagens[status];
+    const linkGestao = token ? `/rsvp/${token}` : null;
     return (
       <div className="rounded-card border border-petroleo/15 bg-white/70 p-8">
         <p className="font-display text-2xl font-bold">{m.titulo}</p>
         <p className="mt-2 text-petroleo/70">{m.corpo}</p>
+        {linkGestao && (
+          <div className="mt-5 rounded-xl border border-petroleo/10 bg-areia/60 p-4">
+            <p className="text-sm font-semibold">
+              Guarda esse link pra gerenciar tua inscrição
+              {status === "lista_espera" ? " e acompanhar a fila" : ""}:
+            </p>
+            <a
+              href={linkGestao}
+              className="mt-1 block break-all font-mono text-sm text-petroleo underline underline-offset-4"
+            >
+              {typeof window !== "undefined"
+                ? `${window.location.origin}${linkGestao}`
+                : linkGestao}
+            </a>
+            <p className="mt-2 text-xs text-petroleo/50">
+              É por ele que você cancela — e, se estiver na fila, vê quando
+              sua vaga for confirmada.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

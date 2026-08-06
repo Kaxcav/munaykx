@@ -30,6 +30,8 @@ Etapa 2 até **03/09** · Resultado preliminar **24/09** · Resultado final **15
 
 Meta: Etapa 2 enviada com link de produto real + captação rodando. **Não existe app pra estabilizar — a fase fica ainda mais focada.**
 
+**Status 06/08 (ONDA 0 do Blueprint em andamento):** STORY-003 concluída — branch `feat/rsvp-cancelamento` (`ee928cb`) pushada, **merge na main pendente**. STORY-005 e STORY-006 em execução paralela em worktrees (`C:\munay-005` e `C:\munay-006`), ambas a partir de `ee928cb`. Ordem de merge combinada: 006 primeiro (tem migration) → deploy verde → rebase da 005 → merge. Banco local compartilhado: só a 006 roda `prisma migrate dev` nesta rodada.
+
 - **E1.1 · Etapa 2 do edital** — textos revisados (consistência MUNAY; inovação enfatizada — peso 4: matching por perfil/nível/rotina, dados do ecossistema local; experiência real do coordenador — critério E), vídeo com acesso liberado. *Mateus + Claude de revisão.*
 - **E1.2 · Site no ar + GTM de lista** — divulgação via parceiros-âncora e Instagram. Meta do PRD: caminhar pros 500 leads. *Mateus (relacionamento) + Kaxcav (medição).*
 - **E1.3 · MEI→ME** — iniciar processo pra não travar habilitação jurídica. *Mateus + contador.*

@@ -25,6 +25,10 @@ Princípio de expansão: validar em Brasília → replicar por cidade (o modelo 
 - Modelos: `Lead`, `Community`, `Event`, `Rsvp` (com waitlist)
 - Descoberta: `/comunidades` com filtros por URL + detalhe por slug
 - RSVP transacional (Serializable, capacidade, unique, upsert de lead)
+- Ciclo de RSVP completo (STORY-003): cancelamento via token (`/rsvp/[token]`),
+  promoção do mais antigo da waitlist na MESMA transação, reativação de
+  inscrição cancelada; contagens de vaga ignoram cancelados; retry de
+  conflito compartilhado em `lib/serializable.ts`
 - Captação de leads B2C/B2B com honeypot
 - Deploy contínuo: push na main → produção
 
@@ -86,10 +90,10 @@ Cancelamento/promoção via token · admin interno mínimo (CRUD de communities/
 
 | # | Story | Onda | Depende de | Status |
 |---|-------|------|-----------|--------|
-| 003 | Cancelamento de RSVP + promoção de waitlist via token (`/rsvp/[token]`) | 0 | — | Spec pronta (revisão da 002) |
+| 003 | Cancelamento de RSVP + promoção de waitlist via token (`/rsvp/[token]`) | 0 | — | ✅ concluída 06/08 (`ee928cb` — merge na main pendente) |
 | 004 | E-mail transacional (Resend): confirmação, promoção, cancelamento | 0 | Domínio | 🔒 bloqueada |
-| 005 | Admin interno mínimo: CRUD communities/events, rota protegida por senha env | 0 | — | Pronta pra escrever |
-| 006 | Produção redonda: OG image, Umami, página de privacidade, `city` no schema | 0 | — | Pronta pra escrever |
+| 005 | Admin interno mínimo: CRUD communities/events, rota protegida por senha env | 0 | — | Em execução 06/08 (worktree `C:\munay-005`) |
+| 006 | Produção redonda: OG image, Umami, página de privacidade, `city` no schema, 35 RAs oficiais como fonte única de regiões (`lib/regioes.ts`) | 0 | — | Em execução 06/08 (worktree `C:\munay-006`) |
 | 007 | SPEC Auth + User (C2) — magic link, sessões, migração de RSVPs por e-mail | 1 | 004 no ar p/ executar | Fase 2 |
 | 008 | SPEC Pertencimento (C3) — membership, favoritos, minhas comunidades, agenda | 1 | 007 | Fase 2 |
 | 009 | SPEC Painel do organizador (C4) — self-service de eventos, lista de inscritos, check-in | 1 | 007 | Fase 2 |
@@ -108,6 +112,7 @@ Regra da fábrica continua: 1 story = 1 branch, handoff obrigatório, desvio con
 4. Conteúdo (C5): qual recorte mínimo primeiro — feed simples, fórum ou cursos? (recomendação: feed de avisos por comunidade; fórum e cursos depois)
 5. Monetização: ratificar gateway na spec da Onda 3 (sem pressa)
 6. Paleta e limpeza de memória — pendências antigas, seguem abertas
+7. **Ratificar (desvio 3 da STORY-003):** reinscrição após cancelamento volta pro FIM da fila (`createdAt` zerado) — quem cancela não guarda lugar. Implementado assim; reverter é 1 linha se o Mateus discordar
 
 ---
 
@@ -120,3 +125,4 @@ Regra da fábrica continua: 1 story = 1 branch, handoff obrigatório, desvio con
 5. **Transação onde há disputa:** capacidade, promoção de waitlist, pagamentos — padrão da 002 vale sempre
 6. **Demo flag:** conteúdo ilustrativo sempre `demo: true`, removível sem dó
 7. **MUNAY** — sempre, em tudo
+8. **DF inteiro, não Plano Piloto:** cobertura das 35 RAs oficiais é requisito de produto — a MUNAY se propõe a alcançar além do Plano Piloto, e lista parcial de regiões exclui exatamente o público que mais importa. Fonte única em `lib/regioes.ts`, "Outra região" cobre RIDE/Entorno (decisão do tech lead, 06/08/2026 — STORY-006)

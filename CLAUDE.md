@@ -52,6 +52,12 @@ resumo operacional — em conflito, os docs acima mandam.
 - Agentes executam stories, nunca inventam escopo. 1 story = 1 branch.
 - Toda sessão de agente: começa lendo este arquivo + a story; termina com
   handoff curto (feito / assumido / desvios / travou).
+- **Um operador de git por vez.** `add`/`commit`/`push` é o Kaxcav, em
+  janela única. Agente entrega arquivos e PARA — não roda git de escrita.
+  (Aprendido em 06/08: `index.lock` travou o repo com duas ferramentas.)
+- **Mover/apagar só com lista explícita de arquivos, aprovada antes.**
+  Nunca executar "move o que estiver em X". (Aprendido em 06/08: 11
+  standards do AIOX movidos por engano numa instrução genérica.)
 - **O app mobile não existe e não deve nascer agora**: gasto antes da
   contratação (19/11) não é reembolsável — o app é O escopo financiável.
 
@@ -109,12 +115,13 @@ Env local: copiar `.env.example` → `.env` (já vem com
 
 ## Agora (ONDA 0 do Blueprint — fechar o ciclo do que existe)
 
-1. **STORY-003** — cancelamento de RSVP + promoção de waitlist via token
-   (`/rsvp/[token]`). Spec pronta em `docs/stories/`.
-2. **STORY-005** — admin interno mínimo (CRUD via Basic Auth de env;
-   sem ele, cadastrar parceiro real = SQL na mão).
-3. **STORY-006** — produção redonda: OG image, Umami, `/privacidade`
-   (LGPD), campo `city` (preparação multi-cidade, sem UI).
+1. **STORY-003** — ✅ concluída 06/08 (`ee928cb`, merge na main
+   pendente): cancelamento + promoção de waitlist via token.
+2. **STORY-005** — ⏳ em execução (worktree `C:\munay-005`): admin
+   interno mínimo (CRUD via Basic Auth de env).
+3. **STORY-006** — ⏳ em execução (worktree `C:\munay-006`): OG image,
+   Umami, `/privacidade` (LGPD), campo `city` (multi-cidade, sem UI) e as
+   **35 RAs oficiais** como fonte única de regiões (`lib/regioes.ts`).
 4. **STORY-004** — e-mail transacional (Resend): 🔒 bloqueada pelo
    **domínio**, que é a pendência nº 1 do PO (domínio → e-mail → auth →
    metade do roadmap).

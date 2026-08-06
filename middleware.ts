@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { igualSeguro } from "@/lib/admin-auth";
 
 /**
  * Basic Auth em /admin/* (STORY-005): ferramenta interna de operação,
@@ -7,19 +8,6 @@ import { NextResponse, type NextRequest } from "next/server";
  * NUNCA existe senha default.
  */
 export const config = { matcher: ["/admin/:path*"] };
-
-/** Comparação em tempo constante — não vaza tamanho/prefixo da senha por timing. */
-function igualSeguro(a: string, b: string): boolean {
-  const enc = new TextEncoder();
-  const bufA = enc.encode(a);
-  const bufB = enc.encode(b);
-  let diff = bufA.length ^ bufB.length;
-  const max = Math.max(bufA.length, bufB.length);
-  for (let i = 0; i < max; i++) {
-    diff |= (bufA[i] ?? 0) ^ (bufB[i] ?? 0);
-  }
-  return diff === 0;
-}
 
 export function middleware(req: NextRequest) {
   const user = process.env.ADMIN_USER;

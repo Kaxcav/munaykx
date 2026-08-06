@@ -85,6 +85,10 @@ model Rsvp {
   email      String
   whatsapp   String?
   status     RsvpStatus @default(confirmado)
+  // Vínculo opcional com conta (STORY-007). Continua existindo RSVP anônimo:
+  // o `email` acima é a chave de reivindicação quando a pessoa cria conta.
+  userId     String?    @map("user_id")
+  user       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   // Autoriza gerenciar a inscrição sem auth (STORY-003). Default no banco
   // (não no client) pra backfillar linhas existentes na própria migration.
   token      String     @unique @default(dbgenerated("(gen_random_uuid())::text"))
@@ -92,5 +96,79 @@ model Rsvp {
 
   @@unique([eventId, email])
   @@index([eventId])
+  @@index([userId])
   @@map("rsvps")
+}
+
+// ─── AUTH (STORY-007) ──────────────────────────────────────────────────────
+// Forma exigida pelo Better Auth 1.6.x. Os NOMES DAS PROPRIEDADES são
+// contrato com a lib (o adapter chama prisma.user.create({ data: { emailVerified … } }));
+// o @map das colunas é escolha nossa, pra manter snake_case como o resto.
+// Conferido contra `getSchema()` do pacote instalado — não copiado de doc.
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  sessions Session[]
+  accounts Account[]
+  rsvps    Rsvp[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Exigida pelo Better Auth mesmo sem OAuth e sem senha: no fluxo magic link
+// ela fica praticamente vazia. Não remover — o core espera a tabela.
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+// Tokens de magic link. Guardados com HASH (storeToken: "hashed" em lib/auth.ts):
+// vazamento desta tabela não vira login de ninguém.
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
 }

@@ -9,5 +9,15 @@ services:
     ports: ["5434:5432"]
     volumes:
       - munay_pgdata:/var/lib/postgresql/data
+  # Caixa de entrada falsa pra dev e CI (STORY-007). SMTP em 1025, UI em 8025.
+  # Nada sai daqui pra internet — é onde o magic link cai enquanto o domínio
+  # próprio não existe. (MailHog está sem manutenção desde 2020.)
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["1025:1025", "8025:8025"]
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 volumes:
   munay_pgdata:

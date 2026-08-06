@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Header from "@/components/Header";
+import HeaderSimples from "@/components/HeaderSimples";
 import Footer from "@/components/Footer";
 
 /**
@@ -16,7 +16,7 @@ export default function ComunidadesError({
 }) {
   return (
     <>
-      <Header />
+      <HeaderSimples />
       <main className="mx-auto max-w-6xl px-5 py-24">
         <p className="eyebrow mb-3">Descoberta</p>
         <h1 className="max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">

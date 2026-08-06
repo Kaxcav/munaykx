@@ -34,17 +34,12 @@ const config: Config = {
         card: "1.5rem",
       },
       keyframes: {
-        ticker: {
-          "0%": { transform: "translateX(0)" },
-          "100%": { transform: "translateX(-50%)" },
-        },
         "pin-pulse": {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.55", transform: "scale(1.35)" },
         },
       },
       animation: {
-        ticker: "ticker 28s linear infinite",
         "pin-pulse": "pin-pulse 2.4s ease-in-out infinite",
       },
     },

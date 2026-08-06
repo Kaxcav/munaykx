@@ -30,10 +30,11 @@ export function getEventBySlug(
   });
 }
 
-/** Confirmados no evento — pra mostrar vagas restantes quando há capacidade. */
+/** Confirmados no evento — pra mostrar vagas restantes quando há capacidade.
+ *  Cancelados (canceledAt) não ocupam vaga (STORY-003). */
 export function countConfirmados(eventId: string): Promise<number> {
   return prisma.rsvp.count({
-    where: { eventId, status: "confirmado" },
+    where: { eventId, status: "confirmado", canceledAt: null },
   });
 }
 

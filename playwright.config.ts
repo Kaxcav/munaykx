@@ -13,7 +13,19 @@ import { defineConfig, devices } from "@playwright/test";
  * tem overlay de erro, recompilação sob demanda e comportamento diferente de
  * cache. Testar dev é testar um app que não existe em produção.
  */
-const PORTA = 3100;
+/**
+ * Porta configurável por env pra permitir DUAS suítes ao mesmo tempo.
+ *
+ * Com a porta fixa, duas janelas rodando `test:e2e` disputam o mesmo
+ * servidor: a segunda encontra a 3100 ocupada e, por causa de
+ * `reuseExistingServer`, **reaproveita o build da outra branch** em vez de
+ * subir o seu. O resultado é teste verde contra código que não é o que você
+ * está editando — a pior forma de verde que existe.
+ *
+ * Em worktree paralela: `$env:PW_PORTA='3200'` (e um banco só dela, ver
+ * CLAUDE.md → "Trabalhar em paralelo").
+ */
+const PORTA = Number(process.env.PW_PORTA ?? 3100);
 const BASE = `http://127.0.0.1:${PORTA}`;
 
 export default defineConfig({

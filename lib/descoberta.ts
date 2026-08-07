@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { CIDADE_PADRAO } from "@/lib/communities";
+import { CIDADE_PADRAO, PUBLICO } from "@/lib/communities";
 import { slugify } from "@/lib/slug";
 
 /**
@@ -61,7 +61,9 @@ export async function recortesComDado(
 ): Promise<Recorte[]> {
   const grupos = await prisma.community.groupBy({
     by: ["modalidade", "regiao", "demo"],
-    where: { ativo: true, city },
+    // `PUBLICO` e não `ativo: true` solto: recorte de SEO montado sobre
+    // comunidade pendente publicaria no Google conteúdo que ninguém aprovou.
+    where: { ...PUBLICO, city },
     _count: { _all: true },
   });
 

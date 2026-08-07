@@ -119,6 +119,16 @@ resumo operacional — em conflito, os docs acima mandam.
   região hardcoded fora dela.
 - Anti-spam: honeypot `site` nos dois forms — preenchido, a API responde
   `{ok:true}` falso sem gravar. Não "consertar" isso achando que é bug.
+- **Ninguém chama `auth.api.getSession()` direto — só `sessaoAtual()`**
+  (`lib/sessao.ts`). A Better Auth **lança** nessa chamada sem
+  `BETTER_AUTH_SECRET`, e como o `<Header />` está em toda página, o site
+  INTEIRO respondia 500 por falta de uma variável (achado em 06/08 rodando
+  a suíte numa máquina sem o segredo). A suíte agora roda **sempre** com a
+  auth desligada (`playwright.config.ts`), então todo teste de página é
+  prova de que o site fica de pé sem ela. Pendência consciente: sem o
+  segredo a lib ainda solta um `unhandledRejection` no boot — vem de
+  construir o `betterAuth()`, o Next registra e segue servindo; matar isso
+  exigiria construção preguiçosa em `lib/auth.ts`.
 - Sem `DATABASE_URL` o site sobe mesmo assim: APIs respondem 503 amigável
   e o sitemap sai só com rotas fixas (decisão consciente).
 - URL pública: fonte única em `lib/site.ts` — `NEXT_PUBLIC_SITE_URL`

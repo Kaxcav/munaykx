@@ -66,6 +66,15 @@ export default defineConfig({
       // comportamento do envio em si é testado em tests/email-modo.spec.ts,
       // sem servidor.
       EMAIL_PROVIDER: "",
+      // Auth DESLIGADA de propósito, pelo mesmo motivo — e este é mais
+      // grave que parece. Em 06/08/2026 três páginas chamavam
+      // `auth.api.getSession()` sem guard; uma delas era o `<Header />`,
+      // que está em TODA página. Sem `BETTER_AUTH_SECRET`, a lib lançava e
+      // o site INTEIRO respondia 500. Rodar a suíte sempre sem o segredo
+      // faz de cada teste de página uma prova de que o site fica de pé
+      // sem ele — e o CI passa a reprovar a volta desse bug.
+      // Vazio vence o que estiver no ambiente (o job do CI define o seu).
+      BETTER_AUTH_SECRET: "",
     },
   },
 });

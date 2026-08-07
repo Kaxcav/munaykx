@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { desdeQuando } from "@/lib/admin-lista";
 import { statusEmail } from "@/lib/email";
+import { Card } from "@/components/ui/card";
+import { CardNumero } from "@/components/ui/card";
 
 /** Dashboard de operação: os números que o time consulta toda semana. */
 export default async function AdminDashboardPage() {
@@ -101,52 +103,39 @@ export default async function AdminDashboardPage() {
       </h1>
 
       {email.modo !== "producao" && (
-        <div
-          className={`mt-8 rounded-card border p-5 ${
+        <Card
+          className={
             email.modo === "teste"
-              ? "border-coral/40 bg-coral/5"
-              : "border-petroleo/15 bg-white/70"
-          }`}
+              ? "mt-8 border-destructive/40 bg-destructive/5 p-5"
+              : "mt-8 p-5"
+          }
         >
           <p className="font-display text-sm font-bold">
             {email.modo === "teste"
               ? "E-mail em modo teste — participante real NÃO recebe"
               : "E-mail desligado"}
           </p>
-          <p className="mt-1 text-sm text-petroleo/70">{email.detalhe}</p>
-          <p className="mt-2 font-mono text-[11px] text-petroleo/50">
+          <p className="mt-1 text-sm text-muted-foreground">{email.detalhe}</p>
+          <p className="mt-2 font-mono text-[11px] text-muted-foreground/70">
             Enquanto isso, a inscrição funciona normal e o site não promete
             aviso por e-mail em lugar nenhum.
           </p>
-        </div>
+        </Card>
       )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
-          <Link
-            key={card.label}
-            href={card.href}
-            className={`rounded-card border bg-white/70 p-6 transition-colors ${
-              card.destaque
-                ? "border-petroleo/30 hover:border-petroleo"
-                : "border-petroleo/10 hover:border-petroleo/30"
-            }`}
-          >
-            <p className="font-mono text-xs uppercase tracking-wider text-petroleo/60">
-              {card.label}
-            </p>
-            <p className="mt-2 font-display text-4xl font-extrabold">
-              {card.valor}
-            </p>
-            {card.nota && (
-              <p className="mt-1 font-mono text-[11px] text-petroleo/45">
-                {card.nota}
-              </p>
-            )}
+          <Link key={card.label} href={card.href}>
+            <CardNumero
+              rotulo={card.label}
+              valor={card.valor}
+              nota={card.nota}
+              destaque={card.destaque}
+            />
           </Link>
         ))}
       </div>
-      <p className="mt-8 font-mono text-xs text-petroleo/45">
+      <p className="mt-8 font-mono text-xs text-muted-foreground">
         Leads é a métrica dos 500 do edital. Contagens direto do banco, sem
         cache. Os recortes de 7 dias contam a partir de agora, não do domingo.
       </p>

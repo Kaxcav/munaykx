@@ -6,6 +6,38 @@
   --font-display: "Bricolage Grotesque";
   --font-sans: "Instrument Sans";
   --font-mono: "IBM Plex Mono";
+
+  /* ──────────────────────────────────────────────────────────────────
+   * TEMA shadcn/ui — GERADO A PARTIR DE lib/brand.ts. Não edite à mão.
+   *
+   * CSS não importa TypeScript, então estes valores são o resultado
+   * calculado por `lib/tema.ts`. `tests/tema.spec.ts` compara os dois: se
+   * alguém mudar a paleta no brand.ts e esquecer daqui, o CI fica vermelho
+   * — em vez de aparecer um botão com a cor errada semanas depois.
+   *
+   * Pra atualizar: mude lib/brand.ts e rode `npm run tema`.
+   * ────────────────────────────────────────────────────────────────── */
+  --background: 45 40% 94.1%;
+  --foreground: 181.3 60% 14.7%;
+  --card: 0 0% 100%;
+  --card-foreground: 181.3 60% 14.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 181.3 60% 14.7%;
+  --primary: 181.3 60% 14.7%;
+  --primary-foreground: 45 40% 94.1%;
+  --secondary: 60 14.8% 89.4%;
+  --secondary-foreground: 181.3 60% 14.7%;
+  --muted: 60 14.8% 89.4%;
+  --muted-foreground: 173.1 10.8% 47.1%;
+  --accent: 75 11.8% 86.7%;
+  --accent-foreground: 181.3 60% 14.7%;
+  --destructive: 10.9 100% 64.5%;
+  --destructive-foreground: 45 40% 94.1%;
+  --border: 85.7 8.4% 83.7%;
+  --input: 111.4 6.7% 79.4%;
+  --ring: 77.6 100% 62%;
+
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -21,9 +53,11 @@
     @apply bg-lime text-petroleo;
   }
 
-  /* Foco visível consistente em todo o site */
+  /* Foco visível consistente em todo o site.
+     O hex do lime estava HARDCODED aqui, furando a regra 4 — agora vem da
+     variável `--ring`, que é calculada a partir do lib/brand.ts. */
   :focus-visible {
-    outline: 3px solid #c6ff3d;
+    outline: 3px solid hsl(var(--ring));
     outline-offset: 2px;
     border-radius: 4px;
   }

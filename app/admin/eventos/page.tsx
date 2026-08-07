@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { EstadoPublicacao } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { formatarDataAdmin } from "@/lib/admin";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /** Lista TODOS os eventos — inclusive passados, inativos e demo. */
 export default async function AdminEventosPage() {
@@ -29,94 +39,78 @@ export default async function AdminEventosPage() {
         </div>
         <Link
           href="/admin/eventos/novo"
-          className="rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+          className={buttonVariants()}
         >
           + Novo evento
         </Link>
       </div>
 
       {eventos.length === 0 ? (
-        <p className="mt-10 text-petroleo/70">Nenhum evento cadastrado ainda.</p>
+        <p className="mt-10 text-muted-foreground">Nenhum evento cadastrado ainda.</p>
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
-              <tr>
-                <th className="px-4 py-3">Evento</th>
-                <th className="px-4 py-3">Comunidade</th>
-                <th className="px-4 py-3">Quando</th>
-                <th className="px-4 py-3">Confirmados</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
+        <div className="mt-8">
+            <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Evento</TableHead>
+                <TableHead>Comunidade</TableHead>
+                <TableHead>Quando</TableHead>
+                <TableHead>Confirmados</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {eventos.map((e) => (
-                <tr key={e.id} className="border-b border-petroleo/5">
-                  <td className="px-4 py-3 font-semibold">
+                <TableRow key={e.id}>
+                  <TableCell className="font-semibold">
                     {e.titulo}
-                    <span className="block font-mono text-xs font-normal text-petroleo/50">
+                    <span className="block font-mono text-xs font-normal text-muted-foreground">
                       /{e.slug}
                     </span>
-                  </td>
-                  <td className="px-4 py-3">{e.community.nome}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                  </TableCell>
+                  <TableCell>{e.community.nome}</TableCell>
+                  <TableCell className="font-mono text-xs">
                     {formatarDataAdmin(e.startsAt)}
                     {e.startsAt < agora && (
-                      <span className="block text-petroleo/50">passado</span>
+                      <span className="block text-muted-foreground">passado</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell>
                     <Link
                       href={`/admin/rsvps?evento=${e.slug}`}
-                      className="underline underline-offset-4 hover:text-petroleo/70"
+                      className="underline underline-offset-4 hover:text-muted-foreground"
                     >
                       {e._count.rsvps}
                       {e.capacidade != null ? ` / ${e.capacidade}` : ""}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="flex flex-wrap gap-1">
-                      {!e.ativo && (
-                        <span className="rounded-full border border-petroleo/20 px-2 py-0.5 font-mono text-[11px] uppercase text-petroleo/60">
-                          inativo
-                        </span>
-                      )}
-                      {e.demo && (
-                        <span className="rounded-full border border-coral/40 px-2 py-0.5 font-mono text-[11px] uppercase text-coral">
-                          demo
-                        </span>
-                      )}
-                      {e.ativo && !e.demo && (
-                        <span className="rounded-full border border-petroleo/20 bg-petroleo px-2 py-0.5 font-mono text-[11px] uppercase text-areia">
-                          no ar
-                        </span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell>
+                    <EstadoPublicacao ativo={e.ativo} demo={e.demo} />
+                  </TableCell>
+                  <TableCell className="text-right">
                     <span className="flex items-center justify-end gap-3">
                       {e.ativo && (
                         <Link
                           href={`/eventos/${e.slug}`}
                           target="_blank"
-                          className="text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+                          className="text-muted-foreground underline underline-offset-4 hover:text-petroleo"
                         >
                           Ver no site ↗
                         </Link>
                       )}
                       <Link
                         href={`/admin/eventos/${e.id}`}
-                        className="font-semibold underline underline-offset-4 hover:text-petroleo/70"
+                        className="font-semibold underline underline-offset-4 hover:text-muted-foreground"
                       >
                         Editar
                       </Link>
                     </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
     </>

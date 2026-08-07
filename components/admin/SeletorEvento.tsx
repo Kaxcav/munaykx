@@ -1,14 +1,18 @@
 import { query } from "@/lib/admin-lista";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { SelectNativo } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 /**
  * Filtro de evento como `<select>`, não como fileira de chips.
  *
- * Motivo: um chip por evento cabia com os 2 eventos do seed. Com uma
- * temporada real (dezenas), a fileira empurra a tabela pra baixo da dobra
- * e a página fica ilegível. Select tem altura constante.
+ * Um chip por evento cabia com os 2 do seed. Com uma temporada real
+ * (dezenas), a fileira empurra a tabela pra baixo da dobra. Select tem
+ * altura constante.
  *
- * Continua sendo `<form method="get">` sem JavaScript — o botão "Filtrar"
- * é o que troca a URL.
+ * **É o `<select>` NATIVO, não o Select do Radix** — ver a nota em
+ * `components/ui/input.tsx`. Este formulário funciona sem JavaScript, e o
+ * componente do Radix quebraria isso em troca de nada que o usuário perceba.
  */
 export function SeletorEvento({
   action,
@@ -35,11 +39,11 @@ export function SeletorEvento({
       <label htmlFor="evento" className="eyebrow mr-1">
         Evento
       </label>
-      <select
+      <SelectNativo
         id="evento"
         name="evento"
         defaultValue={selecionado ?? ""}
-        className="max-w-[22rem] rounded-full border border-petroleo/20 bg-white/70 px-4 py-2 text-sm outline-none transition-colors focus:border-petroleo"
+        className="max-w-[22rem]"
       >
         <option value="">Todos os eventos</option>
         {eventos.map((e) => (
@@ -47,17 +51,17 @@ export function SeletorEvento({
             {e.titulo}
           </option>
         ))}
-      </select>
-      <button
-        type="submit"
-        className="rounded-full border border-petroleo px-5 py-2 text-sm font-semibold transition-colors hover:bg-petroleo hover:text-areia"
-      >
+      </SelectNativo>
+      <Button type="submit" variant="outline">
         Filtrar
-      </button>
+      </Button>
       {selecionado && (
         <a
           href={`${action}${query(ocultos)}`}
-          className="px-2 py-2 text-sm font-medium text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+          className={cn(
+            buttonVariants({ variant: "link", size: "default" }),
+            "text-muted-foreground",
+          )}
         >
           limpar
         </a>

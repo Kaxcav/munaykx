@@ -13,6 +13,15 @@ import {
 } from "@/lib/admin-lista";
 import { BuscaAdmin } from "@/components/admin/BuscaAdmin";
 import { Paginacao } from "@/components/admin/Paginacao";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const TIPOS = ["participante", "organizador"] as const;
 const ORIGENS = ["site", "rsvp"] as const;
@@ -38,8 +47,8 @@ const href = (f: Filtros) => `/admin/leads${query({ ...f })}`;
 const chip = (ativo: boolean) =>
   `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
     ativo
-      ? "border-petroleo bg-petroleo text-areia"
-      : "border-petroleo/15 hover:border-petroleo/40"
+      ? "border-primary bg-primary text-primary-foreground"
+      : "border-border hover:border-primary/40"
   }`;
 
 /** Leads read-only: a métrica dos 500 do edital. Edição não existe de propósito. */
@@ -91,12 +100,12 @@ export default async function AdminLeadsPage({
         <div>
           <p className="eyebrow mb-3">Operação</p>
           <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Leads <span className="text-petroleo/40">({total})</span>
+            Leads <span className="text-muted-foreground">({total})</span>
           </h1>
         </div>
         <a
           href={exportHref}
-          className="rounded-full border border-petroleo px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-petroleo hover:text-areia"
+          className={buttonVariants({ variant: "outline" })}
         >
           Exportar CSV
         </a>
@@ -166,53 +175,53 @@ export default async function AdminLeadsPage({
       </div>
 
       {leads.length === 0 ? (
-        <p className="mt-10 text-petroleo/70">
+        <p className="mt-10 text-muted-foreground">
           {total > 0
             ? "Essa página não existe nesse recorte."
             : "Nenhum lead com esse recorte."}
         </p>
       ) : (
         <>
-          <div className="mt-8 overflow-x-auto rounded-card border border-petroleo/10 bg-white/70">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-petroleo/10 font-mono text-xs uppercase tracking-wider text-petroleo/60">
-                <tr>
-                  <th className="px-4 py-3">Quando</th>
-                  <th className="px-4 py-3">Nome</th>
-                  <th className="px-4 py-3">E-mail</th>
-                  <th className="px-4 py-3">WhatsApp</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Origem</th>
-                  <th className="px-4 py-3">Interesses</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="mt-8">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Quando</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>WhatsApp</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead>Interesses</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {leads.map((l) => (
-                  <tr key={l.id} className="border-b border-petroleo/5">
-                    <td className="px-4 py-3 font-mono text-xs">
+                  <TableRow key={l.id}>
+                    <TableCell className="font-mono text-xs">
                       {formatarDataAdmin(l.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 font-semibold">{l.nome}</td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="font-semibold">{l.nome}</TableCell>
+                    <TableCell>
                       <a
                         href={`mailto:${l.email}`}
-                        className="underline underline-offset-4 hover:text-petroleo/70"
+                        className="underline underline-offset-4 hover:text-muted-foreground"
                       >
                         {l.email}
                       </a>
-                    </td>
-                    <td className="px-4 py-3">{l.whatsapp ?? "—"}</td>
-                    <td className="px-4 py-3">{l.tipo}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{l.origem}</td>
-                    <td className="px-4 py-3 text-petroleo/70">
+                    </TableCell>
+                    <TableCell>{l.whatsapp ?? "—"}</TableCell>
+                    <TableCell>{l.tipo}</TableCell>
+                    <TableCell className="font-mono text-xs">{l.origem}</TableCell>
+                    <TableCell className="text-muted-foreground">
                       {[l.modalidades, l.regiao, l.organizacao, l.modalidade]
                         .filter(Boolean)
                         .join(" · ") || "—"}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <Paginacao
             total={total}

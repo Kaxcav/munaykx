@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { AUTH_ADMIN, criarLeads, limparFixtures, prisma } from "./fixtures";
+import {
+  AUTH_ADMIN,
+  criarEvento,
+  criarLeads,
+  limparFixtures,
+  prisma,
+} from "./fixtures";
 
 /**
  * Listagens do /admin — paginação, busca, período e a regra do CSV.
@@ -14,6 +20,13 @@ test.use({ extraHTTPHeaders: AUTH_ADMIN });
 test.beforeAll(async () => {
   await limparFixtures();
   await criarLeads(130);
+  // O evento é fixture, não seed. O `SeletorEvento` some da tela quando não
+  // há nenhum evento (decisão de UI: filtro vazio não serve pra nada), e o
+  // teste do select dependia do seed demo pra existir. Passava aqui — onde
+  // alguém já rodou `prisma db seed` — e falhava no CI, que sobe o banco
+  // vazio. Isso deixou a `main` vermelha desde 06/08, e é exatamente o que
+  // `fixtures.ts` diz em letras garrafais que não pode acontecer.
+  await criarEvento({ nome: "filtro" });
 });
 
 test.afterAll(async () => {

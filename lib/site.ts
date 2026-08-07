@@ -32,9 +32,7 @@ export const SITE_URL = normalizar(process.env.NEXT_PUBLIC_SITE_URL);
  * `NEXT_PUBLIC_SITE_URL`, o site atende em qualquer host — que é exatamente
  * o comportamento de antes do redirect existir.
  */
-export function hostCanonico(
-  bruto: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
-): string {
+export function hostCanonicoDe(bruto: string | undefined): string {
   if (!bruto?.trim()) return "";
   try {
     return new URL(normalizar(bruto)).host.toLowerCase();
@@ -43,4 +41,22 @@ export function hostCanonico(
     // redirect pra lugar nenhum — melhor não canonicalizar.
     return "";
   }
+}
+
+/**
+ * A mesma decisão, lendo o ambiente. É só isto que o middleware chama.
+ *
+ * A separação em duas funções não é preciosismo — é o conserto de um bug
+ * de teste (07/08/2026). Antes existia UMA função com parâmetro default
+ * (`bruto = process.env.NEXT_PUBLIC_SITE_URL`), e aí `hostCanonico(undefined)`
+ * NÃO testa "sem variável": passar `undefined` aciona o default e lê a env
+ * do mesmo jeito. O teste do caso "não configurado" passava na minha
+ * máquina (env vazia) e falhava no CI (env definida no job) — verde por
+ * acidente de ambiente, que é pior que vermelho.
+ *
+ * Com a parte pura separada, `hostCanonicoDe(undefined)` significa
+ * exatamente uma coisa, em qualquer ambiente.
+ */
+export function hostCanonico(): string {
+  return hostCanonicoDe(process.env.NEXT_PUBLIC_SITE_URL);
 }

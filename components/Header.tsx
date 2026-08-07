@@ -29,6 +29,9 @@ export default async function Header() {
           <Link href="/comunidades" className="text-sm font-medium hover:opacity-70">
             Comunidades
           </Link>
+          <Link href="/mapa" className="text-sm font-medium hover:opacity-70">
+            Mapa
+          </Link>
           <Link
             href="/#organizador"
             className="text-sm font-medium hover:opacity-70"

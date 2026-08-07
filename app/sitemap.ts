@@ -37,6 +37,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // fica de fora do sitemap de propósito (lib/descoberta.ts, regra 2).
         recortesIndexaveis(),
       ]);
+      // O /mapa entra no sitemap pela mesma regra dos recortes: só quando
+      // existe comunidade REAL. `recortesIndexaveis()` já devolve vazio
+      // enquanto tudo for demo, então isto não custa consulta nova.
+      if (recortes.length > 0) {
+        entries.push({
+          url: `${base}/mapa`,
+          lastModified: new Date(),
+          priority: 0.7,
+        });
+      }
+
       entries.push(
         ...comunidades.map((c) => ({
           url: `${base}/comunidades/${c.slug}`,

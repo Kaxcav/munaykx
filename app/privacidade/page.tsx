@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { EMAIL_CONTATO } from "@/lib/contato";
 
 export const metadata: Metadata = {
   title: "Política de privacidade",
@@ -9,9 +10,8 @@ export const metadata: Metadata = {
     "Quais dados a MUNAY coleta, pra quê, e como pedir a exclusão. LGPD em linguagem simples.",
 };
 
-/* TODO: trocar pelo e-mail oficial quando o domínio for registrado
-   (mesmo placeholder do Footer). */
-const EMAIL_CONTATO = "contato@munay.app.br";
+// Fonte única em lib/contato.ts — este endereço é canal do titular de
+// dados (LGPD) e não pode divergir do rodapé nem apontar pra domínio morto.
 
 export default function PrivacidadePage() {
   return (

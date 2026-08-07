@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { brand } from "@/lib/brand";
+import { dominioPublico } from "@/lib/contato";
 import { getCommunityBySlug } from "@/lib/communities";
 
 export const alt = "Comunidade na MUNAY";
@@ -104,7 +105,7 @@ export default async function OpengraphImage({
               color: brand.petroleoSoft,
             }}
           >
-            munay.app.br
+            {dominioPublico()}
           </div>
         </div>
       </div>

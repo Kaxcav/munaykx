@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { brand } from "@/lib/brand";
+import { dominioPublico } from "@/lib/contato";
 
 export const alt = "MUNAY — comunidades esportivas e culturais de Brasília";
 export const size = { width: 1200, height: 630 };
@@ -108,7 +109,7 @@ export default function OpengraphImage() {
               color: brand.petroleoSoft,
             }}
           >
-            munay.app.br
+            {dominioPublico()}
           </div>
         </div>
       </div>

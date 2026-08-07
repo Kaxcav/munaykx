@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EMAIL_CONTATO } from "@/lib/contato";
 
 export default function Footer() {
   return (
@@ -16,10 +17,9 @@ export default function Footer() {
 
         <div className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/50">
           <p>Brasília · DF</p>
-          {/* TODO: trocar pelo e-mail oficial quando o domínio for registrado */}
           <p className="mt-1">
-            <a href="mailto:contato@munay.app.br" className="hover:text-petroleo">
-              contato@munay.app.br
+            <a href={`mailto:${EMAIL_CONTATO}`} className="hover:text-petroleo">
+              {EMAIL_CONTATO}
             </a>
           </p>
           <p className="mt-1">

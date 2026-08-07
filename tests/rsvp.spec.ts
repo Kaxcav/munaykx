@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+
+// Espelha o PORTA do playwright.config.ts — em worktree paralela a suite
+// sobe noutra porta, e Origin cravado faria o teste falhar por ambiente.
+const BASE = `http://127.0.0.1:${process.env.PW_PORTA ?? "3100"}`;
 import { criarEvento, limparFixtures, prisma, DOMINIO_TESTE } from "./fixtures";
 
 /**
@@ -23,7 +27,7 @@ test.afterAll(async () => {
 const inscrever = (request: import("@playwright/test").APIRequestContext, nome: string, email: string) =>
   request.post("/api/rsvps", {
     data: { eventSlug: evento.slug, nome, email },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
 
 test("primeira pessoa confirma, segunda entra na fila", async ({ request }) => {
@@ -56,7 +60,7 @@ test("cancelar promove quem estava na fila, na mesma transação", async ({ requ
 
   const resp = await request.post("/api/rsvps/cancel", {
     data: { token: a.token },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
   expect(resp.ok()).toBeTruthy();
 
@@ -80,13 +84,13 @@ test("cancelar duas vezes com o mesmo token é inofensivo", async ({ request }) 
   });
   await request.post("/api/rsvps/cancel", {
     data: { token: b.token },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
   const antes = await prisma.rsvp.count({ where: { eventId: evento.eventId } });
 
   await request.post("/api/rsvps/cancel", {
     data: { token: b.token },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
   const depois = await prisma.rsvp.count({ where: { eventId: evento.eventId } });
   expect(depois).toBe(antes);
@@ -95,7 +99,7 @@ test("cancelar duas vezes com o mesmo token é inofensivo", async ({ request }) 
 test("token inventado não cancela nada", async ({ request }) => {
   const resp = await request.post("/api/rsvps/cancel", {
     data: { token: "token-que-nao-existe-em-lugar-nenhum" },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
   expect(resp.status()).toBeGreaterThanOrEqual(400);
 });
@@ -109,7 +113,7 @@ test("honeypot: bot preenchido recebe ok falso e nada é gravado", async ({ requ
       email: `zzt-bot${DOMINIO_TESTE}`,
       site: "https://spam.example",
     },
-    headers: { Origin: "http://127.0.0.1:3100" },
+    headers: { Origin: BASE },
   });
   const corpo = await r.json();
   // Responde sucesso de propósito: bot que recebe erro tenta de novo.

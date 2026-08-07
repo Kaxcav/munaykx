@@ -37,7 +37,19 @@ export default function EntrarForm({ disponivel }: { disponivel: boolean }) {
     });
 
     if (error) {
-      setErro("Não deu pra enviar agora. Tenta de novo em instantes.");
+      // "Tenta de novo em instantes" é mentira quando o servidor respondeu
+      // 503 — nesse caso o ambiente não está configurado e tentar mil vezes
+      // dá no mesmo. Mensagem que manda repetir uma ação impossível faz a
+      // pessoa culpar a própria internet e some com a pista do problema.
+      const indisponivel = error.status === 503;
+      setErro(
+        indisponivel
+          ? "O acesso por link ainda não está ativo neste ambiente. Não é problema seu — você pode se inscrever em eventos normalmente, sem conta."
+          : "Não deu pra enviar agora. Tenta de novo em instantes.",
+      );
+      // O detalhe técnico vai pro console, não pra tela: quem opera precisa
+      // dele, quem usa não.
+      console.error("[entrar] falha no magic link:", error.status, error.message);
       setStatus("erro");
       return;
     }

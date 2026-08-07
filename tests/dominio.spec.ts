@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { hostCanonico } from "@/lib/site";
+import { hostCanonicoDe } from "@/lib/site";
 
 /**
  * Canonicalização de domínio.
@@ -106,34 +106,40 @@ test.describe("quem pode virar host canônico", () => {
   // Sem servidor: a decisão de canonicalizar ou não é uma função pura, e é
   // ela que decide se um erro de variável derruba o site ou não.
 
+  // Testa `hostCanonicoDe`, a parte PURA — nunca a que lê a env. A primeira
+  // versão chamava a função que lê a env, passando `undefined`, achando que
+  // isso simulava "sem variável"; não simulava — o default do parâmetro
+  // (`bruto = process.env.NEXT_PUBLIC_SITE_URL`) lia a env do mesmo jeito —
+  // e o teste ficou verde na máquina de quem não tinha a env e vermelho no
+  // CI, que tem. Verde por acidente de ambiente é pior que vermelho.
   test("sem a env configurada, NINGUÉM é redirecionado", () => {
     // Este é o caso perigoso. O `SITE_URL` tem fallback (pro metadataBase e
     // as OG images não explodirem), mas usar esse fallback como canônico
     // significaria: esqueceu a variável no painel → todo visitante leva 308
     // pra um domínio que talvez nem seja nosso. O site não some por falta
     // de env; ele só deixa de canonicalizar.
-    expect(hostCanonico(undefined)).toBe("");
-    expect(hostCanonico("")).toBe("");
-    expect(hostCanonico("   ")).toBe("");
+    expect(hostCanonicoDe(undefined)).toBe("");
+    expect(hostCanonicoDe("")).toBe("");
+    expect(hostCanonicoDe("   ")).toBe("");
   });
 
   test("domínio sem protocolo funciona — é como o Railway entrega", () => {
-    expect(hostCanonico("sejamunay.com.br")).toBe("sejamunay.com.br");
+    expect(hostCanonicoDe("sejamunay.com.br")).toBe("sejamunay.com.br");
   });
 
   test("caixa e barra no fim não criam host diferente", () => {
     // O host da requisição chega minúsculo; se o canônico viesse com
     // maiúscula, a comparação nunca casaria e o site entraria em laço.
-    expect(hostCanonico("https://SejaMunay.com.br/")).toBe("sejamunay.com.br");
+    expect(hostCanonicoDe("https://SejaMunay.com.br/")).toBe("sejamunay.com.br");
   });
 
   test("porta faz parte do host — senão dev e preview quebram", () => {
-    expect(hostCanonico("http://127.0.0.1:3100")).toBe("127.0.0.1:3100");
+    expect(hostCanonicoDe("http://127.0.0.1:3100")).toBe("127.0.0.1:3100");
   });
 
   test("valor sujo não vira redirect pra lugar nenhum", () => {
     // Copiar e colar errado no painel acontece. O que não pode acontecer é
     // virar um 308 pra um endereço inventado.
-    expect(hostCanonico("isto não é uma url")).toBe("");
+    expect(hostCanonicoDe("isto não é uma url")).toBe("");
   });
 });

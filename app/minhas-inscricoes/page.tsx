@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { auth } from "@/lib/auth";
+import { sessaoAtual } from "@/lib/sessao";
 import { prisma } from "@/lib/db";
 import { formatarDataEvento } from "@/lib/events";
 
@@ -22,7 +21,9 @@ const BADGES = {
 } as const;
 
 export default async function MinhasInscricoesPage() {
-  const sessao = await auth.api.getSession({ headers: await headers() });
+  // Auth desligada cai aqui como "ninguém logado" e vai pro /entrar, que
+  // explica a situação. Antes, lançava e virava 500.
+  const sessao = await sessaoAtual();
   if (!sessao) redirect("/entrar");
 
   const inscricoes = await prisma.rsvp.findMany({

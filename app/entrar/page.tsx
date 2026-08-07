@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EntrarForm from "@/components/EntrarForm";
-import { auth, authDisponivel } from "@/lib/auth";
+import { authDisponivel } from "@/lib/auth";
+import { sessaoAtual } from "@/lib/sessao";
 import { emailConfigurado } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,10 @@ export const metadata: Metadata = {
 };
 
 export default async function EntrarPage() {
-  const sessao = await auth.api.getSession({ headers: await headers() });
+  // Sem segredo de sessão, `sessaoAtual()` devolve null em vez de lançar —
+  // e a página cai no aviso de "ainda não configurado" logo abaixo, que é o
+  // que ela já sabia fazer. Antes, lançava antes de chegar nesse aviso.
+  const sessao = await sessaoAtual();
   if (sessao) redirect("/minhas-inscricoes");
 
   // Precisa das duas pontas: segredo de sessão E provedor de e-mail.

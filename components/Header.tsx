@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { sessaoAtual } from "@/lib/sessao";
 import SairButton from "@/components/SairButton";
 
 export default async function Header() {
   // Sessão lida no servidor, de verdade — não o cookie otimista.
-  const sessao = await auth.api.getSession({ headers: await headers() });
+  // Via `sessaoAtual()` e nunca `auth.api.getSession()` direto: este
+  // componente está em TODA página, então um erro aqui derruba o site
+  // inteiro em vez de só o login (ver lib/sessao.ts).
+  const sessao = await sessaoAtual();
 
   return (
     <header className="sticky top-0 z-40 border-b border-petroleo/10 bg-areia/90 backdrop-blur">

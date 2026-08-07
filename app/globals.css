@@ -78,7 +78,13 @@
   html {
     scroll-behavior: auto;
   }
-  .animate-pin-pulse {
+  .animate-pin-pulse,
+  .animate-deriva {
     animation: none !important;
+  }
+  /* O mosaico usa snap-scroll no mobile; com movimento reduzido, o salto
+     do snap também incomoda. */
+  .snap-x {
+    scroll-behavior: auto;
   }
 }

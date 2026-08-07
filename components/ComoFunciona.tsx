@@ -1,21 +1,27 @@
+/**
+ * Briefing 07/08/2026, itens 6 e 7: mais verde sálvia e tom de voz próximo,
+ * coloquial, sem corporativês. A copy antiga ("Do primeiro treino à rotina:
+ * agenda da turma, próximos eventos e avisos num lugar só") descrevia
+ * funcionalidade; esta descreve o que a pessoa sente.
+ */
 const PASSOS = [
   {
     n: "01",
-    titulo: "Descubra",
+    titulo: "Fuça",
     texto:
-      "Filtre por modalidade, região, horário e nível. Veja o que existe perto de você — inclusive o que nunca apareceu no seu feed.",
+      "Filtra por modalidade, região, horário e nível. Aparece o que existe perto de você — inclusive o que nunca passou no seu feed porque não paga tráfego.",
   },
   {
     n: "02",
-    titulo: "Chegue junto",
+    titulo: "Chega junto",
     texto:
-      "Antes de ir, você já sabe como funciona: quem organiza, onde é, que horas começa e se o grupo recebe iniciantes. Sem chegar no escuro.",
+      "Antes de sair de casa você já sabe quem organiza, onde é, que horas começa e se o grupo recebe iniciante. Ninguém merece chegar no escuro.",
   },
   {
     n: "03",
-    titulo: "Faça parte",
+    titulo: "Fica",
     texto:
-      "Do primeiro treino à rotina: agenda da turma, próximos eventos e avisos num lugar só. Comunidade de verdade, não grupo perdido.",
+      "Do primeiro treino ao dia em que você é quem chama os outros. Agenda, próximos rolês e avisos num lugar só — não num grupo com 400 pessoas mudo.",
   },
 ];
 
@@ -31,9 +37,9 @@ export default function ComoFunciona() {
         {PASSOS.map((p) => (
           <article
             key={p.n}
-            className="rounded-card border border-petroleo/10 bg-white/70 p-7"
+            className="rounded-card border border-salvia/35 bg-salvia-soft p-7 transition-colors hover:border-salvia"
           >
-            <p className="font-mono text-sm text-petroleo/50">{p.n}</p>
+            <p className="font-mono text-sm font-semibold text-salvia-deep">{p.n}</p>
             <h3 className="mt-3 font-display text-2xl font-bold">{p.titulo}</h3>
             <p className="mt-3 leading-relaxed text-petroleo/75">{p.texto}</p>
           </article>

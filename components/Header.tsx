@@ -42,11 +42,20 @@ export default async function Header() {
 
         {sessao ? (
           <div className="flex items-center gap-4">
+            {/* STORY-011: a conta deixou de ser uma tela só. `/perfil` é a
+                porta (é lá que estão os dados e os links pras outras duas) —
+                empilhar três botões aqui encheria o header em telas médias. */}
             <Link
-              href="/minhas-inscricoes"
+              href="/meus-ingressos"
+              className="hidden text-sm font-medium hover:opacity-70 sm:block"
+            >
+              Ingressos
+            </Link>
+            <Link
+              href="/perfil"
               className="rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
             >
-              Minhas inscrições
+              Minha conta
             </Link>
             <SairButton />
           </div>

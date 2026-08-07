@@ -1,15 +1,38 @@
 import Link from "next/link";
 import { getCommunities } from "@/lib/communities";
+import {
+  LEGENDA_FAMILIAS,
+  acentoDaModalidade,
+  classesDoAcento,
+  familiaDaModalidade,
+} from "@/lib/modalidades";
 
 /**
  * IMPORTANTE (jurídico/edital): NÃO publicar nomes de parceiros reais
  * (Liga Entrequadras, MOAI, Gracie Barra, Evolve etc.) sem autorização
  * formal de uso de marca. Os dados do banco são seed demo, por modalidade.
  * Quando os parceiros-âncora confirmarem, substituir no banco.
+ *
+ * BRIEFING 07/08/2026, ITEM 3 — cor nos cards:
+ * "Hoje estão visualmente neutros demais e não diferenciam categorias. (…)
+ * Cada categoria pode ganhar uma cor de destaque sutil, criando
+ * reconhecimento visual rápido."
+ *
+ * Como foi feito, e o que isso protege: a cor NÃO é escolhida card a card
+ * nem pela posição no grid — é derivada da modalidade em
+ * `lib/modalidades.ts`. Consequência prática: jiu-jítsu é a mesma cor aqui,
+ * na busca e no mapa, e continua sendo depois de filtrar. Cor que muda de
+ * lugar pra lugar não cria reconhecimento — cria ruído.
+ *
+ * "Sutil" foi levado ao pé da letra: fundo em tom lavado (`-soft`), traço
+ * fino no topo e a etiqueta de família. O nome da comunidade continua em
+ * petróleo, então a hierarquia de leitura não muda — só ganha um atalho
+ * visual antes da leitura.
  */
 type Card = {
   slug?: string;
   nome: string;
+  modalidade: string;
   regiao: string;
   quando: string;
   nivel: string;
@@ -19,36 +42,42 @@ type Card = {
 const CARDS_ESTATICOS: Card[] = [
   {
     nome: "Run club matinal",
+    modalidade: "corrida",
     regiao: "Asa Sul",
     quando: "TER · QUI 06H15 — PARQUE DA CIDADE",
     nivel: "Todos os ritmos",
   },
   {
     nome: "Jiu-jítsu",
+    modalidade: "jiu-jítsu",
     regiao: "Noroeste",
     quando: "SEG–SEX 19H — TATAME ABERTO",
     nivel: "Iniciantes bem-vindos",
   },
   {
     nome: "Yoga ao ar livre",
+    modalidade: "yoga",
     regiao: "Asa Norte",
     quando: "SÁB 08H — PARQUE OLHOS D'ÁGUA",
     nivel: "Leve seu tapete",
   },
   {
     nome: "Funcional",
+    modalidade: "funcional",
     regiao: "Sudoeste",
     quando: "SEG · QUA · SEX 06H30",
     nivel: "Em grupo",
   },
   {
     nome: "Vôlei de areia",
+    modalidade: "vôlei",
     regiao: "Lago Sul",
     quando: "DOM 09H — QUADRAS",
     nivel: "Jogo aberto",
   },
   {
     nome: "Pedal de domingo",
+    modalidade: "pedal",
     regiao: "Plano Piloto",
     quando: "DOM 07H — EIXÃO DO LAZER",
     nivel: "Ritmo passeio",
@@ -63,6 +92,7 @@ async function getCards(): Promise<Card[]> {
     return comunidades.slice(0, 6).map((c) => ({
       slug: c.slug,
       nome: c.nome,
+      modalidade: c.modalidade,
       regiao: c.regiao,
       quando: [c.horarios, c.local].filter(Boolean).join(" — ").toUpperCase(),
       nivel: c.nivel ?? c.modalidade,
@@ -80,37 +110,77 @@ export default async function Vitrine() {
     <section id="comunidades" className="mx-auto max-w-6xl px-5 py-20">
       <p className="eyebrow mb-3">O que já acontece na cidade</p>
       <h2 className="max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-        Brasília treina todo dia. Você só não estava vendo.
+        Brasília treina todo dia. Você é que não estava vendo.
       </h2>
 
-      <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Legenda das famílias: o que a cor quer dizer. Sem isso, a cor é
+          decoração; com isso, vira atalho de leitura. */}
+      <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+        {LEGENDA_FAMILIAS.map((f) => (
+          <li
+            key={f.acento}
+            className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-petroleo/55"
+          >
+            <span
+              aria-hidden
+              className={`h-2.5 w-2.5 rounded-full ${classesDoAcento(f.acento).traco}`}
+            />
+            {f.rotulo}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => {
+          const acento = acentoDaModalidade(c.modalidade);
+          const cor = classesDoAcento(acento);
+          const familia = familiaDaModalidade(c.modalidade);
+
           const conteudo = (
             <>
-              <div className="flex items-start justify-between gap-3">
+              {/* Traço da categoria: o reconhecimento acontece aqui, antes
+                  mesmo de a pessoa ler o nome. */}
+              <span aria-hidden className={`block h-1 w-12 rounded-full ${cor.traco}`} />
+
+              <div className="mt-4 flex items-start justify-between gap-3">
                 <h3 className="font-display text-xl font-bold">{c.nome}</h3>
                 <span className="shrink-0 rounded-full border border-petroleo/15 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-petroleo/60">
                   {c.regiao}
                 </span>
               </div>
-              <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
+
+              <p className={`mt-3 font-mono text-xs uppercase tracking-[0.14em] ${cor.tinta}`}>
                 {c.quando}
               </p>
-              <p className="mt-2 text-sm text-petroleo/60">{c.nivel}</p>
+              <p className="mt-2 text-sm text-petroleo/60">
+                {c.nivel}
+                {familia && (
+                  <span className="text-petroleo/40"> · {familia}</span>
+                )}
+              </p>
             </>
           );
 
-          const estilo =
-            "group block rounded-card border border-petroleo/10 bg-white/70 p-6 transition-colors hover:border-petroleo/30";
+          const estilo = `group block h-full rounded-card border border-petroleo/10 ${cor.fundo} p-6 transition-all hover:-translate-y-0.5 hover:border-petroleo/25`;
+
+          // O `<article>` carrega o estilo NOS DOIS CASOS, e o `<Link>` é só
+          // casca de navegação.
+          //
+          // Antes não era assim: com slug, a cor ficava no `<Link>` e o
+          // `<article>` ia sem classe nenhuma. Visualmente dava no mesmo, mas
+          // o DOM mudava de forma dependendo de o banco ter comunidade ou não
+          // — e foi exatamente isso que fez o teste da safelist passar com o
+          // banco vazio e falhar com o banco cheio. Teste que depende do
+          // estado do seed é o tipo de verde que o projeto já decidiu não
+          // aceitar (ver a nota do handoff de 06/08).
+          const cartao = <article className={estilo}>{conteudo}</article>;
 
           return c.slug ? (
-            <Link key={c.nome} href={`/comunidades/${c.slug}`} className={estilo}>
-              <article>{conteudo}</article>
+            <Link key={c.nome} href={`/comunidades/${c.slug}`} className="block">
+              {cartao}
             </Link>
           ) : (
-            <article key={c.nome} className={estilo}>
-              {conteudo}
-            </article>
+            <div key={c.nome}>{cartao}</div>
           );
         })}
       </div>

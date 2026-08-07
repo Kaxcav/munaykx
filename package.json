@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
+    "preflight": "node scripts/preflight.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "tema": "tsx scripts/gerar-tema.mjs"

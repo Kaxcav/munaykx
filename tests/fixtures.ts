@@ -108,3 +108,89 @@ export const AUTH_ADMIN = {
     "Basic " +
     Buffer.from("teste:senha-de-teste-longa-o-suficiente").toString("base64"),
 };
+
+export type OrgDeTeste = {
+  userId: string;
+  email: string;
+  organizationId: string;
+  communityId: string;
+  communitySlug: string;
+  eventId: string;
+  rsvpId: string;
+};
+
+/**
+ * Uma organização completa e ISOLADA: conta + organização + comunidade +
+ * evento + um inscrito.
+ *
+ * Existe pra semear DUAS e provar que uma não enxerga a outra. Testar escopo
+ * com um dono só não prova nada — o vazamento só aparece quando há um
+ * segundo dono pra vazar.
+ */
+export async function criarOrganizacao(nome: string): Promise<OrgDeTeste> {
+  const base = `${PREFIXO}${nome}`;
+  const email = `${base}${DOMINIO_TESTE}`;
+
+  const user = await prisma.user.create({
+    data: { name: `Dono ${nome}`, email, emailVerified: true },
+  });
+
+  const org = await prisma.organization.create({
+    data: {
+      nome: `Organização ${nome}`,
+      slug: `${base}-org`,
+      membros: { create: { userId: user.id } },
+    },
+  });
+
+  const comunidade = await prisma.community.create({
+    data: {
+      slug: `${base}-com`,
+      nome: `Comunidade ${nome}`,
+      modalidade: "Corrida",
+      regiao: "Ceilândia",
+      demo: true,
+      organizationId: org.id,
+      descricao: "fixture de escopo",
+    },
+  });
+
+  const evento = await prisma.event.create({
+    data: {
+      communityId: comunidade.id,
+      slug: `${base}-ev`,
+      titulo: `Treino ${nome}`,
+      startsAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      capacidade: 10,
+      demo: true,
+    },
+  });
+
+  const rsvp = await prisma.rsvp.create({
+    data: {
+      eventId: evento.id,
+      nome: `Inscrito de ${nome}`,
+      email: `${base}-inscrito${DOMINIO_TESTE}`,
+      whatsapp: "61999990000",
+    },
+  });
+
+  return {
+    userId: user.id,
+    email,
+    organizationId: org.id,
+    communityId: comunidade.id,
+    communitySlug: comunidade.slug,
+    eventId: evento.id,
+    rsvpId: rsvp.id,
+  };
+}
+
+/** Limpa o que `criarOrganizacao` cria. Rodar ANTES de `limparFixtures`. */
+export async function limparOrganizacoes() {
+  await prisma.rsvp.deleteMany({ where: { email: { endsWith: DOMINIO_TESTE } } });
+  await prisma.event.deleteMany({ where: { slug: { startsWith: PREFIXO } } });
+  await prisma.community.deleteMany({ where: { slug: { startsWith: PREFIXO } } });
+  await prisma.organization.deleteMany({ where: { slug: { startsWith: PREFIXO } } });
+  await prisma.user.deleteMany({ where: { email: { endsWith: DOMINIO_TESTE } } });
+}

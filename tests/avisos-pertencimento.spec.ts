@@ -112,6 +112,14 @@ test("token de descadastro: válido volta os dados; adulterado é null", async (
 test("descadastro pelo link (deslogado): assinatura válida desliga; forjada não", async ({
   request,
 }) => {
+  // O servidor da suíte roda com BETTER_AUTH_SECRET="" (playwright.config), e o
+  // token é assinado com esse segredo. O processo de teste tem que gerar o token
+  // com o MESMO valor — senão, num CI que define o segredo pro runner, a
+  // assinatura do teste não bate com a do servidor. (Foi o que pegou no CI: o
+  // verde local, com os dois lados vazios, era o acidente.)
+  const secretoAntes = process.env.BETTER_AUTH_SECRET;
+  process.env.BETTER_AUTH_SECRET = "";
+  try {
   const u = await criarUsuario(`${PREFIXO}seg4${DOMINIO_TESTE}`);
   await seguir(u.id, A.communityId); // avisarEventos nasce true
 
@@ -144,4 +152,8 @@ test("descadastro pelo link (deslogado): assinatura válida desliga; forjada nã
       })
     )?.avisarEventos,
   ).toBe(true);
+  } finally {
+    if (secretoAntes === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = secretoAntes;
+  }
 });

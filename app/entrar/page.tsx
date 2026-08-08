@@ -15,12 +15,31 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function EntrarPage() {
+/**
+ * Só caminho relativo same-origin: começa com "/", nunca "//" (que o navegador
+ * trata como outro host) nem esquema. Barra open-redirect via `?proximo=`.
+ */
+function caminhoSeguro(p: string | undefined): string | null {
+  if (!p || !p.startsWith("/") || p.startsWith("//")) return null;
+  if (p.includes("://") || p.includes("\\")) return null;
+  return p;
+}
+
+export default async function EntrarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ proximo?: string }>;
+}) {
+  const { proximo } = await searchParams;
+  // Pra onde ir depois do login: o `?proximo=` validado (ex.: voltar pra
+  // comunidade e completar o seguir) ou as inscrições, como sempre.
+  const destino = caminhoSeguro(proximo) ?? "/minhas-inscricoes";
+
   // Sem segredo de sessão, `sessaoAtual()` devolve null em vez de lançar —
   // e a página cai no aviso de "ainda não configurado" logo abaixo, que é o
   // que ela já sabia fazer. Antes, lançava antes de chegar nesse aviso.
   const sessao = await sessaoAtual();
-  if (sessao) redirect("/minhas-inscricoes");
+  if (sessao) redirect(destino);
 
   // Precisa das duas pontas: segredo de sessão E provedor de e-mail.
   const disponivel = authDisponivel() && emailConfigurado();
@@ -41,7 +60,7 @@ export default async function EntrarPage() {
 
         <div className="mt-10">
           {disponivel ? (
-            <EntrarForm disponivel />
+            <EntrarForm disponivel callbackURL={destino} />
           ) : (
             <div className="max-w-md rounded-card border border-petroleo/15 bg-white/70 p-8">
               <p className="font-display text-xl font-bold">

@@ -8,6 +8,7 @@ import {
   eventoDoUsuario,
 } from "@/lib/organizacao";
 import { dispararEmail, emailRsvpCancelado } from "@/lib/emails-rsvp";
+import { dispararAvisosDeEventoNovo } from "@/lib/avisos-evento";
 
 /**
  * MUTAÇÕES DO PAINEL DO ORGANIZADOR (STORY-009, frente C).
@@ -106,6 +107,8 @@ export async function criarEvento(
         ativo: dados.ativo,
       },
     });
+    // Evento novo → avisa os seguidores (pós-commit, fire-and-forget). STORY-008.
+    dispararAvisosDeEventoNovo(ev.id);
     return { ok: true, dados: { id: ev.id } };
   } catch (error) {
     if (

@@ -228,6 +228,22 @@ export default function PrivacidadePage() {
             </p>
           </section>
 
+          {/* 3.5 — Comunidades seguidas (STORY-008) */}
+          <section>
+            <h2 className="font-display text-xl font-bold">
+              3.5. Comunidades que você segue
+            </h2>
+            <p className="mt-3 text-petroleo/80">
+              Quando você segue uma comunidade, guardamos esse vínculo (quais
+              comunidades você segue) para montar a sua <strong>agenda</strong> e
+              te avisar de eventos novos por e-mail. O aviso nasce ligado e você
+              desliga a qualquer momento — por comunidade, na tela{" "}
+              <em>Minhas comunidades</em> ou pelo link no rodapé de cada e-mail,
+              sem precisar de login. Deixar de seguir apaga o vínculo e não afeta
+              suas inscrições em eventos.
+            </p>
+          </section>
+
           {/* 4 — Retenção */}
           <section>
             <h2 className="font-display text-xl font-bold">

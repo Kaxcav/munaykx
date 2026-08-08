@@ -8,7 +8,13 @@ type Status = "idle" | "enviando" | "enviado" | "erro";
 const inputCls =
   "w-full rounded-xl border border-petroleo/15 bg-white/70 px-4 py-3 text-petroleo placeholder:text-petroleo/40 focus:border-petroleo";
 
-export default function EntrarForm({ disponivel }: { disponivel: boolean }) {
+export default function EntrarForm({
+  disponivel,
+  callbackURL = "/minhas-inscricoes",
+}: {
+  disponivel: boolean;
+  callbackURL?: string;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [erro, setErro] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -33,7 +39,7 @@ export default function EntrarForm({ disponivel }: { disponivel: boolean }) {
     setStatus("enviando");
     const { error } = await authClient.signIn.magicLink({
       email: alvo,
-      callbackURL: "/minhas-inscricoes",
+      callbackURL,
     });
 
     if (error) {

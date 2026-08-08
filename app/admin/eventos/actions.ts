@@ -9,6 +9,7 @@ import {
   parseDataBrasilia,
   type AdminFormState,
 } from "@/lib/admin";
+import { dispararAvisosDeEventoNovo } from "@/lib/avisos-evento";
 
 export async function salvarEvento(
   id: string | null,
@@ -52,11 +53,13 @@ export async function salvarEvento(
     ativo: parsed.data.ativo,
   };
 
+  let novoEventoId: string | null = null;
   try {
     if (id) {
       await prisma.event.update({ where: { id }, data });
     } else {
-      await prisma.event.create({ data });
+      const criado = await prisma.event.create({ data });
+      novoEventoId = criado.id;
     }
   } catch (error) {
     if (
@@ -77,6 +80,10 @@ export async function salvarEvento(
     );
     return { error: "Não foi possível salvar. Tenta de novo em instantes." };
   }
+
+  // Evento NOVO → avisa os seguidores da comunidade (pós-commit, fire-and-forget,
+  // com teto 1/comunidade/dia). Edição não dispara. STORY-008.
+  if (novoEventoId) dispararAvisosDeEventoNovo(novoEventoId);
 
   revalidatePath(`/eventos/${parsed.data.slug}`);
   redirect("/admin/eventos");

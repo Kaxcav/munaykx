@@ -294,15 +294,26 @@ model OrganizationInvite {
   @@map("organization_invites")
 }
 
-/// Pertencimento (STORY-008 · C3): a pessoa segue a comunidade. Sem papel e
-/// sem poder — de propósito. É o que faz "minhas comunidades" e o sinal de
-/// "você e mais 4 pessoas daqui estão nesse evento" existirem sem precisar
-/// de grafo de amizade nenhum.
+/// Papel numa comunidade (STORY-008, decisão 3). Nasce `membro`; só o /admin
+/// (e a STORY-009) promove a `organizador`. O campo existe desde já pra 009
+/// não precisar de migration de alteração.
+enum PapelMembership {
+  membro
+  organizador
+}
+
+/// Pertencimento (STORY-008 · C3): a pessoa segue a comunidade. Um verbo só —
+/// Seguir —, auto-serviço, sem aprovação. É o que faz "minhas comunidades" e a
+/// agenda existirem sem precisar de grafo de amizade nenhum.
 model Membership {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now()) @map("created_at")
-  userId      String   @map("user_id")
-  communityId String   @map("community_id")
+  id          String          @id @default(uuid())
+  createdAt   DateTime        @default(now()) @map("created_at")
+  userId      String          @map("user_id")
+  communityId String          @map("community_id")
+  papel       PapelMembership @default(membro)
+  // Opt-out do aviso de evento novo. Default true (decisão 5): seguir cria
+  // expectativa de ser avisado, então o aviso nasce ligado, com descadastro.
+  avisarEventos Boolean       @default(true) @map("avisar_eventos")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)

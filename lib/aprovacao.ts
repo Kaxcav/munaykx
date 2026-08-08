@@ -19,11 +19,11 @@ import { prisma } from "@/lib/db";
  *    duplo, corrida entre dois admins ou reprocessamento NÃO re-disparam a
  *    decisão nem o e-mail. `count === 0` = "não era mais pendente".
  *
- * 3. **Não existe coluna de "motivo da recusa" no schema da fundação**, e
- *    `schema.prisma` é território de migration do tech lead — fora do escopo
- *    desta frente (só arquivos novos). Por isso o motivo viaja no E-MAIL de
- *    recusa (RODADA: "o e-mail leva o motivo") e o banco guarda o status.
- *    Persistir o motivo numa coluna é follow-up de migration (ver relatório).
+ * 3. **O motivo da recusa é persistido** em `Community.motivoRecusa` (migration
+ *    `..._motivo_recusa`, a pedido do dono) E vai no e-mail de recusa (RODADA:
+ *    "o e-mail leva o motivo"). Persistir além do e-mail deixa auditável por
+ *    que algo foi barrado, sem depender da caixa de ninguém. Aprovar não
+ *    preenche o campo; só recusar.
  */
 
 export type ComunidadePendente = {
@@ -84,14 +84,16 @@ export function aprovar(id: string): Promise<ResultadoDecisao> {
   return decidir(id, "aprovada");
 }
 
-/** Recusa: mantém fora do site (status), sem apagar. Só a partir de `pendente`. */
-export function recusar(id: string): Promise<ResultadoDecisao> {
-  return decidir(id, "recusada");
+/** Recusa: mantém fora do site (status), sem apagar, gravando o motivo. Só a
+ *  partir de `pendente`. */
+export function recusar(id: string, motivo: string): Promise<ResultadoDecisao> {
+  return decidir(id, "recusada", motivo);
 }
 
 async function decidir(
   id: string,
   novo: "aprovada" | "recusada",
+  motivo?: string,
 ): Promise<ResultadoDecisao> {
   return prisma.$transaction(async (tx) => {
     const atual = await tx.community.findUnique({
@@ -107,7 +109,10 @@ async function decidir(
     // decisões concorrentes → só a primeira muda `count`, a segunda é no-op.
     const r = await tx.community.updateMany({
       where: { id, statusPublicacao: "pendente" },
-      data: { statusPublicacao: novo },
+      data:
+        novo === "recusada"
+          ? { statusPublicacao: "recusada", motivoRecusa: motivo?.trim() || null }
+          : { statusPublicacao: "aprovada" },
     });
     if (r.count === 0) return { ok: false, motivo: "nao-pendente" };
 

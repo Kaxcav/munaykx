@@ -36,7 +36,7 @@ export async function recusarAction(formData: FormData): Promise<void> {
   // é o que a RODADA pede ("recusa leva o motivo"). Sem motivo, não recusa.
   if (!id || !motivo) return;
 
-  const r = await recusar(id);
+  const r = await recusar(id, motivo);
 
   // E-mail SÓ depois do commit da decisão, e nunca trava a resposta
   // (dispararEmail é fire-and-forget que engole erro). Sem organização dona

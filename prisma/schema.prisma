@@ -66,6 +66,12 @@ model Community {
   autorizacaoTexto String?   @map("autorizacao_texto")
   autorizacaoEm    DateTime? @map("autorizacao_em")
 
+  // Motivo da recusa, escrito pelo admin na fila de aprovação (STORY-009,
+  // frente B). Anulável: só a comunidade `recusada` tem. Fica no banco além
+  // de ir no e-mail — pra auditar por que algo foi barrado sem depender da
+  // caixa de e-mail de ninguém. Aprovar não preenche; recusar preenche.
+  motivoRecusa String? @map("motivo_recusa")
+
   // Link de convite pra virar MEMBRO (nunca organizador — poder só entra
   // por convite nominal com aceite). Nulo = comunidade sem link ativo.
   codigoConvite String? @unique @map("codigo_convite")

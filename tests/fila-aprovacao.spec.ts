@@ -100,10 +100,11 @@ test("aprovar abre as portas públicas — a comunidade passa a existir", async 
   expect(noBanco?.statusPublicacao).toBe("aprovada");
 });
 
-test("recusar mantém fora do site e grava o status (não apaga)", async () => {
+test("recusar mantém fora do site, grava o status E o motivo (não apaga)", async () => {
   const org = await pendentePronta("recusa");
+  const MOTIVO = "falta a autorização assinada do responsável pela marca";
 
-  const r = await recusar(org.communityId);
+  const r = await recusar(org.communityId, MOTIVO);
   expect(r.ok).toBe(true);
   if (r.ok) expect(r.destino).toBe(org.email); // notifica o dono da org
 
@@ -113,12 +114,18 @@ test("recusar mantém fora do site e grava o status (não apaga)", async () => {
     org.communitySlug,
   );
 
-  // e a linha CONTINUA no banco, só que recusada — recusar é status, não delete
+  // e a linha CONTINUA no banco, recusada, com o motivo e a autorização — recusar
+  // é status, não delete
   const noBanco = await prisma.community.findUnique({
     where: { id: org.communityId },
-    select: { statusPublicacao: true, autorizacaoTexto: true },
+    select: {
+      statusPublicacao: true,
+      autorizacaoTexto: true,
+      motivoRecusa: true,
+    },
   });
   expect(noBanco?.statusPublicacao).toBe("recusada");
+  expect(noBanco?.motivoRecusa).toBe(MOTIVO); // persistido, não só no e-mail
   expect(noBanco?.autorizacaoTexto).toBe(TEXTO_AUTORIZACAO); // a prova fica
 });
 
@@ -134,7 +141,7 @@ test("a decisão é transacional: só parte de pendente, reprocessar é no-op", 
   if (!segunda.ok) expect(segunda.motivo).toBe("nao-pendente");
 
   // recusar depois de aprovada também é barrado — a comunidade já saiu da fila
-  const tentaRecusar = await recusar(org.communityId);
+  const tentaRecusar = await recusar(org.communityId, "tarde demais");
   expect(tentaRecusar.ok).toBe(false);
 
   // e o estado não regrediu

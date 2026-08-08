@@ -314,6 +314,10 @@ model Membership {
   // Opt-out do aviso de evento novo. Default true (decisão 5): seguir cria
   // expectativa de ser avisado, então o aviso nasce ligado, com descadastro.
   avisarEventos Boolean       @default(true) @map("avisar_eventos")
+  // Teto "1 aviso por comunidade por dia por pessoa". É o gate atômico: um
+  // updateMany condicional em `ultimoAvisoEm` decide quem recebe, então dois
+  // eventos no mesmo dia (mesmo em corrida) só geram UM e-mail por seguidor.
+  ultimoAvisoEm DateTime?     @map("ultimo_aviso_em")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)

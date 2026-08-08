@@ -99,6 +99,52 @@ export async function comunidadesDeUsuario(userId: string): Promise<ComunidadeSe
   }));
 }
 
+/**
+ * SUGESTÃO de seguir (STORY-008, tarefa 8): comunidades onde a pessoa já tem
+ * RSVP ativo mas **não segue**. É sugestão, nunca vínculo automático — seguir
+ * alguém sem pedir destrói confiança. Só comunidades públicas.
+ */
+export async function sugestoesDeSeguir(
+  userId: string,
+): Promise<Array<{ id: string; slug: string; nome: string }>> {
+  const [rsvps, seguidas] = await Promise.all([
+    prisma.rsvp.findMany({
+      where: { userId, canceledAt: null },
+      select: {
+        event: {
+          select: {
+            community: {
+              select: {
+                id: true,
+                slug: true,
+                nome: true,
+                statusPublicacao: true,
+                ativo: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.membership.findMany({ where: { userId }, select: { communityId: true } }),
+  ]);
+
+  const jaSegue = new Set(seguidas.map((m) => m.communityId));
+  const mapa = new Map<string, { id: string; slug: string; nome: string }>();
+  for (const r of rsvps) {
+    const c = r.event.community;
+    if (
+      c.statusPublicacao === "aprovada" &&
+      c.ativo &&
+      !jaSegue.has(c.id) &&
+      !mapa.has(c.id)
+    ) {
+      mapa.set(c.id, { id: c.id, slug: c.slug, nome: c.nome });
+    }
+  }
+  return Array.from(mapa.values());
+}
+
 export type ItemAgenda = {
   eventId: string;
   slug: string;

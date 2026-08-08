@@ -47,6 +47,33 @@ model Community {
   ativo      Boolean  @default(true)
   events     Event[]
 
+  // ── Organização dona (STORY-009) ─────────────────────────────────────
+  // `null` = cadastrada por nós pelo /admin. Continua existindo e sendo
+  // editável só pelo admin interno.
+  organizationId String?       @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  // Default `aprovada` DE PROPÓSITO, não `pendente`: as comunidades que já
+  // estão em produção foram cadastradas por nós e não podem sumir do site
+  // no instante do deploy. Quem nasce pendente é só o que vem pelo painel,
+  // e isso é decidido na aplicação — nunca no default da coluna.
+  statusPublicacao StatusPublicacao @default(aprovada) @map("status_publicacao")
+
+  // A PROVA da regra 3 do projeto: o texto exato que o organizador aceitou
+  // e quando. Não é telemetria — é o documento que autoriza publicar o nome
+  // de um parceiro real. Guardar o texto, e não só um booleano, porque a
+  // redação muda com o tempo e o que vale é a que a pessoa leu.
+  autorizacaoTexto String?   @map("autorizacao_texto")
+  autorizacaoEm    DateTime? @map("autorizacao_em")
+
+  // Link de convite pra virar MEMBRO (nunca organizador — poder só entra
+  // por convite nominal com aceite). Nulo = comunidade sem link ativo.
+  codigoConvite String? @unique @map("codigo_convite")
+
+  membros Membership[]
+
+  @@index([organizationId])
+  @@index([statusPublicacao])
   @@map("communities")
 }
 
@@ -64,6 +91,10 @@ model Event {
   gratuito    Boolean   @default(true)
   demo        Boolean   @default(false)
   ativo       Boolean   @default(true)
+  // Cancelar NÃO apaga: existe gente inscrita, e apagar a linha some com o
+  // histórico dela. Evento cancelado sai da descoberta, avisa os inscritos
+  // por e-mail e não promove ninguém da fila (STORY-009, decisão 7).
+  canceladoEm DateTime? @map("cancelado_em")
   rsvps       Rsvp[]
 
   @@index([communityId])
@@ -93,6 +124,10 @@ model Rsvp {
   // (não no client) pra backfillar linhas existentes na própria migration.
   token      String     @unique @default(dbgenerated("(gen_random_uuid())::text"))
   canceledAt DateTime?  @map("canceled_at")
+  // Check-in do organizador. Marcar duas vezes é o mesmo que marcar uma —
+  // a idempotência mora aqui, não na UI, porque a tela é otimista e a rede
+  // de quadra e parque cai no meio da lista.
+  checkinEm  DateTime?  @map("checkin_em")
 
   @@unique([eventId, email])
   @@index([eventId])
@@ -118,6 +153,11 @@ model User {
   sessions Session[]
   accounts Account[]
   rsvps    Rsvp[]
+  // Onde a pessoa TEM PODER (administra) e onde ela SÓ PERTENCE (segue).
+  // São duas coisas diferentes de propósito — ver o comentário do
+  // Membership lá embaixo.
+  organizacoes OrganizationMember[]
+  memberships  Membership[]
 
   @@map("users")
 }
@@ -171,4 +211,97 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+// ─── ORGANIZAÇÃO (STORY-009 · C4) ──────────────────────────────────────────
+//
+// A distinção que não pode borrar, e que decide a segurança do painel inteiro:
+//
+//   OrganizationMember = QUEM ADMINISTRA. Vê lista de inscritos, edita evento,
+//   marca presença. Entra SÓ por convite nominal com aceite.
+//
+//   Membership         = QUEM SEGUE. Recebe aviso, aparece em "minhas
+//   comunidades". Entra por link aberto, que o organizador joga no grupo.
+//
+// Se um dia link aberto conceder poder administrativo, qualquer pessoa com o
+// link vê nome, e-mail e WhatsApp de gente real. É esse o incidente que a
+// separação evita.
+
+enum StatusPublicacao {
+  pendente
+  aprovada
+  recusada
+}
+
+/// O negócio do parceiro. Fina de propósito (STORY-009, decisão 3): serve
+/// pra agrupar comunidades sob um dono quando o mesmo grupo tiver várias.
+/// Sem CNPJ, sem endereço, sem logo, sem plano — isso é C6 e não tem cliente
+/// pedindo. Existe agora porque separar depois exige migrar dado vivo.
+model Organization {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  nome      String
+  slug      String   @unique
+
+  membros     OrganizationMember[]
+  communities Community[]
+  convites    OrganizationInvite[]
+
+  @@map("organizations")
+}
+
+/// Poder administrativo. Todo membro da organização é organizador — papéis
+/// internos ficaram fora de escopo por não ter demanda.
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now()) @map("created_at")
+  userId         String   @map("user_id")
+  organizationId String   @map("organization_id")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("organization_members")
+}
+
+/// Convite nominal pra virar organizador. Por e-mail e com aceite, nunca por
+/// link aberto: é isto que separa "entrou no grupo" de "pode ver a base de
+/// participantes". Organização real raramente tem uma pessoa só, e sem isto
+/// o painel morre no dia em que o dono tira férias.
+model OrganizationInvite {
+  id             String    @id @default(uuid())
+  createdAt      DateTime  @default(now()) @map("created_at")
+  organizationId String    @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Guardado em minúsculas — o aceite compara com o e-mail da sessão.
+  email          String
+  token          String    @unique
+  expiraEm       DateTime  @map("expira_em")
+  aceitoEm       DateTime? @map("aceito_em")
+  /// Quem convidou, pra auditoria de quem deu poder a quem.
+  convidadoPorId String?   @map("convidado_por_id")
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@map("organization_invites")
+}
+
+/// Pertencimento (STORY-008 · C3): a pessoa segue a comunidade. Sem papel e
+/// sem poder — de propósito. É o que faz "minhas comunidades" e o sinal de
+/// "você e mais 4 pessoas daqui estão nesse evento" existirem sem precisar
+/// de grafo de amizade nenhum.
+model Membership {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @map("created_at")
+  userId      String   @map("user_id")
+  communityId String   @map("community_id")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@index([communityId])
+  @@map("memberships")
 }

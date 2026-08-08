@@ -1,5 +1,16 @@
 import { prisma } from "@/lib/db";
 import type { Community, Event } from "@prisma/client";
+import { PUBLICO } from "@/lib/communities";
+
+/**
+ * Evento só é público se a COMUNIDADE dele for. Sem isto, uma comunidade
+ * `pendente` fica invisível mas os eventos dela aparecem no site e no
+ * sitemap — o portão de aprovação com um buraco do lado.
+ *
+ * `canceladoEm` entra junto nas listagens: evento cancelado sai da descoberta
+ * sem a linha ser apagada, porque tem gente inscrita e o histórico dela vale.
+ */
+const EVENTO_PUBLICO = { community: PUBLICO } as const;
 
 export type EventComCommunity = Event & { community: Community };
 
@@ -8,7 +19,13 @@ export function getUpcomingEventsByCommunity(
   communityId: string,
 ): Promise<Event[]> {
   return prisma.event.findMany({
-    where: { communityId, ativo: true, startsAt: { gte: new Date() } },
+    where: {
+      communityId,
+      ativo: true,
+      canceladoEm: null,
+      startsAt: { gte: new Date() },
+      ...EVENTO_PUBLICO,
+    },
     orderBy: { startsAt: "asc" },
   });
 }
@@ -16,7 +33,12 @@ export function getUpcomingEventsByCommunity(
 /** Todos os próximos eventos ativos — alimenta o sitemap. */
 export function getUpcomingEvents(): Promise<Event[]> {
   return prisma.event.findMany({
-    where: { ativo: true, startsAt: { gte: new Date() } },
+    where: {
+      ativo: true,
+      canceladoEm: null,
+      startsAt: { gte: new Date() },
+      ...EVENTO_PUBLICO,
+    },
     orderBy: { startsAt: "asc" },
   });
 }
@@ -25,7 +47,9 @@ export function getEventBySlug(
   slug: string,
 ): Promise<EventComCommunity | null> {
   return prisma.event.findFirst({
-    where: { slug, ativo: true },
+    // Cancelado NÃO some daqui de propósito: quem tem o link precisa chegar
+    // numa página que explica, não num 404. Some das listagens, não da URL.
+    where: { slug, ativo: true, ...EVENTO_PUBLICO },
     include: { community: true },
   });
 }

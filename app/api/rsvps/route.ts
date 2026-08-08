@@ -73,8 +73,17 @@ export async function POST(req: Request) {
     const resultado = await withSerializableRetry(() =>
       prisma.$transaction(
         async (tx): Promise<Resultado> => {
+          // `canceladoEm` e a comunidade pública entram no MESMO `where` da
+          // transação, não numa checagem antes: inscrição em evento
+          // cancelado, ou em comunidade que ninguém aprovou, é o tipo de
+          // coisa que só aparece quando já tem gente inscrita.
           const evento = await tx.event.findFirst({
-            where: { slug: eventSlug, ativo: true },
+            where: {
+              slug: eventSlug,
+              ativo: true,
+              canceladoEm: null,
+              community: { ativo: true, statusPublicacao: "aprovada" },
+            },
           });
           if (!evento) return { erro: 404 as const };
           if (evento.startsAt < new Date()) return { erro: 410 as const };

@@ -2,6 +2,15 @@ import { test, expect } from "@playwright/test";
 import { hostCanonicoDe } from "@/lib/site";
 
 /**
+ * Espelha o `PORTA` do playwright.config.ts. Sem isto, rodar a suíte numa
+ * worktree paralela (`PW_PORTA=3200`) faz este arquivo falhar afirmando
+ * 3100 — falha de ambiente disfarçada de falha de código, que é o erro que
+ * este mesmo arquivo já cometeu uma vez.
+ */
+const PORTA = process.env.PW_PORTA ?? "3100";
+const HOST = `127.0.0.1:${PORTA}`;
+
+/**
  * Canonicalização de domínio.
  *
  * O que isto protege: o site responde em mais de um endereço (domínio próprio
@@ -18,13 +27,13 @@ import { hostCanonicoDe } from "@/lib/site";
 test("no host canônico, nada é redirecionado", async ({ page }) => {
   const resp = await page.goto("/comunidades");
   expect(resp?.status()).toBe(200);
-  expect(new URL(page.url()).host).toBe("127.0.0.1:3100");
+  expect(new URL(page.url()).host).toBe(HOST);
 });
 
 test("host de desenvolvimento nunca é redirecionado", async ({ request }) => {
   // Se o middleware redirecionasse localhost, o dev local viraria inutilizável.
   const resp = await request.get("/comunidades", {
-    headers: { host: "localhost:3100" },
+    headers: { host: `localhost:${PORTA}` },
     maxRedirects: 0,
     failOnStatusCode: false,
   });

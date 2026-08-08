@@ -5,6 +5,27 @@ import { REGIAO_OUTRA, REGIOES_DF } from "@/lib/regioes";
 /** Cidade padrão da descoberta enquanto não existe seletor na UI (Blueprint C1). */
 export const CIDADE_PADRAO = "Brasília";
 
+/**
+ * O QUE É PÚBLICO. Toda consulta que alimenta o site aberto espalha isto.
+ *
+ * São dois interruptores diferentes, e confundir os dois é o bug:
+ *
+ * - `ativo` é do **organizador** — ele pausa a própria comunidade quando o
+ *   grupo entra em recesso.
+ * - `statusPublicacao` é da **MUNAY** — é o portão de aprovação. Comunidade
+ *   que chegou pelo painel nasce `pendente` e não existe pro mundo até
+ *   alguém aqui olhar.
+ *
+ * Mora numa constante só porque a falha aqui é silenciosa: basta UMA consulta
+ * pública esquecer `statusPublicacao` pra comunidade não aprovada aparecer no
+ * site — e o portão inteiro deixa de valer sem ninguém perceber. Há teste de
+ * comportamento pra isso em tests/aprovacao.spec.ts, não de gosto.
+ */
+export const PUBLICO = {
+  ativo: true,
+  statusPublicacao: "aprovada",
+} as const;
+
 export type CommunityFilters = {
   modalidade?: string;
   regiao?: string;
@@ -17,7 +38,7 @@ export function getCommunities(
 ): Promise<Community[]> {
   return prisma.community.findMany({
     where: {
-      ativo: true,
+      ...PUBLICO,
       city: filters.city ?? CIDADE_PADRAO,
       ...(filters.modalidade ? { modalidade: filters.modalidade } : {}),
       ...(filters.regiao ? { regiao: filters.regiao } : {}),
@@ -28,7 +49,7 @@ export function getCommunities(
 
 export function getCommunityBySlug(slug: string): Promise<Community | null> {
   return prisma.community.findFirst({
-    where: { slug, ativo: true },
+    where: { slug, ...PUBLICO },
   });
 }
 
@@ -46,13 +67,13 @@ export async function getCommunityFacets(
 }> {
   const [modalidades, regioesDb] = await Promise.all([
     prisma.community.findMany({
-      where: { ativo: true, city },
+      where: { ...PUBLICO, city },
       distinct: ["modalidade"],
       select: { modalidade: true },
       orderBy: { modalidade: "asc" },
     }),
     prisma.community.findMany({
-      where: { ativo: true, city },
+      where: { ...PUBLICO, city },
       distinct: ["regiao"],
       select: { regiao: true },
     }),

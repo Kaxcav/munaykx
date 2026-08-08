@@ -186,50 +186,116 @@ type 'typeof Prisma'`. Por isso existe o script `postinstall`: o
 dia o erro voltar, é sinal de que o postinstall não rodou —
 `npx prisma generate` resolve na hora. (Aprendido em 06/08.)
 
-## Agora (ONDA 0 fechada — atualizado 06/08, noite)
+## Trabalhar em paralelo (várias janelas)
 
-**ONDA 0 inteira está escrita.** Em produção: STORY-003 (cancelamento +
-promoção via token), STORY-005 (admin interno + 35 RAs + city) e
-STORY-006 (OG, Umami, `/privacidade`, `lib/regioes.ts`). Em branch,
-buildando limpo, esperando push/merge do Kaxcav:
+Dá, e o repo já tem worktrees (`git worktree list`). O que NÃO dá é duas
+janelas na mesma pasta — foi assim que o `index.lock` travou o repo em 06/08
+e que dois `npm ci` simultâneos comeram o `node_modules` em 07/08.
 
-- **STORY-007 · auth por magic link** (`feat/auth-magic-link`) — Better
-  Auth 1.6.26 **pinada exata**, só 2 plugins (magicLink + nextCookies,
-  este SEMPRE por último), sessão em banco, `storeToken: "hashed"`, página
-  intermediária `/entrar/confirmar` porque scanner corporativo (SafeLinks,
-  gateway .gov.br) faz GET preventivo e queimaria o token. Sem
-  `BETTER_AUTH_SECRET` a auth responde 503 em vez de cair no segredo
-  default público — mesma regra do "nunca existe senha default" do /admin.
-- **STORY-004 · e-mail transacional** — **desbloqueada**: a premissa "só
-  com domínio" caiu. O adapter fala SMTP ou Resend e `EMAIL_FROM` vem de
-  env, então domínio próprio vira troca de variável. Fecha o buraco maior
-  do produto: quem era promovido da fila **não era avisado por ninguém**.
-- **Melhorias do /admin** — paginação (50/página), busca por nome/e-mail,
-  período de 7/30 dias, dropdown de eventos, "ver no site". CSV exporta o
-  recorte inteiro, **nunca só a página**.
-- **SEO programático** — `/descobrir/[recorte]` (ver seção de stack).
-- **ESLint** configurado; o `npm run build` reprova erro de lint de fato.
+Uma janela = um worktree = uma branch = um banco = uma porta:
 
-O que resta, e não é código:
+```powershell
+git worktree add ..\munay-B feat/outra-coisa
+cd ..\munay-B
+Copy-Item ..\munay-site\.env .env          # cada worktree tem o seu
+npm ci                                      # node_modules é por pasta
+docker exec munay-site-db-1 psql -U munay -d munay -c "CREATE DATABASE munay_b"
+# no .env do worktree: DATABASE_URL=...localhost:5434/munay_b
+npx prisma migrate deploy
+$env:PW_PORTA='3200'                        # senão as duas suítes brigam
+```
 
-1. **Kaxcav**: push/merge das branches; no Railway, setar
-   `BETTER_AUTH_SECRET`, `EMAIL_PROVIDER`, `SMTP_URL`/`RESEND_API_KEY` e
-   `EMAIL_FROM`; **rotar a senha do Postgres** (vazou em chat); criar o
-   serviço Umami (+ `NEXT_PUBLIC_UMAMI_*`); apagar por SQL os 4 registros
-   de teste que sobraram em produção.
-2. **Decisões do PO** (Blueprint §7): domínio, paleta (0.3), ratificar
-   "cancelou → fim da fila" (desvio 3 da 003), limpeza de memória (0.2).
-3. **Operação**: cadastrar parceiros reais pelo `/admin` — só com
-   autorização assinada (regra 3).
-4. **ONDA 1 — specs escritas em 06/08**: `docs/stories/STORY-008`
-   (pertencimento C3), `STORY-009` (painel do organizador C4) e
-   `STORY-010` (conteúdo C5). **São specs: a execução é ONDA 2**, depois
-   do resultado do edital (15/10) — construir antes queima orçamento não
-   reembolsável. C2 (auth) saiu na frente por decisão do tech lead:
-   **desvio confessado**, registrado aqui e no Master Plan.
-   Três decisões dessas specs esperam ratificação do PO (Blueprint §7):
-   Reviews fora da primeira leva, `Favorite` fundido em `Membership`, e
-   conteúdo começando só por feed de avisos.
+**Por que porta separada não é frescura:** com a porta fixa, a segunda suíte
+acha a 3100 ocupada e — por causa de `reuseExistingServer` — reaproveita o
+servidor da OUTRA branch. Verde contra código que não é o seu.
 
-Anti-meta: nenhuma feature nova fora disso antes da Etapa 2 (03/09);
-construção pesada é pós-resultado (15/10), como escopo financiável.
+**Por que banco separado:** os fixtures apagam tudo que começa com `zzt-` no
+`beforeAll`. Duas suítes no mesmo banco se apagam no meio.
+
+**O que continua sendo de UM só:** `git push`, merge na `main`, e a migration.
+Duas migrations criadas em paralelo colidem no histórico do Prisma e a segunda
+só falha no deploy. Quem for mexer em `schema.prisma` avisa antes.
+
+**Como dividir sem colisão:** paralelize por PASTA, não por intenção. Duas
+janelas em `app/painel/` e `app/admin/` convivem; duas janelas em
+`lib/organizacao.ts` não. Arquivos-gargalo hoje: `lib/organizacao.ts`,
+`prisma/schema.prisma`, `tests/fixtures.ts`, `CLAUDE.md`.
+
+## Armadilhas que já custaram tempo (não repita)
+
+**Verde por acidente de ambiente é pior que vermelho.** Dois casos em 07/08:
+um teste que passava só porque a máquina não tinha uma env que o CI tem, e
+outro que dependia do `prisma db seed`, que o CI não roda. Antes de confiar
+num verde, reproduza a condição do CI: banco NOVO e vazio e as variáveis do
+job. Receita: `CREATE DATABASE munay_ci` → `migrate deploy` sem seed →
+`DATABASE_URL` apontando pra ele.
+
+**Teste que nunca falhou não é teste.** Ao escrever guarda de segurança,
+quebre a guarda de propósito e confirme que o teste fica vermelho. Foi assim
+que os testes de escopo do painel foram validados.
+
+**Função com parâmetro default que lê env não é testável.** `f(bruto =
+process.env.X)` chamada como `f(undefined)` lê a env do mesmo jeito. Separe a
+parte pura (`fDe(valor)`) de quem lê o ambiente (`f()`).
+
+**`prisma migrate dev` é interativo** e falha em terminal sem TTY. Caminho
+não-interativo: `prisma migrate diff --from-schema-datasource
+prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script`
+dentro de `prisma/migrations/<timestamp>_<nome>/migration.sql`, depois
+`migrate deploy`. **Cuidado com BOM:** `Set-Content -Encoding UTF8` do
+PowerShell 5 grava BOM e o Postgres devolve `syntax error at or near "﻿"`.
+Use `[System.IO.File]::WriteAllText($p, $t, (New-Object System.Text.UTF8Encoding $false))`.
+
+**Antes de qualquer migration, confira pra onde a `DATABASE_URL` aponta.**
+Near-miss em 06/08: o env do PowerShell apontava pra produção.
+
+## Agora (atualizado 07/08, madrugada)
+
+**Tudo que existia em branch foi mergeado. `main` = `57ded3f`, e o CI ficou
+verde pela primeira vez.** Em produção: ONDA 0 completa + auth por magic
+link + e-mail transacional + `/admin` com shadcn/ui + `/mapa` + domínio
+canônico.
+
+Estado verificado (não de memória):
+
+- **E-mail está em PRODUÇÃO.** `sejamunay.com.br` verificado na Resend,
+  envio habilitado, remetente `ola@sejamunay.com.br`. Mas **só 1 e-mail
+  saiu da conta inteira** — falta a prova prática com destinatário que não
+  seja o dono.
+- **O domínio NÃO recebe e-mail**: não existe registro MX. O endereço do
+  rodapé e da política de privacidade devolve bounce. Pendência do Kaxcav.
+- **Produção não tem NENHUMA comunidade.** O site está no ar, testado e
+  vazio. `/comunidades` responde "nada por aqui" e o `/mapa` mostra 35 de
+  35 regiões sem ninguém. Decisão do PO: rodar o seed demo ou esperar
+  organizador real.
+- **Senha do Postgres continua a que vazou em chat.** Sem rotação.
+
+Em andamento, branch `feat/painel-organizador` (2 commits, 94 testes verdes):
+a fundação da **STORY-009** — `Organization`, `OrganizationMember`,
+`Membership`, `OrganizationInvite`, `statusPublicacao` e `lib/organizacao.ts`
+com o filtro de dono. Mais o portão de aprovação fechado nas seis consultas
+públicas. **Decisão do tech lead em 07/08: organização se cadastra sozinha,
+com aprovação e edição do admin.**
+
+Falta da 009 (é daqui que a próxima rodada começa):
+
+1. Formulário de cadastro de comunidade com o **checkbox de autorização**
+   (grava texto e timestamp — é a prova da regra 3), nascendo `pendente`.
+2. `/painel` — comunidades da organização, edição, quem não é organizador
+   de nada vê convite pra cadastrar, não erro.
+3. Fila de aprovação no `/admin` — aprovar, recusar com motivo, ver o texto
+   aceito. Recusa avisa por e-mail.
+4. CRUD de evento no painel reusando `eventAdminSchema` (sem duplicar regra)
+   e cancelamento como status, com e-mail pros inscritos.
+5. Inscritos por evento + check-in + **CSV por evento, nunca global**.
+6. Convites: **link aberto vira MEMBRO** (`Membership`), **convite nominal
+   por e-mail vira ORGANIZADOR** (`OrganizationInvite`). Não borrar os dois.
+
+**Desvio confessado (regra 6):** as STORY-008 e 009 dizem que a execução é
+ONDA 2, pós-15/10, porque construir antes queima orçamento não reembolsável.
+Foi antecipada por decisão do tech lead em 07/08, com justificativa: a regra
+foi escrita supondo que o site teria conteúdo, e ele não tem — e sem
+autosserviço o conteúdo depende do Kaxcav digitar.
+
+Anti-meta continua valendo pro resto: nada de app mobile, checkout, ingresso
+ou `Friendship` antes do resultado do edital.

@@ -3,6 +3,7 @@ import path from "node:path";
 import { test, expect } from "@playwright/test";
 import {
   IDADE_MINIMA,
+  POLITICA_VERSAO,
   dataParaBanco,
   erroDeCoerencia,
   formatarCep,
@@ -319,5 +320,85 @@ test.describe("perguntas leves", () => {
   test("resposta longa é truncada, não rejeitada", () => {
     const limpo = sanitizarRespostas({ [PERGUNTAS[0].id]: "y".repeat(500) });
     expect(limpo[PERGUNTAS[0].id].length).toBe(200);
+  });
+});
+
+/**
+ * Redesign da tela de consentimento (09/08) — conversão SEM dark pattern.
+ *
+ * O objetivo do dono é clique legítimo nos opt-ins #2 (recomendações) e #3
+ * (estatísticas). O que a LGPD invalida — e o que reprova num edital — é o
+ * atalho: caixa pré-marcada, "aceitar tudo", copy que empurra. Estes testes
+ * travam justamente o que NÃO pode existir, além de provar que a mudança foi
+ * só de UI/copy: o opt-in nasce desligado e o vínculo com a versão da política
+ * continua intacto. São estruturais de propósito — a suíte roda sem sessão
+ * (auth off), então o comportamento logado do formulário não é exercitável por
+ * browser aqui; o que dá pra garantir é a régua no schema + no código servido.
+ */
+test.describe("consentimento — conversão sem dark pattern (redesign 09/08)", () => {
+  const lerServido = (rel: string) =>
+    fs.readFileSync(path.join(__dirname, "..", ...rel.split("/")), "utf8");
+
+  test("opt-ins nascem DESLIGADOS — o schema não liga #2/#3 sozinho", () => {
+    // Sem a pessoa marcar, recomendação e insights são FALSE. Trocar o
+    // .default(false) por .default(true) deixa este teste vermelho.
+    const r = perfilSchema.parse({ nome: "Ana", consentiuCadastro: true });
+    expect(r.consentiuRecomendacao).toBe(false);
+    expect(r.consentiuInsights).toBe(false);
+  });
+
+  test("a página deriva o opt-in da DATA (!== null), não de um default ligado", () => {
+    const page = lerServido("app/perfil/page.tsx");
+    // Usuário novo tem consentimento NULL → booleano vira false → chave desligada.
+    expect(page).toContain(
+      "consentiuRecomendacao: usuario.consentiuRecomendacao !== null",
+    );
+    expect(page).toContain(
+      "consentiuInsights: usuario.consentiuInsights !== null",
+    );
+  });
+
+  test("o vínculo com a versão da política fica intacto ao salvar", () => {
+    const actions = lerServido("app/perfil/actions.ts");
+    // A action carimba a versão da política no aceite...
+    expect(actions).toContain("politicaVersao: POLITICA_VERSAO");
+    // ...e preserva a DATA original (carimbo só quando LIGA) — regravar apagaria
+    // "desde quando", que é o que se prova numa fiscalização.
+    expect(actions).toMatch(/consentiuRecomendacao:\s*carimbo\(/);
+    expect(actions).toMatch(/consentiuInsights:\s*carimbo\(/);
+  });
+
+  test("POLITICA_VERSAO existe e é uma data ISO (o aceite guarda a versão)", () => {
+    expect(POLITICA_VERSAO).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  test("a UI não tem dark pattern: nada pré-marcado, nenhum 'aceitar tudo'", () => {
+    const form = lerServido("components/perfil/PerfilForm.tsx");
+    // Nenhuma chave nasce ligada por markup.
+    expect(form).not.toContain("defaultChecked");
+    expect(form).not.toMatch(/checked=\{\s*true\s*\}/);
+    // Nenhum atalho que ligue os três de uma vez (o vetor clássico de dark pattern).
+    expect(form).not.toMatch(/aceitar tudo|marcar todos|selecionar todos|ligar todos/i);
+    // As três chaves seguem presas ao ESTADO (vindo do servidor), não a um literal.
+    expect(form).toContain("marcado={dados.consentiuCadastro}");
+    expect(form).toContain("marcado={dados.consentiuRecomendacao}");
+    expect(form).toContain("marcado={dados.consentiuInsights}");
+  });
+
+  test("é toggle acessível (role=switch) e 'recomendado' está só no opt-in que beneficia a pessoa", () => {
+    const form = lerServido("components/perfil/PerfilForm.tsx");
+    expect(form).toContain('role="switch"');
+    // Exatamente UM consentimento tem nivel="recomendado" (o #2). Marcar o #3
+    // como recomendado seria empurrar coleta que não beneficia a pessoa.
+    expect((form.match(/nivel="recomendado"/g) ?? []).length).toBe(1);
+  });
+
+  test("a copy fala por BENEFÍCIO, não por obrigação jurídica", () => {
+    const form = lerServido("components/perfil/PerfilForm.tsx");
+    // #2: o ganho é da pessoa.
+    expect(form).toContain("combina com você");
+    // #3: convite + garantia de anonimato, não juridiquês.
+    expect(form).toContain("cena de Brasília");
+    expect(form).toMatch(/sem nome, sem e-mail/i);
   });
 });

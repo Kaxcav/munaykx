@@ -27,12 +27,20 @@ export default async function AdminComunidadesPage() {
             Comunidades
           </h1>
         </div>
-        <Link
-          href="/admin/comunidades/nova"
-          className={buttonVariants()}
-        >
-          + Nova comunidade
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/comunidades/assistido"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Colar texto (IA)
+          </Link>
+          <Link
+            href="/admin/comunidades/nova"
+            className={buttonVariants()}
+          >
+            + Nova comunidade
+          </Link>
+        </div>
       </div>
 
       {comunidades.length === 0 ? (

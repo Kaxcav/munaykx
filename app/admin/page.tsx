@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { desdeQuando } from "@/lib/admin-lista";
 import { statusEmail } from "@/lib/email";
 import { Card } from "@/components/ui/card";
+import { resumoBuscas } from "@/lib/ai/registro";
 import { CardNumero } from "@/components/ui/card";
 
 /** Dashboard de operação: os números que o time consulta toda semana. */
@@ -34,6 +35,11 @@ export default async function AdminDashboardPage() {
       where: { createdAt: { gte: seteDias }, canceledAt: null },
     }),
   ]);
+
+  // Registro anônimo de buscas: só NÚMEROS. O texto buscado nunca aparece
+  // aqui — pode conter desabafo, e exibir busca individual é exatamente o que
+  // a sensibilidade do campo proíbe.
+  const buscas = await resumoBuscas();
 
   const leads = Object.fromEntries(
     leadsPorTipo.map((l) => [l.tipo, l._count._all]),
@@ -135,6 +141,29 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
+      <section className="mt-8">
+        <h2 className="font-display text-lg font-bold">O que a cidade procura</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Registro <strong>anônimo</strong> das buscas — sem conta, sem IP, sem
+          sessão. Só a contagem aparece aqui: o texto buscado pode conter
+          desabafo e nunca é exibido individualmente.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <CardNumero rotulo="Buscas registradas" valor={buscas.total} />
+          <CardNumero rotulo="Últimos 30 dias" valor={buscas.ultimos30} />
+          <CardNumero
+            rotulo="Sem nada a oferecer (30d)"
+            valor={buscas.semResultado30}
+            destaque={buscas.semResultado30 > 0}
+            nota={
+              buscas.semResultado30 > 0
+                ? "demanda existindo sem oferta"
+                : undefined
+            }
+          />
+        </div>
+      </section>
+
       <p className="mt-8 font-mono text-xs text-muted-foreground">
         Leads é a métrica dos 500 do edital. Contagens direto do banco, sem
         cache. Os recortes de 7 dias contam a partir de agora, não do domingo.

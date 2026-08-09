@@ -1,6 +1,7 @@
 import { getCommunityFacets } from "@/lib/communities";
 import { iaDisponivel, interpretarBusca } from "@/lib/ia";
 import { recomendar } from "@/lib/ai/recomendacao";
+import { registrarBusca } from "@/lib/ai/registro";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,23 @@ export async function POST(req: Request) {
       interpretarBusca(texto, facetas, ip),
       recomendar(texto, ip),
     ]);
+
+    // REGISTRO ANÔNIMO — grava o que a cidade procura, sem quem procurou.
+    // Repare no que NÃO é passado: nem `ip`, nem sessão, nem nada de
+    // identidade. O `ip` acima existe só pro teto de custo e morre aqui.
+    // Fire-and-forget: não atrasa a resposta e não pode derrubá-la.
+    registrarBusca({
+      texto,
+      modalidade: resultado?.modalidade ?? null,
+      regiao: resultado?.regiao ?? null,
+      // Só é "teve resultado" quando havia comunidade de verdade pra oferecer
+      // ou um filtro que leva a alguma. `false` é o registro mais valioso do
+      // conjunto: é demanda existindo sem oferta.
+      teveResultado:
+        (descoberta?.recomendacoes.length ?? 0) > 0 ||
+        Boolean(resultado?.modalidade) ||
+        Boolean(resultado?.regiao),
+    });
 
     // `null` não é erro: é "não deu pra interpretar com confiança". A UI
     // cai no filtro normal, que sempre funciona.

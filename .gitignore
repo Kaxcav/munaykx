@@ -43,3 +43,6 @@ Thumbs.db
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Reivindicacao de worktree (scripts/preflight.mjs) - local, nunca versionado
+.operacao-lock.json

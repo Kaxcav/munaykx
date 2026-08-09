@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCommunityBySlug } from "@/lib/communities";
@@ -8,6 +8,11 @@ import {
   formatarDataEvento,
   getUpcomingEventsByCommunity,
 } from "@/lib/events";
+import { sessaoAtual } from "@/lib/sessao";
+import { segue, seguir } from "@/lib/membership";
+import { avisosDaComunidade } from "@/lib/posts";
+import FeedAvisos from "@/components/FeedAvisos";
+import { seguirAction, deixarDeSeguirAction } from "./seguir-actions";
 
 // Detalhe vem do banco a cada request — nada de pré-render no build.
 export const dynamic = "force-dynamic";
@@ -16,24 +21,54 @@ type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Params;
+  searchParams: Promise<{ avisos?: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
   const comunidade = await getCommunityBySlug(slug).catch(() => null);
   if (!comunidade) return { title: "Comunidade não encontrada" };
+
+  // Página 2+ do feed sai NOINDEX (STORY-010, decisão 7). Aviso é conteúdo
+  // curto, situacional e efêmero — indexar isso em massa é o padrão que
+  // derruba domínio, o mesmo motivo pelo qual `lib/descoberta.ts` recusa
+  // recorte sem dado. A página 1 continua indexável: ela é a comunidade.
+  const { avisos } = await searchParams;
+  const paginado = Number(avisos ?? "1") > 1;
+
   return {
     title: comunidade.nome,
     description: `${comunidade.nome} — ${comunidade.modalidade} · ${comunidade.regiao}, Brasília.`,
+    ...(paginado ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
-export default async function ComunidadePage({ params }: { params: Params }) {
+export default async function ComunidadePage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: Promise<{ seguir?: string; avisos?: string }>;
+}) {
   const { slug } = await params;
   const c = await getCommunityBySlug(slug);
   if (!c) notFound();
 
+  const sessao = await sessaoAtual();
+  const { seguir: querSeguir, avisos: paginaAvisos } = await searchParams;
+  // Continuação pós-login: voltou do /entrar com ?seguir=1 → completa e limpa
+  // a query (one-shot; `seguir` é idempotente).
+  if (sessao && querSeguir === "1") {
+    await seguir(sessao.user.id, c.id);
+    redirect(`/comunidades/${slug}`);
+  }
+  const jaSegue = sessao ? await segue(sessao.user.id, c.id) : false;
+
   const eventos = await getUpcomingEventsByCommunity(c.id);
+  const feed = await avisosDaComunidade(c.id, {
+    pagina: Number(paginaAvisos ?? "1") || 1,
+  });
 
   const detalhes: Array<{ rotulo: string; valor: string }> = [
     { rotulo: "Modalidade", valor: c.modalidade },
@@ -65,6 +100,43 @@ export default async function ComunidadePage({ params }: { params: Params }) {
         <h1 className="mt-3 max-w-2xl font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
           {c.nome}
         </h1>
+
+        <div className="mt-6">
+          {jaSegue ? (
+            <form
+              action={deixarDeSeguirAction}
+              className="inline-flex flex-wrap items-center gap-3"
+            >
+              <input type="hidden" name="slug" value={c.slug} />
+              <span className="rounded-full border border-petroleo/20 bg-white/70 px-4 py-2 text-sm font-semibold">
+                Seguindo ✓
+              </span>
+              <button
+                type="submit"
+                className="text-sm text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+              >
+                Deixar de seguir
+              </button>
+            </form>
+          ) : (
+            <form action={seguirAction}>
+              <input type="hidden" name="slug" value={c.slug} />
+              <button
+                type="submit"
+                className="rounded-full bg-petroleo px-6 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+              >
+                Seguir comunidade
+              </button>
+            </form>
+          )}
+          <p className="mt-2 text-xs text-petroleo/50">
+            Seguindo, esta comunidade entra na sua{" "}
+            <Link href="/agenda" className="underline underline-offset-4">
+              agenda
+            </Link>{" "}
+            e você é avisado de eventos novos.
+          </p>
+        </div>
 
         {c.descricao && (
           <p className="mt-6 max-w-2xl text-lg text-petroleo/80">{c.descricao}</p>
@@ -114,6 +186,13 @@ export default async function ComunidadePage({ params }: { params: Params }) {
             </div>
           </section>
         )}
+
+        <FeedAvisos
+          avisos={feed.avisos}
+          slug={c.slug}
+          pagina={feed.pagina}
+          temMais={feed.temMais}
+        />
 
         <div className="mt-12">
           <Link

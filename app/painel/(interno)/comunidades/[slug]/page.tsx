@@ -115,6 +115,23 @@ export default async function GerenciarComunidade({
         </Link>
       </div>
 
+      {/* Frente D: link aberto — concede seguir, nunca poder. */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
+        <div>
+          <p className="font-display text-lg font-bold">Link de convite</p>
+          <p className="mt-1 text-sm text-petroleo/70">
+            Um link pro grupo de WhatsApp. Quem abrir passa a seguir — não vira
+            organizador nem vê inscritos.
+          </p>
+        </div>
+        <Link
+          href={`/painel/comunidades/${encodeURIComponent(com.slug)}/convite`}
+          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
+        >
+          {com.codigoConvite ? "Ver o link →" : "Criar link →"}
+        </Link>
+      </div>
+
       <div className="mt-12 flex items-center justify-between">
         <h2 className="font-display text-2xl font-bold">Eventos</h2>
         <Link

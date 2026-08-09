@@ -12,6 +12,8 @@
  * "Exportar" quer o recorte inteiro, não os 50 que estão na tela.
  */
 
+import { semNul } from "@/lib/entrada";
+
 export const POR_PAGINA = 50;
 
 /** Períodos oferecidos. `null` = desde sempre. */
@@ -35,7 +37,9 @@ export function parsePeriodo(valor: string | undefined): Periodo | undefined {
 
 /** Termo de busca limpo, ou undefined. Corta em 80 pra não virar vetor de carga. */
 export function parseBusca(valor: string | undefined): string | undefined {
-  const termo = valor?.trim().slice(0, 80);
+  // `semNul` antes do corte: a busca do /admin também vai parar num `contains`
+  // do Prisma, e NUL ali derruba a listagem inteira (ver lib/entrada.ts).
+  const termo = semNul(valor)?.trim().slice(0, 80);
   return termo ? termo : undefined;
 }
 

@@ -107,6 +107,16 @@ export async function comunidadePorCodigo(
   // `codigoConvite` é "" — e `findFirst` devolveria a primeira delas.
   if (!limpo) return null;
 
+  // Só o alfabeto que `novoCodigo()` produz (base64url) chega ao banco.
+  //
+  // Não é preciosismo: `/c/%00` derrubava a rota com **500**. O Postgres
+  // recusa NUL em texto, o Prisma lança, e o erro sobe até virar página de
+  // erro — num endereço que qualquer um alcança sem login. Validar contra o
+  // alfabeto do gerador mata essa classe inteira de entrada de uma vez, em
+  // vez de caçar caractere problemático um a um: o que não pode ser um código
+  // nosso nem chega a virar query.
+  if (!/^[A-Za-z0-9_-]+$/.test(limpo)) return null;
+
   return prisma.community.findFirst({
     where: { codigoConvite: limpo, ...PUBLICO },
     select: { id: true, slug: true, nome: true, modalidade: true, regiao: true },

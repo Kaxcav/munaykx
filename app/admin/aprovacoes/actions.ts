@@ -26,6 +26,10 @@ export async function aprovarAction(formData: FormData): Promise<void> {
   // Publicar muda o que o site aberto mostra: revalida a descoberta.
   revalidatePath("/admin/aprovacoes");
   revalidatePath("/comunidades");
+  // A HOME também: `components/Vitrine.tsx` lista comunidades do banco numa
+  // página com ISR. Sem esta linha, a comunidade recém-aprovada só apareceria
+  // quando o cache expirasse — bug latente que a Onda 1 fecha.
+  revalidatePath("/");
 }
 
 export async function recusarAction(formData: FormData): Promise<void> {
@@ -49,4 +53,8 @@ export async function recusarAction(formData: FormData): Promise<void> {
 
   revalidatePath("/admin/aprovacoes");
   revalidatePath("/comunidades");
+  // A HOME também: `components/Vitrine.tsx` lista comunidades do banco numa
+  // página com ISR. Sem esta linha, a comunidade recém-aprovada só apareceria
+  // quando o cache expirasse — bug latente que a Onda 1 fecha.
+  revalidatePath("/");
 }

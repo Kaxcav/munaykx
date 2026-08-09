@@ -83,10 +83,75 @@ model Community {
 
   membros Membership[]
   posts   Post[]
+  // O eixo de tempo (FASE 0 do mapa). `horarios` acima continua sendo o texto
+  // livre que a pessoa escreve e o site mostra; ISTO é a versão consultável.
+  // Os dois convivem de propósito — ver `lib/horarios.ts`.
+  horariosRecorrentes HorarioRecorrente[]
 
   @@index([organizationId])
   @@index([statusPublicacao])
   @@map("communities")
+}
+
+/**
+ * HORÁRIO RECORRENTE — o destravador do eixo de tempo (FASE 0 do mapa).
+ *
+ * O PROBLEMA: `Community.horarios` é texto livre ("toda terça e quinta, 6h15").
+ * Texto não se consulta. Não dá pra perguntar ao banco "o que está ativo terça
+ * às 6h" — e essa pergunta é o diferencial do produto. Esta tabela existe para
+ * tornar a recorrência CONSULTÁVEL, e é a razão de a Fase 0 vir antes de
+ * qualquer mapa cartográfico.
+ *
+ * O texto livre NÃO foi removido e não deve ser: ele carrega nuance que
+ * nenhum campo estruturado carrega ("6h15, exceto feriado, ponto de encontro no
+ * portão 3"). O estruturado alimenta o mapa; o texto continua sendo o que a
+ * pessoa lê. Comunidade sem horário estruturado simplesmente não responde ao
+ * scrubber — degrada, não quebra.
+ *
+ * MINUTOS, e não "hora": 6h15 é o horário real de treino de corrida. Guardar
+ * hora inteira perderia o dado logo no caso mais comum. Minutos desde 00:00
+ * (6h15 = 375) comparam com `>=`/`<=` sem parsing e indexam como inteiro.
+ *
+ * SEM lat/lng DE PROPÓSITO (Fase 1, atrás de decisão de privacidade): o mapa
+ * da Fase 0 acende REGIÃO, nunca ponto. É isso que zera o risco de expor "onde
+ * tem gente treinando sozinha às 6h" — o filtro que a própria Strava se recusou
+ * a entregar. Ver PESQUISA-MAPA-MUNAY.md §H.
+ */
+model HorarioRecorrente {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  communityId String    @map("community_id")
+  // Cascade: horário sem comunidade não significa nada. Apagou a comunidade,
+  // os horários vão junto — nada de linha órfã acendendo o mapa.
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  /// 0=domingo … 6=sábado. Mesma convenção do `Date.getDay()` do JS, pra não
+  /// precisar de tradução na fronteira (que é onde erro de fuso nasce).
+  diaSemana Int @map("dia_semana")
+
+  /// Minutos desde 00:00 (6h15 = 375).
+  minutoInicio Int @map("minuto_inicio")
+
+  /// Fim, também em minutos. Anulável: muita comunidade sabe a hora que começa
+  /// e não a que termina. `null` → o cálculo assume a duração padrão
+  /// (`DURACAO_PADRAO_MIN` em `lib/horarios.ts`), em vez de sumir do mapa.
+  minutoFim Int? @map("minuto_fim")
+
+  /// RA da OCORRÊNCIA, quando ela difere da RA da comunidade (grupo itinerante
+  /// que treina no Parque da Cidade na terça e no Guará no sábado). `null` = usa
+  /// a região da comunidade, que é o caso comum. Nasce anulável para NÃO
+  /// duplicar o dado da `Community` por padrão — duas cópias divergem em
+  /// silêncio, e a que estivesse errada acenderia a RA errada no mapa.
+  regiao String?
+
+  /// Pausar o horário sem perder o registro (recesso, obra na quadra). Igual ao
+  /// `ativo` da comunidade: é do organizador, não da MUNAY.
+  ativo Boolean @default(true)
+
+  // O índice do eixo de tempo: a consulta central é sempre por (dia, minuto).
+  @@index([diaSemana, minutoInicio])
+  @@index([communityId])
+  @@map("horarios_recorrentes")
 }
 
 model Event {

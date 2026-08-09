@@ -118,12 +118,31 @@ export function formatarDataAdmin(data: Date): string {
  * CSV com ";" e CRLF — o Excel pt-BR abre direto (vírgula viraria coluna
  * única). Quem consome adiciona o BOM ﻿ na resposta.
  */
+/**
+ * Caracteres que fazem Excel e LibreOffice tratarem a célula como FÓRMULA.
+ *
+ * Isto é a defesa contra CSV injection, e o cenário não é hipotético: o campo
+ * `nome` do RSVP é preenchido por qualquer visitante, **sem conta**, e vai
+ * direto pro CSV que o organizador baixa e abre. Um nome como
+ * `=HYPERLINK("http://sitedele","clique")` — ou pior, `=cmd|'/c calc'!A0` —
+ * executa na máquina de quem abre, não na nossa. A vítima é justamente o
+ * parceiro real que a MUNAY acabou de trazer.
+ *
+ * `-` entra na lista porque `-1+1` também é fórmula; número negativo legítimo
+ * vira texto no Excel, que é o preço aceito pra não executar nada.
+ */
+const PREFIXO_DE_FORMULA = /^[=+\-@\t\r]/;
+
 export function toCsv(
   header: string[],
   rows: (string | number | boolean | null | undefined)[][],
 ): string {
   const esc = (v: string | number | boolean | null | undefined) => {
-    const s = v == null ? "" : String(v);
+    const bruto = v == null ? "" : String(v);
+    // Apóstrofo à frente: o Excel/LibreOffice lê como "isto é texto" e não
+    // mostra o caractere. Neutraliza na ORIGEM em vez de confiar em aviso de
+    // planilha, que a pessoa clica sem ler.
+    const s = PREFIXO_DE_FORMULA.test(bruto) ? `'${bruto}` : bruto;
     return /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return [header, ...rows]

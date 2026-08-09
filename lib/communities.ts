@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Community } from "@prisma/client";
 import { REGIAO_OUTRA, REGIOES_DF } from "@/lib/regioes";
+import { semNul, semNulObrigatorio } from "@/lib/entrada";
 
 /** Cidade padrão da descoberta enquanto não existe seletor na UI (Blueprint C1). */
 export const CIDADE_PADRAO = "Brasília";
@@ -36,20 +37,28 @@ export type CommunityFilters = {
 export function getCommunities(
   filters: CommunityFilters = {},
 ): Promise<Community[]> {
+  // Os filtros vêm da querystring, então passam pelo guard de NUL antes de
+  // virar query — `?modalidade=%00` respondia 500 (ver lib/entrada.ts).
+  const modalidade = semNul(filters.modalidade);
+  const regiao = semNul(filters.regiao);
+
   return prisma.community.findMany({
     where: {
       ...PUBLICO,
-      city: filters.city ?? CIDADE_PADRAO,
-      ...(filters.modalidade ? { modalidade: filters.modalidade } : {}),
-      ...(filters.regiao ? { regiao: filters.regiao } : {}),
+      city: semNul(filters.city) ?? CIDADE_PADRAO,
+      ...(modalidade ? { modalidade } : {}),
+      ...(regiao ? { regiao } : {}),
     },
     orderBy: { nome: "asc" },
   });
 }
 
 export function getCommunityBySlug(slug: string): Promise<Community | null> {
+  // Slug vem de parâmetro de rota. Nenhum slug real tem NUL (o schema só
+  // aceita [a-z0-9-]), então limpar aqui não muda resultado legítimo — só
+  // evita que `/comunidades/%00` derrube a página em vez de dar 404.
   return prisma.community.findFirst({
-    where: { slug, ...PUBLICO },
+    where: { slug: semNulObrigatorio(slug), ...PUBLICO },
   });
 }
 

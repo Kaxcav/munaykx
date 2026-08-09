@@ -4,8 +4,10 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RsvpForm from "@/components/RsvpForm";
+import CompartilharBotoes from "@/components/CompartilharBotoes";
 import { emailConfigurado } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
+import { textoCompartilharEvento, urlEvento } from "@/lib/compartilhar";
 import {
   countConfirmados,
   formatarDataEvento,
@@ -25,9 +27,15 @@ export async function generateMetadata({
   const { slug } = await params;
   const evento = await getEventBySlug(slug).catch(() => null);
   if (!evento) return { title: "Evento não encontrado" };
+  const descricao = `${evento.titulo} — ${formatarDataEvento(evento.startsAt)} · ${evento.community.nome}, ${evento.community.regiao}.`;
+  // openGraph/twitter EXPLÍCITOS: o layout raiz fixa um og:title genérico, então
+  // sem isto o preview do link mostraria a marca, não o evento. A imagem vem do
+  // `opengraph-image.tsx` ao lado. `type: "article"` é o certo pra página de detalhe.
   return {
     title: evento.titulo,
-    description: `${evento.titulo} — ${formatarDataEvento(evento.startsAt)} · ${evento.community.nome}, ${evento.community.regiao}.`,
+    description: descricao,
+    openGraph: { title: evento.titulo, description: descricao, type: "article" },
+    twitter: { title: evento.titulo, description: descricao },
   };
 }
 
@@ -144,6 +152,13 @@ export default async function EventoPage({ params }: { params: Params }) {
             </div>
           ))}
         </dl>
+
+        <CompartilharBotoes
+          className="mt-10"
+          url={urlEvento(evento.slug)}
+          texto={textoCompartilharEvento(evento)}
+          titulo={evento.titulo}
+        />
 
         <section className="mt-16 max-w-3xl">
           {jaPassou ? (

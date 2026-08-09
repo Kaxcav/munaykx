@@ -89,6 +89,14 @@ export default async function GerenciarComunidade({
             <input type="checkbox" name="ativo" defaultChecked={com.ativo} />
             Ativa (aparece no site)
           </label>
+          <label className="flex items-center gap-2 self-end pb-3 text-sm">
+            <input
+              type="checkbox"
+              name="acolheIniciante"
+              defaultChecked={com.acolheIniciante}
+            />
+            Acolhe iniciantes (quem tá começando é bem-vindo)
+          </label>
         </div>
         <button
           type="submit"

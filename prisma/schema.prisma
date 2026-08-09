@@ -43,6 +43,11 @@ model Community {
   horarios   String?
   local      String?
   nivel      String?
+  // Sinal EXPLÍCITO do organizador: "essa comunidade acolhe quem tá começando".
+  // Diferente de `nivel` (texto editorial livre) — este é estruturado/queryável, o
+  // que sustenta o filtro `/comunidades?iniciantes=1` e o selo. Default false: quem
+  // não marcou não aparece como acolhedor (sinal opt-in, nunca presumido).
+  acolheIniciante Boolean @default(false) @map("acolhe_iniciante")
   demo       Boolean  @default(false)
   ativo      Boolean  @default(true)
   events     Event[]

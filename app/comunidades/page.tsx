@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BuscaIA from "@/components/BuscaIA";
+import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
 import { getCommunities, getCommunityFacets } from "@/lib/communities";
 import { recortesComDado, tituloDoRecorte } from "@/lib/descoberta";
 import { iaDisponivel } from "@/lib/ia";
@@ -19,15 +20,24 @@ export const dynamic = "force-dynamic";
 type SearchParams = Promise<{
   modalidade?: string;
   regiao?: string;
+  /** `iniciantes=1` liga o filtro "acolhe iniciante". */
+  iniciantes?: string;
   /** O que a busca por descrição entendeu — só pra mostrar de volta. */
   ia?: string;
   iaObs?: string;
 }>;
 
-function filtroHref(params: { modalidade?: string; regiao?: string }) {
+function filtroHref(params: {
+  modalidade?: string;
+  regiao?: string;
+  iniciantes?: boolean;
+}) {
   const qs = new URLSearchParams();
   if (params.modalidade) qs.set("modalidade", params.modalidade);
   if (params.regiao) qs.set("regiao", params.regiao);
+  // Preserva o filtro de iniciantes ao trocar modalidade/região (senão trocar
+  // de aba de modalidade jogaria fora a escolha "pra quem tá começando").
+  if (params.iniciantes) qs.set("iniciantes", "1");
   const s = qs.toString();
   return s ? `/comunidades?${s}` : "/comunidades";
 }
@@ -37,14 +47,15 @@ export default async function ComunidadesPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { modalidade, regiao, ia, iaObs } = await searchParams;
+  const { modalidade, regiao, iniciantes, ia, iaObs } = await searchParams;
+  const soIniciantes = iniciantes === "1";
   const [comunidades, facets, recortes] = await Promise.all([
-    getCommunities({ modalidade, regiao }),
+    getCommunities({ modalidade, regiao, acolheIniciante: soIniciantes }),
     getCommunityFacets(),
     recortesComDado(),
   ]);
 
-  const temFiltro = Boolean(modalidade || regiao);
+  const temFiltro = Boolean(modalidade || regiao || soIniciantes);
 
   // O filtro aqui vive em querystring — o Google indexa isso mal e nunca com
   // um título que case com "corrida em Ceilândia". Quando o recorte atual
@@ -95,7 +106,7 @@ export default async function ComunidadesPage({
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow mr-1">Modalidade</span>
             <Link
-              href={filtroHref({ regiao })}
+              href={filtroHref({ regiao, iniciantes: soIniciantes })}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 !modalidade
                   ? "border-petroleo bg-petroleo text-areia"
@@ -107,7 +118,7 @@ export default async function ComunidadesPage({
             {facets.modalidades.map((m) => (
               <Link
                 key={m}
-                href={filtroHref({ modalidade: m, regiao })}
+                href={filtroHref({ modalidade: m, regiao, iniciantes: soIniciantes })}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                   modalidade === m
                     ? "border-petroleo bg-petroleo text-areia"
@@ -122,7 +133,7 @@ export default async function ComunidadesPage({
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow mr-1">Região</span>
             <Link
-              href={filtroHref({ modalidade })}
+              href={filtroHref({ modalidade, iniciantes: soIniciantes })}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 !regiao
                   ? "border-petroleo bg-petroleo text-areia"
@@ -134,7 +145,7 @@ export default async function ComunidadesPage({
             {facets.regioes.map((r) => (
               <Link
                 key={r}
-                href={filtroHref({ modalidade, regiao: r })}
+                href={filtroHref({ modalidade, regiao: r, iniciantes: soIniciantes })}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                   regiao === r
                     ? "border-petroleo bg-petroleo text-areia"
@@ -144,6 +155,22 @@ export default async function ComunidadesPage({
                 {r}
               </Link>
             ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow mr-1">Pra quem tá começando</span>
+            <Link
+              href={filtroHref({ modalidade, regiao, iniciantes: !soIniciantes })}
+              aria-pressed={soIniciantes}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                soIniciantes
+                  ? "border-petroleo bg-petroleo text-areia"
+                  : "border-petroleo/15 hover:border-petroleo/40"
+              }`}
+            >
+              <span aria-hidden>🌱</span>
+              Só as que acolhem iniciantes
+            </Link>
           </div>
         </div>
 
@@ -193,6 +220,9 @@ export default async function ComunidadesPage({
                   <p className="mt-2 text-sm text-petroleo/60">
                     {c.nivel ?? c.modalidade}
                   </p>
+                  {c.acolheIniciante && (
+                    <SeloAcolheIniciante className="mt-3" />
+                  )}
                 </article>
               </Link>
             ))}

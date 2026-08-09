@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
 import { getCommunities } from "@/lib/communities";
 import {
   LEGENDA_FAMILIAS,
@@ -36,6 +37,7 @@ type Card = {
   regiao: string;
   quando: string;
   nivel: string;
+  acolheIniciante?: boolean;
 };
 
 // Fallback estático: mantém a home funcional sem banco (build, preview, pane).
@@ -53,6 +55,7 @@ const CARDS_ESTATICOS: Card[] = [
     regiao: "Noroeste",
     quando: "SEG–SEX 19H — TATAME ABERTO",
     nivel: "Iniciantes bem-vindos",
+    acolheIniciante: true,
   },
   {
     nome: "Yoga ao ar livre",
@@ -96,6 +99,7 @@ async function getCards(): Promise<Card[]> {
       regiao: c.regiao,
       quando: [c.horarios, c.local].filter(Boolean).join(" — ").toUpperCase(),
       nivel: c.nivel ?? c.modalidade,
+      acolheIniciante: c.acolheIniciante,
     }));
   } catch {
     // Banco fora do ar não pode derrubar a home — cai no recorte estático.
@@ -158,6 +162,7 @@ export default async function Vitrine() {
                   <span className="text-petroleo/40"> · {familia}</span>
                 )}
               </p>
+              {c.acolheIniciante && <SeloAcolheIniciante className="mt-3" />}
             </>
           );
 

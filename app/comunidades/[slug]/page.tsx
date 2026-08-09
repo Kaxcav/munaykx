@@ -10,6 +10,8 @@ import {
 } from "@/lib/events";
 import { sessaoAtual } from "@/lib/sessao";
 import { segue, seguir } from "@/lib/membership";
+import { avisosDaComunidade } from "@/lib/posts";
+import FeedAvisos from "@/components/FeedAvisos";
 import { seguirAction, deixarDeSeguirAction } from "./seguir-actions";
 
 // Detalhe vem do banco a cada request — nada de pré-render no build.
@@ -19,15 +21,26 @@ type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Params;
+  searchParams: Promise<{ avisos?: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
   const comunidade = await getCommunityBySlug(slug).catch(() => null);
   if (!comunidade) return { title: "Comunidade não encontrada" };
+
+  // Página 2+ do feed sai NOINDEX (STORY-010, decisão 7). Aviso é conteúdo
+  // curto, situacional e efêmero — indexar isso em massa é o padrão que
+  // derruba domínio, o mesmo motivo pelo qual `lib/descoberta.ts` recusa
+  // recorte sem dado. A página 1 continua indexável: ela é a comunidade.
+  const { avisos } = await searchParams;
+  const paginado = Number(avisos ?? "1") > 1;
+
   return {
     title: comunidade.nome,
     description: `${comunidade.nome} — ${comunidade.modalidade} · ${comunidade.regiao}, Brasília.`,
+    ...(paginado ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -36,14 +49,14 @@ export default async function ComunidadePage({
   searchParams,
 }: {
   params: Params;
-  searchParams: Promise<{ seguir?: string }>;
+  searchParams: Promise<{ seguir?: string; avisos?: string }>;
 }) {
   const { slug } = await params;
   const c = await getCommunityBySlug(slug);
   if (!c) notFound();
 
   const sessao = await sessaoAtual();
-  const { seguir: querSeguir } = await searchParams;
+  const { seguir: querSeguir, avisos: paginaAvisos } = await searchParams;
   // Continuação pós-login: voltou do /entrar com ?seguir=1 → completa e limpa
   // a query (one-shot; `seguir` é idempotente).
   if (sessao && querSeguir === "1") {
@@ -53,6 +66,9 @@ export default async function ComunidadePage({
   const jaSegue = sessao ? await segue(sessao.user.id, c.id) : false;
 
   const eventos = await getUpcomingEventsByCommunity(c.id);
+  const feed = await avisosDaComunidade(c.id, {
+    pagina: Number(paginaAvisos ?? "1") || 1,
+  });
 
   const detalhes: Array<{ rotulo: string; valor: string }> = [
     { rotulo: "Modalidade", valor: c.modalidade },
@@ -170,6 +186,13 @@ export default async function ComunidadePage({
             </div>
           </section>
         )}
+
+        <FeedAvisos
+          avisos={feed.avisos}
+          slug={c.slug}
+          pagina={feed.pagina}
+          temMais={feed.temMais}
+        />
 
         <div className="mt-12">
           <Link

@@ -6,8 +6,9 @@ import Footer from "@/components/Footer";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDeUsuario, sugestoesDeSeguir } from "@/lib/membership";
 import { formatarDataEvento } from "@/lib/events";
+import { comunidadesComAvisoDePost } from "@/lib/posts";
 import { seguirAction } from "../comunidades/[slug]/seguir-actions";
-import { alternarAvisoAction } from "./actions";
+import { alternarAvisoAction, alternarAvisoPostsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +23,10 @@ export default async function MinhasComunidadesPage() {
   const sessao = await sessaoAtual();
   if (!sessao) redirect("/entrar");
 
-  const [lista, sugestoes] = await Promise.all([
+  const [lista, sugestoes, avisoPosts] = await Promise.all([
     comunidadesDeUsuario(sessao.user.id),
     sugestoesDeSeguir(sessao.user.id),
+    comunidadesComAvisoDePost(sessao.user.id),
   ]);
 
   return (
@@ -89,26 +91,50 @@ export default async function MinhasComunidadesPage() {
                       )}
                     </p>
                   </div>
-                  <form action={alternarAvisoAction} className="shrink-0">
-                    <input
-                      type="hidden"
-                      name="communityId"
-                      value={c.comunidade.id}
-                    />
-                    <input
-                      type="hidden"
-                      name="avisar"
-                      value={c.avisarEventos ? "0" : "1"}
-                    />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-petroleo/20 px-4 py-2 text-xs font-semibold transition-colors hover:border-petroleo/50"
-                    >
-                      {c.avisarEventos
-                        ? "Avisos: ligados"
-                        : "Avisos: desligados"}
-                    </button>
-                  </form>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    <form action={alternarAvisoAction}>
+                      <input
+                        type="hidden"
+                        name="communityId"
+                        value={c.comunidade.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="avisar"
+                        value={c.avisarEventos ? "0" : "1"}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-petroleo/20 px-4 py-2 text-xs font-semibold transition-colors hover:border-petroleo/50"
+                      >
+                        {c.avisarEventos
+                          ? "Eventos novos: ligados"
+                          : "Eventos novos: desligados"}
+                      </button>
+                    </form>
+                    {/* Opt-in separado (STORY-010): e-mail de aviso é mais
+                        frequente e mais miúdo — nasce desligado. */}
+                    <form action={alternarAvisoPostsAction}>
+                      <input
+                        type="hidden"
+                        name="communityId"
+                        value={c.comunidade.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="avisar"
+                        value={avisoPosts.has(c.comunidade.id) ? "0" : "1"}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-petroleo/20 px-4 py-2 text-xs font-semibold transition-colors hover:border-petroleo/50"
+                      >
+                        {avisoPosts.has(c.comunidade.id)
+                          ? "Avisos por e-mail: ligados"
+                          : "Avisos por e-mail: desligados"}
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </li>
             ))}

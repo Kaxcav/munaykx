@@ -244,6 +244,38 @@ export default function PrivacidadePage() {
             </p>
           </section>
 
+          {/* 3.6 — Avisos publicados (STORY-010) */}
+          <section>
+            <h2 className="font-display text-xl font-bold">
+              3.6. Avisos publicados por organizadores
+            </h2>
+            <p className="mt-3 text-petroleo/80">
+              Quem organiza uma comunidade pode publicar <strong>avisos</strong>{" "}
+              nela (&ldquo;hoje o treino é no campo 2&rdquo;). O aviso é público:
+              aparece na página da comunidade e na agenda de quem segue. Quem
+              publica é identificado e responsável pelo que escreveu — não
+              publique dado pessoal de outra pessoa ali.
+            </p>
+            <p className="mt-3 text-petroleo/80">
+              Receber esses avisos <strong>por e-mail</strong> é opcional e nasce{" "}
+              <strong>desligado</strong>: só chega se você ligar, em{" "}
+              <em>Minhas comunidades</em>. No máximo um e-mail por comunidade por
+              dia, e todo e-mail traz link de descadastro de um clique, sem
+              login.
+            </p>
+            <p className="mt-3 text-petroleo/80">
+              <strong>Se você apagar sua conta, os avisos que publicou são
+              anonimizados, não apagados:</strong> o texto permanece — a
+              comunidade recebeu aquela informação e o histórico dela não é só
+              seu — e a autoria passa a aparecer como &ldquo;organizador da
+              comunidade&rdquo;, sem vínculo com você. Se o próprio texto contiver
+              dado pessoal seu, peça a exclusão pelo canal do titular: nesse caso
+              o aviso é removido, não só anonimizado. A MUNAY também pode{" "}
+              <strong>ocultar</strong> qualquer aviso, com motivo registrado —
+              ocultar é reversível, apagar não.
+            </p>
+          </section>
+
           {/* 4 — Retenção */}
           <section>
             <h2 className="font-display text-xl font-bold">

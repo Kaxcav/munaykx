@@ -96,11 +96,17 @@ export type Fundador = {
  */
 export const FUNDADORES: Fundador[] = [];
 
-/** Link de WhatsApp já com a mensagem inicial — só quando há número. */
-export function linkWhatsApp(): string | null {
-  if (!CANAIS.whatsapp) return null;
+/**
+ * Link de WhatsApp já com a mensagem inicial — só quando há número.
+ *
+ * Recebe o número por parâmetro desde a Onda 1 do ULTRAPLAN: o valor agora
+ * pode vir do conteúdo editável no /admin, e `CANAIS` virou o PADRÃO de
+ * fábrica em vez da única fonte. Sem argumento, mantém o comportamento antigo.
+ */
+export function linkWhatsApp(numero: string = CANAIS.whatsapp): string | null {
+  if (!numero) return null;
   const texto = encodeURIComponent("Oi! Vim pelo site da MUNAY.");
-  return `https://wa.me/${CANAIS.whatsapp}?text=${texto}`;
+  return `https://wa.me/${numero}?text=${texto}`;
 }
 
 export function linkInstagram(handle: string): string {

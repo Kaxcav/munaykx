@@ -435,3 +435,51 @@ model Post {
   @@index([communityId, createdAt])
   @@map("posts")
 }
+
+/// CONTEÚDO EDITÁVEL PELO /admin (ULTRAPLAN, Onda 1).
+///
+/// Key-value de propósito, com o SCHEMA no código (`lib/conteudo/registro.ts`,
+/// Zod por chave). Tabela por seção faria cada ajuste de copy virar migration
+/// — e migration é deploy, que é exatamente o que esta onda existe pra evitar.
+///
+/// O código continua dono da ESTRUTURA; o banco guarda só o VALOR. Chave que
+/// não está no registro é ignorada na leitura, e chave sem linha aqui cai no
+/// padrão do registro — que é o texto que já estava hardcoded. Por isso o site
+/// sobe idêntico ao de hoje com esta tabela vazia, e continua de pé se o banco
+/// sumir (mesma regra do "sem DATABASE_URL o site sobe").
+model ConteudoSite {
+  chave         String   @id
+  valor         Json
+  /// Formato do `valor` quando foi gravado. Se o registro mudar de formato, a
+  /// leitura valida com Zod e cai no padrão em vez de lançar.
+  versaoSchema  Int      @default(1) @map("versao_schema")
+  atualizadoEm  DateTime @updatedAt @map("atualizado_em")
+  /// Credencial do /admin (Basic Auth é compartilhada — é a identidade que
+  /// existe de verdade; inventar nome de pessoa aqui seria registro falso).
+  atualizadoPor String   @map("atualizado_por")
+
+  @@map("conteudo_site")
+}
+
+/// Histórico APPEND-ONLY: é o audit log e o rollback ao mesmo tempo.
+///
+/// Nada aqui é editado ou apagado pela interface. Reverter cria um registro
+/// novo apontando o valor antigo — mesma regra do "ocultar é reversível,
+/// apagar não" da STORY-010.
+///
+/// ⚠️ LGPD: `valor` pode conter dado pessoal (contato de fundador), então esta
+/// tabela tem o mesmo acesso restrito do resto do /admin e não vai pra
+/// exportação nenhuma.
+model ConteudoVersao {
+  id           String    @id @default(uuid())
+  chave        String
+  valor        Json
+  versaoSchema Int       @default(1) @map("versao_schema")
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+  criadoPor    String    @map("criado_por")
+  /// `null` = rascunho. Publicar carimba aqui e copia o valor pro ConteudoSite.
+  publicadoEm  DateTime? @map("publicado_em")
+
+  @@index([chave, criadoEm])
+  @@map("conteudo_versoes")
+}

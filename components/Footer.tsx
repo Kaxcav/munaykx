@@ -1,11 +1,7 @@
 import Link from "next/link";
-import {
-  CANAIS,
-  EMAIL_CONTATO,
-  FUNDADORES,
-  linkInstagram,
-  linkWhatsApp,
-} from "@/lib/contato";
+import { type Fundador, linkInstagram, linkWhatsApp } from "@/lib/contato";
+import { conteudos } from "@/lib/conteudo";
+import { paraFundadorDoFooter } from "@/lib/conteudo/registro";
 
 /**
  * RODAPÉ — briefing 07/08/2026, item 13.
@@ -44,8 +40,16 @@ const INSTITUCIONAIS = [
   { href: "/privacidade", rotulo: "Política de privacidade" },
 ] as const;
 
-function Canais() {
-  const whats = linkWhatsApp();
+type CanaisResolvidos = {
+  email: string;
+  whatsapp: string;
+  telefone: string;
+  instagram: string;
+};
+
+function Canais({ canais }: { canais: CanaisResolvidos }) {
+  const { email: EMAIL_CONTATO, ...CANAIS } = canais;
+  const whats = linkWhatsApp(CANAIS.whatsapp);
   const linkClasse =
     "text-petroleo/70 transition-colors hover:text-salvia-deep hover:underline underline-offset-4";
 
@@ -89,7 +93,8 @@ function Canais() {
   );
 }
 
-function Fundadores() {
+function Fundadores({ lista }: { lista: readonly Fundador[] }) {
+  const FUNDADORES = lista;
   if (FUNDADORES.length === 0) return null;
 
   return (
@@ -143,7 +148,29 @@ function Fundadores() {
   );
 }
 
-export default function Footer() {
+/**
+ * ONDA 1 do ULTRAPLAN: os canais e os fundadores vêm do conteúdo editável no
+ * /admin, com `lib/contato.ts` como padrão de fábrica. Componente assíncrono
+ * porque a leitura é de banco — com cache por tag e fallback, então rodapé
+ * nunca deixa a página cair (ver `lib/conteudo/index.ts`).
+ */
+export default async function Footer() {
+  const dados = await conteudos([
+    "rodape.email",
+    "rodape.whatsapp",
+    "rodape.telefone",
+    "rodape.instagram",
+    "rodape.fundadores",
+  ] as const);
+
+  const canais: CanaisResolvidos = {
+    email: dados["rodape.email"],
+    whatsapp: dados["rodape.whatsapp"],
+    telefone: dados["rodape.telefone"],
+    instagram: dados["rodape.instagram"],
+  };
+  const fundadores = dados["rodape.fundadores"].map(paraFundadorDoFooter);
+
   return (
     <footer className="border-t border-petroleo/10 bg-areia">
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -164,7 +191,7 @@ export default function Footer() {
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/50">
             Fala com a gente
           </p>
-          <Canais />
+          <Canais canais={canais} />
         </div>
 
         <div>
@@ -186,7 +213,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <Fundadores />
+      <Fundadores lista={fundadores} />
 
       <div className="border-t border-petroleo/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-6 font-mono text-xs text-petroleo/45">

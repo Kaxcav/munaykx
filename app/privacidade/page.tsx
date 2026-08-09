@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { EMAIL_CONTATO } from "@/lib/contato";
+import { conteudo } from "@/lib/conteudo";
 
 // ⚠️ REVISÃO JURÍDICA PENDENTE. Este texto foi montado a partir do que o
 // código realmente coleta (prisma/schema.prisma → model User/Lead/Rsvp,
@@ -22,7 +22,11 @@ export const metadata: Metadata = {
     "Quais dados a MUNAY coleta, pra quê, base legal e como exercer seus direitos. LGPD em linguagem simples.",
 };
 
-export default function PrivacidadePage() {
+export default async function PrivacidadePage() {
+  // Canal do titular (LGPD) editável pelo /admin desde a Onda 1: se o e-mail
+  // de contato mudar, a política tem que mudar junto — canal que devolve
+  // bounce promete atendimento que não pode acontecer.
+  const EMAIL_CONTATO = await conteudo("rodape.email");
   return (
     <>
       <Header />

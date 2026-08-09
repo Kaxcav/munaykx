@@ -525,3 +525,28 @@ model BuscaRegistro {
   @@index([dia])
   @@map("busca_registros")
 }
+
+/// "A SEMANA EM BRASÍLIA" — curadoria semanal (ideia #3).
+///
+/// Um resumo em texto dos eventos da próxima semana, gerado uma vez por
+/// semana e servido em `/semana`. Guardado em vez de gerado por request por
+/// três motivos: o texto é o mesmo pra todo mundo, gerar por visita
+/// multiplicaria o custo por visitante, e uma página de SEO não pode depender
+/// de a API estar de pé no instante do crawler.
+///
+/// Append-only na prática: cada geração cria uma linha, e a página lê a mais
+/// recente. O histórico fica — dá pra ver o que a cidade tinha em cada semana.
+model ResumoSemana {
+  id        String   @id @default(uuid())
+  criadoEm  DateTime @default(now()) @map("criado_em")
+  /// Primeiro dia da janela coberta. Único: uma semana, um resumo vigente.
+  inicio    DateTime @db.Date
+  /// O texto pronto pra colar no Instagram.
+  texto     String   @db.Text
+  /// Quantos eventos reais entraram. `0` nunca chega a virar linha — sem
+  /// evento não há curadoria, e a página mostra estado vazio.
+  eventos   Int
+
+  @@index([inicio])
+  @@map("resumos_semana")
+}

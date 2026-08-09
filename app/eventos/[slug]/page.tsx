@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RsvpForm from "@/components/RsvpForm";
 import { emailConfigurado } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 import {
   countConfirmados,
   formatarDataEvento,
@@ -42,6 +43,50 @@ export default async function EventoPage({ params }: { params: Params }) {
     evento.capacidade !== null && confirmados !== null
       ? Math.max(0, evento.capacidade - confirmados)
       : null;
+
+  const jsonLdEvento = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: evento.titulo,
+    startDate: evento.startsAt.toISOString(),
+    url: `${SITE_URL}/eventos/${evento.slug}`,
+    eventStatus: evento.canceladoEm
+      ? "https://schema.org/EventCancelled"
+      : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    // `location` sempre existe: quando o evento não informa o lugar exato, a
+    // região da comunidade é a verdade disponível — e é o que a página mostra.
+    location: {
+      "@type": "Place",
+      name: evento.local ?? evento.community.regiao,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: evento.community.regiao,
+        addressRegion: "DF",
+        addressCountry: "BR",
+      },
+    },
+    organizer: {
+      "@type": "Organization",
+      name: evento.community.nome,
+      url: `${SITE_URL}/comunidades/${evento.community.slug}`,
+    },
+    // Preço só quando é fato. "Consultar organização" não vira 0.
+    ...(evento.gratuito
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "BRL",
+            availability:
+              vagasRestantes === 0
+                ? "https://schema.org/SoldOut"
+                : "https://schema.org/InStock",
+            url: `${SITE_URL}/eventos/${evento.slug}`,
+          },
+        }
+      : {}),
+  };
 
   const detalhes: Array<{ rotulo: string; valor: string }> = [
     { rotulo: "Quando", valor: formatarDataEvento(evento.startsAt) },
@@ -129,6 +174,23 @@ export default async function EventoPage({ params }: { params: Params }) {
         </section>
       </main>
       <Footer />
+      {/*
+        JSON-LD do EVENTO — só dados que a página já mostra.
+        Marcar como Event faz o Google exibir data e local direto no
+        resultado, o que importa mais aqui do que na maioria das páginas: a
+        pessoa decide se vai a um treino pela data e pelo lugar, e ver isso
+        antes de clicar é metade da decisão.
+        Nada de campo inventado: sem preço quando não é gratuito (a página
+        diz "consultar"), sem performer, sem imagem que não existe. Structured
+        data que descreve o que a página não mostra é o que o Google chama de
+        spam — e o domínio é a evidência da Etapa 2.
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLdEvento),
+        }}
+      />
     </>
   );
 }

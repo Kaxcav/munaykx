@@ -1,4 +1,10 @@
-import { ANCORAS, LAGO, raio, type RegiaoNoMapa } from "@/lib/mapa";
+import {
+  ANCORAS,
+  LAGO,
+  raio,
+  type EstadoRegiao,
+  type RegiaoNoMapa,
+} from "@/lib/mapa";
 
 /**
  * Mapa esquemático do DF. Server component puro: SVG procedural, zero
@@ -18,8 +24,38 @@ import { ANCORAS, LAGO, raio, type RegiaoNoMapa } from "@/lib/mapa";
  *
  * Cor: só classes de token (regra 4). O lime aparece uma vez só, no hover
  * — acento raro, nunca fundo de texto (regra 7).
+ *
+ * ── `estados` (FASE 0 do eixo de tempo) ──────────────────────────────────
+ *
+ * Sem a prop, nada muda: o componente segue server-side puro e com zero JS,
+ * exatamente como antes. COM ela, quem manda no desenho é o mapa passado —
+ * é assim que o scrubber apaga as RAs que não têm ninguém às terças 6h sem
+ * duplicar uma linha do SVG (`components/EixoDeTempo.tsx`).
+ *
+ * O componente continua síncrono e sem hook de propósito: assim ele é
+ * "compartilhado" e pode ser renderizado tanto pelo server (caminho sem JS)
+ * quanto de dentro do client component do scrubber.
  */
-export function MapaDF({ regioes }: { regioes: RegiaoNoMapa[] }) {
+export function MapaDF({
+  regioes,
+  estados,
+}: {
+  regioes: RegiaoNoMapa[];
+  estados?: Record<string, EstadoRegiao>;
+}) {
+  if (estados) {
+    regioes = regioes.map((r) => {
+      const novo = estados[r.regiao] ?? "vazio";
+      if (novo === r.estado) return r;
+      // Apagada pelo filtro de tempo vira "vazio" INTEIRO — total zerado, sem
+      // slug, sem rótulo. Só trocar a cor deixaria um círculo grande e cinza
+      // com o nome da RA do lado, que lê como "tem bastante coisa aqui" bem na
+      // hora em que a resposta é "aqui não tem nada terça 6h". O raio vem de
+      // `total`, então o total tem que cair junto.
+      if (novo === "vazio") return { ...r, estado: novo, total: 0, reais: 0, slug: null };
+      return { ...r, estado: novo };
+    });
+  }
   return (
     <svg
       viewBox="4 4 80 84"

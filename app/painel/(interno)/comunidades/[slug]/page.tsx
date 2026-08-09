@@ -140,6 +140,25 @@ export default async function GerenciarComunidade({
         </Link>
       </div>
 
+      {/* FASE 0 do mapa: horário estruturado é o que coloca a comunidade no
+          eixo de tempo. Fica como sub-rota (igual avisos e convite) porque é
+          uma lista, e lista não cabe num form de salvar-tudo. */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
+        <div>
+          <p className="font-display text-lg font-bold">Horários da semana</p>
+          <p className="mt-1 text-sm text-petroleo/70">
+            Os dias e horas que se repetem. É o que faz sua comunidade aparecer
+            quando alguém filtra o mapa por &ldquo;terça 6h&rdquo;.
+          </p>
+        </div>
+        <Link
+          href={`/painel/comunidades/${encodeURIComponent(com.slug)}/horarios`}
+          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
+        >
+          Cadastrar horários →
+        </Link>
+      </div>
+
       <div className="mt-12 flex items-center justify-between">
         <h2 className="font-display text-2xl font-bold">Eventos</h2>
         <Link

@@ -4,7 +4,9 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { MapaDF } from "@/components/MapaDF";
+import { EixoDeTempo } from "@/components/EixoDeTempo";
 import { regioesNoMapa, mapaIndexavel, type RegiaoNoMapa } from "@/lib/mapa";
+import { matrizTemporal, temEixoDeTempo } from "@/lib/horarios";
 
 /**
  * `/mapa` — onde o movimento já chegou no DF, e onde ainda não chegou.
@@ -36,6 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MapaPage() {
   const regioes = await carregar();
+  const matriz = await matrizTemporal();
+  const temEixo = temEixoDeTempo(matriz);
   const comDado = regioes.filter((r) => r.estado !== "vazio");
   const vazias = regioes.filter((r) => r.estado === "vazio");
   const reais = regioes.filter((r) => r.estado === "real").length;
@@ -56,7 +60,15 @@ export default async function MapaPage() {
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <div>
-            <MapaDF regioes={regioes} />
+            {/* FASE 0 do eixo de tempo. Sem NENHUM horário estruturado no banco,
+                a página renderiza o mapa server-side puro de sempre — zero JS,
+                nenhum controle na tela. Um scrubber que não muda nada seria
+                pior que nenhum: promete um filtro e devolve o mesmo desenho. */}
+            {temEixo ? (
+              <EixoDeTempo regioes={regioes} matriz={matriz} />
+            ) : (
+              <MapaDF regioes={regioes} />
+            )}
             <p className="mt-4 max-w-xl font-mono text-xs leading-relaxed text-petroleo/50">
               Esquema, não mapa cartográfico: as posições são aproximadas e
               servem pra reconhecer a cidade, não pra chegar em lugar nenhum.

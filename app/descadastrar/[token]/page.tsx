@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { prisma } from "@/lib/db";
 import { lerTokenDescadastro } from "@/lib/avisos-evento";
+import { lerTokenDescadastroPost } from "@/lib/avisos-post";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,16 @@ export default async function DescadastrarPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const dados = lerTokenDescadastro(decodeURIComponent(token));
+  const cru = decodeURIComponent(token);
+
+  // UMA URL de descadastro pros dois tipos de aviso (evento novo, STORY-008; e
+  // aviso da comunidade, STORY-010). O propósito vem assinado DENTRO do token,
+  // então o link desliga exatamente o que o e-mail prometia desligar — nunca o
+  // outro. Duas URLs seria pior pra quem lê e pior pro provedor de e-mail, que
+  // espera um endereço de descadastro estável.
+  const deEvento = lerTokenDescadastro(cru);
+  const dePost = deEvento ? null : lerTokenDescadastroPost(cru);
+  const dados = deEvento ?? dePost;
 
   let ok = false;
   let comunidade: string | null = null;
@@ -35,7 +45,7 @@ export default async function DescadastrarPage({
     // falha se o vínculo já não existe (deixou de seguir).
     await prisma.membership.updateMany({
       where: { userId: dados.userId, communityId: dados.communityId },
-      data: { avisarEventos: false },
+      data: deEvento ? { avisarEventos: false } : { avisarPosts: false },
     });
     const c = await prisma.community.findUnique({
       where: { id: dados.communityId },
@@ -56,7 +66,8 @@ export default async function DescadastrarPage({
               Pronto — avisos desligados
             </h1>
             <p className="mt-4 text-petroleo/70">
-              Você não recebe mais e-mails de eventos novos
+              Você não recebe mais e-mails
+              {deEvento ? " de eventos novos" : " de avisos"}
               {comunidade ? (
                 <>
                   {" "}

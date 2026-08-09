@@ -98,6 +98,23 @@ export default async function GerenciarComunidade({
         </button>
       </form>
 
+      {/* STORY-010: entrada do feed de avisos desta comunidade. */}
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
+        <div>
+          <p className="font-display text-lg font-bold">Avisos</p>
+          <p className="mt-1 text-sm text-petroleo/70">
+            Mudou o local, caiu por chuva: avise quem segue sem depender do
+            grupo de WhatsApp.
+          </p>
+        </div>
+        <Link
+          href={`/painel/comunidades/${encodeURIComponent(com.slug)}/avisos`}
+          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
+        >
+          Avisar quem segue →
+        </Link>
+      </div>
+
       <div className="mt-12 flex items-center justify-between">
         <h2 className="font-display text-2xl font-bold">Eventos</h2>
         <Link

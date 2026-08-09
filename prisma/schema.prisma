@@ -77,6 +77,7 @@ model Community {
   codigoConvite String? @unique @map("codigo_convite")
 
   membros Membership[]
+  posts   Post[]
 
   @@index([organizationId])
   @@index([statusPublicacao])
@@ -164,6 +165,9 @@ model User {
   // Membership lá embaixo.
   organizacoes OrganizationMember[]
   memberships  Membership[]
+  // Avisos publicados. Sem cascade: apagar a conta anonimiza o aviso
+  // (`autorId` vira null), não apaga o histórico da comunidade — ver Post.
+  posts        Post[]
 
   @@map("users")
 }
@@ -318,6 +322,14 @@ model Membership {
   // updateMany condicional em `ultimoAvisoEm` decide quem recebe, então dois
   // eventos no mesmo dia (mesmo em corrida) só geram UM e-mail por seguidor.
   ultimoAvisoEm DateTime?     @map("ultimo_aviso_em")
+  // Aviso de POST é OPT-IN (STORY-010, decisão 4) — nasce DESLIGADO, ao
+  // contrário do de evento. Regra: e-mail que a pessoa espera vem ligado;
+  // e-mail que ela não pediu vem desligado. Inverter isso é como se queima a
+  // reputação de um domínio recém-aquecido.
+  avisarPosts   Boolean       @default(false) @map("avisar_posts")
+  // Teto de post, SEPARADO do de evento: um não pode consumir a cota do
+  // outro. Mesmo gate atômico (updateMany condicional).
+  ultimoAvisoPostEm DateTime? @map("ultimo_aviso_post_em")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
@@ -325,4 +337,37 @@ model Membership {
   @@unique([userId, communityId])
   @@index([communityId])
   @@map("memberships")
+}
+
+/// Feed de avisos da comunidade (STORY-010 · C5). É o aviso curto e
+/// situacional — "hoje o treino é no campo 2" — que hoje só existe no grupo de
+/// WhatsApp, justamente onde o iniciante que a MUNAY trouxe não está.
+///
+/// One-way de propósito: não tem comentário (decisão 2 — comentário é fórum
+/// com outro nome, e fórum sem moderador é passivo, não ativo).
+model Post {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  communityId String    @map("community_id")
+  // NULLABLE com `SetNull` — e isto é um desvio consciente da spec, que pedia
+  // autor obrigatório "sem Cascade". Sem nulo, apagar a conta seria impossível
+  // (FK) ou levaria o histórico junto; com `SetNull`, apagar a conta anonimiza
+  // o aviso e preserva o que a comunidade recebeu. É a resolução do conflito
+  // que a própria spec apontou entre histórico e "apagar conta apaga tudo" da
+  // LGPD: **anonimizar, não deletar** — sem job, sem varredura, estrutural.
+  autorId     String?   @map("autor_id")
+  corpo       String    @db.Text
+  // Moderação (decisão 6): ocultar é reversível, apagar não. Existe pro caso
+  // de alguém publicar dado pessoal de terceiro às 3h de um sábado.
+  ocultoEm     DateTime? @map("oculto_em")
+  ocultoMotivo String?   @map("oculto_motivo")
+  // Quem ocultou. O /admin é Basic Auth compartilhado, então o que dá pra
+  // registrar honestamente é o usuário daquela credencial — não uma pessoa.
+  ocultoPor    String?   @map("oculto_por")
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  autor     User?     @relation(fields: [autorId], references: [id], onDelete: SetNull)
+
+  @@index([communityId, createdAt])
+  @@map("posts")
 }

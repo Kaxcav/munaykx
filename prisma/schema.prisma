@@ -483,3 +483,42 @@ model ConteudoVersao {
   @@index([chave, criadoEm])
   @@map("conteudo_versoes")
 }
+
+/// REGISTRO ANÔNIMO DE BUSCAS — o "gravador" (enabler da ideia #5).
+///
+/// Guarda o que a cidade PROCURA, para um dia responder "o que Brasília pede
+/// e a MUNAY ainda não tem". Autorizado pelo dono em 09/08/2026.
+///
+/// ── ANONIMATO ESTRUTURAL, NÃO POR DISCIPLINA ────────────────────────────
+///
+/// Esta tabela **não tem relation com User, não tem IP e não tem sessão**, e
+/// isso é a garantia: não existe coluna por onde ligar uma busca a uma pessoa,
+/// então nenhum código futuro consegue fazer essa ligação por engano. Nem hash
+/// de IP — hash de IP continua sendo pseudônimo, e pseudônimo identifica.
+///
+/// ⚠️ **`texto` é DADO SENSÍVEL.** Gente escreve desabafo em campo de busca
+/// ("quero voltar a treinar depois da depressão"). O texto fica porque é o
+/// valor do registro, mas com três travas: nunca é exibido individualmente no
+/// /admin (só contagem), nunca sai em export, e o uso previsto é agregado.
+/// Retenção proposta: 12 meses (a confirmar com o jurídico, junto do resto da
+/// política).
+model BuscaRegistro {
+  id        String   @id @default(uuid())
+  /// Só a data — sem hora. Hora + região aproximada começa a virar rastro de
+  /// uma pessoa específica num bairro pequeno.
+  dia       DateTime @db.Date
+  /// O que a pessoa escreveu, cortado. Sensível — ver o aviso acima.
+  texto     String   @db.Text
+  /// O que a IA ENTENDEU. `null` quando não deu pra interpretar — e esse null
+  /// é informação: é a busca que o produto não soube atender.
+  modalidade String?
+  /// Região aproximada: a que a busca mencionou, não a de quem buscou. A
+  /// MUNAY não geolocaliza ninguém.
+  regiao     String?
+  /// Houve comunidade pra oferecer? `false` é o registro mais valioso: é
+  /// demanda existindo sem oferta.
+  teveResultado Boolean @default(false) @map("teve_resultado")
+
+  @@index([dia])
+  @@map("busca_registros")
+}

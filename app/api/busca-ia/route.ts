@@ -1,5 +1,6 @@
 import { getCommunityFacets } from "@/lib/communities";
 import { iaDisponivel, interpretarBusca } from "@/lib/ia";
+import { recomendar } from "@/lib/ai/recomendacao";
 
 export const dynamic = "force-dynamic";
 
@@ -38,15 +39,42 @@ export async function POST(req: Request) {
 
   try {
     const facetas = await getCommunityFacets();
-    const resultado = await interpretarBusca(texto, facetas, ip);
+    // As duas chamadas em paralelo: a interpretação continua alimentando os
+    // filtros (o caminho que sempre funcionou) e a recomendação acrescenta as
+    // três comunidades. Uma falhar não derruba a outra — cada uma devolve
+    // `null` por conta própria, e a UI degrada no que sobrou.
+    const [resultado, descoberta] = await Promise.all([
+      interpretarBusca(texto, facetas, ip),
+      recomendar(texto, ip),
+    ]);
 
     // `null` não é erro: é "não deu pra interpretar com confiança". A UI
     // cai no filtro normal, que sempre funciona.
     if (!resultado) {
+      // Sem interpretação mas COM recomendação ainda vale a pena responder:
+      // as três comunidades são o que a pessoa queria, e o filtro era só o
+      // meio de chegar nelas.
+      if (descoberta && descoberta.recomendacoes.length > 0) {
+        return Response.json({
+          ok: true,
+          modalidade: null,
+          regiao: null,
+          entendimento: "",
+          observacao: descoberta.observacao,
+          recomendacoes: descoberta.recomendacoes,
+        });
+      }
       return Response.json({ ok: false, motivo: "sem-interpretacao" });
     }
 
-    return Response.json({ ok: true, ...resultado });
+    return Response.json({
+      ok: true,
+      ...resultado,
+      recomendacoes: descoberta?.recomendacoes ?? [],
+      // A observação da descoberta ("só achei duas") tem prioridade: ela fala
+      // do resultado que a pessoa vai ver, não do filtro.
+      observacao: descoberta?.observacao ?? resultado.observacao,
+    });
   } catch (erro) {
     console.error(
       "[busca-ia] falha:",

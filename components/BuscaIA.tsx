@@ -1,7 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+type Recomendacao = {
+  slug: string;
+  nome: string;
+  modalidade: string;
+  regiao: string;
+  porque: string;
+};
 
 /**
  * Campo de busca por descrição.
@@ -19,6 +28,10 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
   const [texto, setTexto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  // As recomendações ficam NA TELA em vez de virar querystring: elas são o
+  // resultado, não um recorte. Mandar a pessoa pra listagem aqui perderia
+  // justamente a justificativa, que é o que a feature acrescenta.
+  const [recomendacoes, setRecomendacoes] = useState<Recomendacao[]>([]);
 
   async function buscar(valor: string) {
     const limpo = valor.trim();
@@ -26,6 +39,7 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
 
     setCarregando(true);
     setAviso(null);
+    setRecomendacoes([]);
 
     try {
       const resp = await fetch("/api/busca-ia", {
@@ -38,6 +52,18 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
       if (!dados.ok) {
         // Nunca mostra erro técnico: a busca normal existe e funciona.
         setAviso("Não consegui interpretar. Tenta pelos filtros abaixo.");
+        return;
+      }
+
+      const achadas: Recomendacao[] = Array.isArray(dados.recomendacoes)
+        ? dados.recomendacoes
+        : [];
+      if (achadas.length > 0) {
+        // Achou comunidade de verdade: mostra as três com o porquê e para
+        // aqui. O filtro continua disponível logo abaixo, pra quem quiser ver
+        // tudo.
+        setRecomendacoes(achadas);
+        if (dados.observacao) setAviso(dados.observacao);
         return;
       }
 
@@ -104,6 +130,36 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
         <p className="mt-3 text-sm text-petroleo/70" role="status">
           {aviso}
         </p>
+      )}
+
+      {recomendacoes.length > 0 && (
+        <div className="mt-5">
+          <p className="eyebrow mb-3">
+            {recomendacoes.length === 1
+              ? "Achei uma que combina"
+              : `Achei ${recomendacoes.length} que combinam`}
+          </p>
+          <ul className="grid gap-3">
+            {recomendacoes.map((r) => (
+              <li key={r.slug}>
+                <Link
+                  href={`/comunidades/${r.slug}`}
+                  className="block rounded-card border border-petroleo/10 bg-white p-5 transition-colors hover:border-petroleo/30"
+                >
+                  <p className="font-display text-lg font-bold">{r.nome}</p>
+                  <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60">
+                    {r.modalidade} · {r.regiao}
+                  </p>
+                  {/* Texto do modelo: renderizado pelo React, que escapa por
+                      construção. Nada de innerHTML aqui. */}
+                  <p className="mt-3 text-sm leading-relaxed text-petroleo/80">
+                    {r.porque}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">

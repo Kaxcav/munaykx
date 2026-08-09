@@ -28,7 +28,7 @@ export default function CommunityForm({
   community,
 }: {
   action: (prev: AdminFormState, formData: FormData) => Promise<AdminFormState>;
-  community?: Community;
+  community?: Partial<Community>;
 }) {
   const [state, formAction] = useActionState(action, null);
   // Slug acompanha o nome até a pessoa mexer no campo; na edição, nunca auto.
@@ -98,7 +98,7 @@ export default function CommunityForm({
             </option>
             {/* Dado legado (ex.: "Asa Sul" das demos) fora da lista oficial:
                 entra como opção extra pra edição não corromper o valor. */}
-            {community && !REGIOES_COM_OUTRA.includes(community.regiao) && (
+            {community?.regiao && !REGIOES_COM_OUTRA.includes(community.regiao) && (
               <option value={community.regiao}>
                 {community.regiao} (valor atual, fora da lista oficial)
               </option>

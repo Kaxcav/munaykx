@@ -503,26 +503,30 @@ export default function PerfilForm({
             id="sec-consentimento"
             className="font-display text-2xl font-extrabold tracking-tight"
           >
-            O que a gente pode fazer com isso
+            Você no controle
           </h2>
-          <p className="mt-2 text-sm text-petroleo/65">
-            Três permissões separadas, porque são três coisas diferentes. Você
-            escolhe uma a uma e muda de ideia quando quiser.
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-petroleo/80">
+            São três coisas diferentes, então são três chaves separadas. Você
+            liga o que faz sentido pra você e desliga quando quiser — nada aqui
+            vem ligado por padrão.
           </p>
 
           <div className="mt-6 space-y-3">
+            {/* O necessário primeiro, marcado como pré-requisito: sem base
+                legal não há perfil. Não vem ligado — a pessoa é quem liga. */}
             <Consentimento
               id="consentiuCadastro"
               marcado={dados.consentiuCadastro}
               onChange={(v) => set("consentiuCadastro", v)}
               titulo="Guardar meus dados de cadastro"
+              nivel="necessario"
               texto={
                 <>
-                  Necessário pra existir perfil. Sem isso a gente não tem como
-                  guardar nada — os detalhes estão na{" "}
+                  É o que faz existir um perfil seu — sem isso não há o que
+                  guardar. Você lê o passo a passo na{" "}
                   <Link
                     href="/privacidade"
-                    className="underline underline-offset-4"
+                    className="underline underline-offset-4 hover:text-salvia-deep"
                     target="_blank"
                   >
                     política de privacidade
@@ -530,21 +534,21 @@ export default function PerfilForm({
                   .
                 </>
               }
-              obrigatorio
             />
             <Consentimento
               id="consentiuRecomendacao"
               marcado={dados.consentiuRecomendacao}
               onChange={(v) => set("consentiuRecomendacao", v)}
-              titulo="Usar meu histórico pra me recomendar coisas"
-              texto="A gente olha em que eventos você se inscreveu pra sugerir comunidade e horário que combinam. Desligado, a MUNAY funciona igual — só sugere menos bem."
+              titulo="Quer que a MUNAY sugira o que combina com você?"
+              nivel="recomendado"
+              texto="A gente olha nos eventos em que você já entrou pra te apontar comunidade e horário com a sua cara — menos rolagem, mais coisa boa perto de você. Desligado, a MUNAY funciona igual; só acerta menos na sugestão."
             />
             <Consentimento
               id="consentiuInsights"
               marcado={dados.consentiuInsights}
               onChange={(v) => set("consentiuInsights", v)}
-              titulo="Entrar em estatísticas gerais sobre o público"
-              texto="Números agregados do tipo “quantas pessoas praticam corrida no Sudoeste”, sem nome, sem e-mail e sem nada que identifique você. Nunca é vendido nem repassado individualmente."
+              titulo="Topa entrar nos números que ajudam a cena de Brasília a crescer?"
+              texto="Vira contagem agregada — do tipo “quanta gente corre no Sudoeste” — que mostra pra cidade (e pra quem apoia o esporte) que a cena é viva. Anônimo: sem nome, sem e-mail, sem nada que aponte pra você. Nunca é vendido nem repassado individualmente."
             />
           </div>
         </section>
@@ -614,47 +618,103 @@ export default function PerfilForm({
   );
 }
 
+/**
+ * Um consentimento = uma CHAVE (toggle), não um checkbox de termo. A intenção
+ * de conversão é de DESIGN e COPY, não de truque: a chave nasce sempre no valor
+ * que veio do servidor (`marcado`), que pra opt-in novo é FALSE. Nenhuma chave
+ * vem pré-ligada no markup, não há atalho que ligue todas de uma vez, e o selo
+ * "recomendado" (só no #2) marca o que beneficia a PESSOA — não empurra,
+ * orienta. Tirar qualquer uma dessas três coisas é o que a LGPD trata como
+ * consentimento inválido.
+ *
+ * Acessibilidade: o `<input>` é um checkbox real (`role="switch"`) apenas
+ * escondido visualmente (`sr-only`, segue focável e no tab order); o trilho
+ * mostra o foco por `peer-focus-visible`. O `<label>` envolve tudo, então o
+ * nome acessível é o título + texto, e clicar em qualquer parte alterna.
+ */
+type NivelConsentimento = "necessario" | "recomendado" | "opcional";
+
 function Consentimento({
   id,
   marcado,
   onChange,
   titulo,
   texto,
-  obrigatorio = false,
+  nivel = "opcional",
 }: {
   id: string;
   marcado: boolean;
   onChange: (v: boolean) => void;
   titulo: string;
   texto: React.ReactNode;
-  obrigatorio?: boolean;
+  nivel?: NivelConsentimento;
 }) {
+  const recomendado = nivel === "recomendado";
+  const obrigatorio = nivel === "necessario";
   return (
     <label
-      className={`flex cursor-pointer items-start gap-3 rounded-card border p-5 transition-colors ${
-        marcado ? "border-salvia/50 bg-salvia-soft" : "border-petroleo/15 bg-white/50"
+      htmlFor={id}
+      className={`flex cursor-pointer items-start justify-between gap-4 rounded-card border p-5 transition-colors ${
+        marcado
+          ? "border-salvia/60 bg-salvia-soft"
+          : recomendado
+            ? "border-salvia/40 bg-white/60 ring-1 ring-salvia/25 hover:border-salvia/60"
+            : "border-petroleo/15 bg-white/60 hover:border-petroleo/30"
       }`}
     >
-      <input
-        id={id}
-        type="checkbox"
-        checked={marcado}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4 accent-salvia"
-      />
-      <span>
-        <span className="block font-semibold">
-          {titulo}
-          {obrigatorio && (
-            <span className="ml-2 font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
-              necessário
-            </span>
-          )}
+      <span className="min-w-0">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="font-display text-base font-bold text-petroleo">
+            {titulo}
+          </span>
+          {obrigatorio && <SeloConsentimento tom="neutro">necessário</SeloConsentimento>}
+          {recomendado && <SeloConsentimento tom="salvia">recomendado</SeloConsentimento>}
         </span>
-        <span className="mt-1 block text-sm leading-relaxed text-petroleo/70">
+        <span className="mt-1.5 block text-sm leading-relaxed text-petroleo/80">
           {texto}
         </span>
       </span>
+
+      <span className="relative mt-0.5 shrink-0">
+        <input
+          id={id}
+          type="checkbox"
+          role="switch"
+          checked={marcado}
+          onChange={(e) => onChange(e.target.checked)}
+          className="peer sr-only"
+        />
+        <span
+          aria-hidden
+          className="block h-6 w-11 rounded-full bg-petroleo/25 transition-colors peer-checked:bg-salvia peer-focus-visible:ring-2 peer-focus-visible:ring-salvia-deep peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-areia"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"
+        />
+      </span>
     </label>
+  );
+}
+
+/** Selo curto ao lado do título. Contraste ≥ AA de propósito (a auditoria pegou
+ *  texto muted abaixo de AA): salvia-deep sobre claro, petroleo/80 no neutro. */
+function SeloConsentimento({
+  tom,
+  children,
+}: {
+  tom: "neutro" | "salvia";
+  children: React.ReactNode;
+}) {
+  const cls =
+    tom === "salvia"
+      ? "border-salvia/50 bg-salvia-soft text-salvia-deep"
+      : "border-petroleo/25 bg-white/70 text-petroleo/80";
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${cls}`}
+    >
+      {children}
+    </span>
   );
 }

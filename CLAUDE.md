@@ -36,6 +36,13 @@ resumo operacional — em conflito, os docs acima mandam.
    única — `tailwind.config.ts` e as OG images importam de lá; next/og não
    enxerga classes Tailwind). Zero hex hardcoded em componente. Paleta
    alternativa em disputa (decisão 0.3 do PO) — a troca segue num arquivo só.
+   Desde 07/08/2026 a paleta tem **`salvia`** (verde sálvia, pedido do PO) e
+   seis **acentos de categoria** — todos DERIVADOS por mistura no
+   `tailwind.config.ts`, nenhum hex novo. As classes de acento são escolhidas
+   em runtime, então dependem da **`safelist`** do config: mexeu em
+   `lib/modalidades.ts`, confira a safelist, senão o card sai colorido em dev
+   e cinza em produção. A matemática de cor mora em **`lib/cor.ts`**, que não
+   importa NADA — o loader de config do Tailwind não resolve o alias `@/`.
 5. **Prisma fixado na major v6** (`^6.x` no package.json). Não subir de
    major nem trocar ORM sem decisão explícita. Migrations only: nunca
    editar migration já aplicada.
@@ -43,8 +50,11 @@ resumo operacional — em conflito, os docs acima mandam.
    desde que explícito na seção "Desvios" do handoff e registrado em
    story/commit. Nunca silencioso. Precedente: a `lista_espera` da
    STORY-002 nasceu fora de spec, foi confessada e aceita.
-7. Copy em pt-BR, voz direta, sem corporativês. Lime é acento raro, não
-   cor de fundo de texto (contraste ruim sobre areia).
+7. Copy em pt-BR, voz direta, sem corporativês. **Desde o briefing de
+   07/08/2026 o tom é mais coloquial** ("Dá uma conferida aí"), mirando jovem
+   de classe A/B — nada institucional. Lime continua sendo acento RARO, não
+   cor de fundo de texto (contraste ruim sobre areia); quem cobre área agora é
+   o `salvia`.
 
 ## Fábrica (papéis e fluxo)
 
@@ -79,7 +89,8 @@ resumo operacional — em conflito, os docs acima mandam.
   filtros via URL) · `/comunidades/[slug]` · `/descobrir/[recorte]` (SEO
   programático) · `/eventos/[slug]` (detalhe + RSVP) · `/rsvp/[token]`
   (gerenciar inscrição, noindex) · `/entrar` + `/entrar/confirmar` +
-  `/minhas-inscricoes` (auth por magic link) · `/privacidade` (LGPD) ·
+  `/minhas-inscricoes` + `/perfil` + `/meus-ingressos` (auth por magic link,
+  todas noindex) · `/privacidade` (LGPD) ·
   `/admin/*` (interno: Basic Auth por env, noindex + robots).
   Não existe índice `/eventos` — evento se descobre pela comunidade.
 - APIs: `POST /api/leads` · `POST /api/rsvps` · `POST /api/rsvps/cancel` ·
@@ -299,3 +310,44 @@ autosserviço o conteúdo depende do Kaxcav digitar.
 
 Anti-meta continua valendo pro resto: nada de app mobile, checkout, ingresso
 ou `Friendship` antes do resultado do edital.
+
+## Briefing do PO — 07/08/2026 (STORY-011, executada)
+
+O Mateus entregou um briefing de 13 itens (`MUNAY Briefing Landing Page.docx`)
+cobrindo landing, área do usuário e rodapé. **Está implementado** — spec e
+racional completos em `docs/stories/STORY-011-briefing-mateus.md`.
+
+**⚠️ DESVIO CONFESSADO, e é grande:** a Parte II do briefing (perfil com CPF,
+inteligência de consumo, ingressos) é justamente a "construção pesada" que a
+linha acima manda deixar pro pós-15/10. **Foi executada mesmo assim, por
+decisão explícita do Kaxcav em 07/08/2026.** Mitigações: a migração só
+ACRESCENTA colunas anuláveis (reverter é `DROP COLUMN`), nenhuma dependência
+nova entrou, e o item 10.1 (vender inteligência de público pra terceiros)
+**não foi construído** — depende de parecer jurídico, não de código.
+
+O que mudou no site:
+
+- **Landing** ganhou `<Mosaico />` (seção de mídia; composições SVG no lugar
+  das fotos, que não existem) e `<PainelFuncional />` (Comunidade · Mapa ·
+  Organizadores + Cursos no roadmap). Os cards da vitrine agora têm **cor por
+  categoria**, determinística (`lib/modalidades.ts`). A ordem das seções é
+  amarrada pelo briefing: mídia vem ANTES de "Brasília treina todo dia" — tem
+  teste que reprova se inverter.
+- **Área do usuário**: `/perfil` (cadastro + painel de ajuda + tags de
+  interesse + perguntas leves + consentimento granular), `/minhas-inscricoes`
+  com os chips Ativos/Encerrados/Pagos, e `/meus-ingressos` — tela escura, densa
+  e verde, de propósito o oposto do resto do site.
+- **LGPD**: consentimento é **data**, não booleano ("desde quando" é o que se
+  prova); três finalidades separadas; versão da política guardada no aceite;
+  idade mínima 16 pro CADASTRO (RSVP continua sem conta, pra qualquer idade);
+  perfil privado por padrão; `panoramaAgregado()` com k-anonimato k=5.
+
+**A aba "Pagos" nasce vazia e isso está certo** — não existe pagamento no
+produto. `ehPago()` em `lib/inscricoes.ts` é o único ponto que muda quando
+existir.
+
+**Pendências que dependem de DADO, não de código** (o rodapé e a seção de mídia
+estão prontos e vazios; campo sem valor não renderiza, pra não repetir o
+`contato@munay.app.br` que ficou semanas no ar): fotos/vídeos com autorização
+de imagem, telefone + WhatsApp + Instagram, e os perfis pessoais dos
+fundadores. Mais quatro decisões do Mateus, listadas no fim da STORY-011.

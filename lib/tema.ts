@@ -1,4 +1,5 @@
 import { brand } from "@/lib/brand";
+import { hexParaHsl, misturar } from "@/lib/cor";
 
 /**
  * TEMA shadcn/ui derivado da marca.
@@ -20,56 +21,14 @@ import { brand } from "@/lib/brand";
  * (`hsl(var(--primary) / 0.5)`).
  */
 
-/** "#0F3B3C" → [15, 59, 60] */
-function hexParaRgb(hex: string): [number, number, number] {
-  const limpo = hex.replace("#", "");
-  return [
-    parseInt(limpo.slice(0, 2), 16),
-    parseInt(limpo.slice(2, 4), 16),
-    parseInt(limpo.slice(4, 6), 16),
-  ];
-}
-
-/** "#0F3B3C" → "181 60% 15%" (o formato que o shadcn espera) */
-export function hexParaHsl(hex: string): string {
-  const [r255, g255, b255] = hexParaRgb(hex);
-  const r = r255 / 255;
-  const g = g255 / 255;
-  const b = b255 / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-
-  let h = 0;
-  let s = 0;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-    else if (max === g) h = ((b - r) / d + 2) / 6;
-    else h = ((r - g) / d + 4) / 6;
-  }
-
-  const arredonda = (n: number) => Math.round(n * 10) / 10;
-  return `${arredonda(h * 360)} ${arredonda(s * 100)}% ${arredonda(l * 100)}%`;
-}
-
 /**
- * Mistura dois hex. Serve pros tons que a marca não define mas o shadcn
- * exige (borda, superfície suave) — em vez de inventar um hex novo, que
- * seria exatamente a cor fora do `brand.ts` que a regra 4 proíbe.
+ * As conversões de cor migraram pra `lib/cor.ts` em 07/08/2026 — módulo sem
+ * import nenhum, porque o `tailwind.config.ts` precisa delas e o loader de
+ * config do Tailwind não resolve o alias `@/` (a nota longa está lá).
+ * Reexportadas aqui pra não quebrar quem já importava de `@/lib/tema` —
+ * `tests/tema.spec.ts`, entre outros.
  */
-export function misturar(hexA: string, hexB: string, proporcao: number): string {
-  const a = hexParaRgb(hexA);
-  const b = hexParaRgb(hexB);
-  const canal = (i: 0 | 1 | 2) =>
-    Math.round(a[i] * (1 - proporcao) + b[i] * proporcao);
-  return `#${[canal(0), canal(1), canal(2)]
-    .map((n) => n.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
+export { hexParaHsl, misturar };
 
 const BRANCO = "#FFFFFF";
 

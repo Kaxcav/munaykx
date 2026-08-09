@@ -157,6 +157,70 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  // ─── PERFIL (STORY-011, briefing do PO de 07/08/2026) ─────────────────
+  // TODOS OPCIONAIS, e isso é decisão, não preguiça. O RSVP funciona sem
+  // conta e a conta funciona sem perfil: campo obrigatório aqui viraria
+  // barreira no meio do funil, contra a regra "auth é aditiva, nunca
+  // barreira" da STORY-007.
+
+  // 8.1 · Dados cadastrais.
+  //
+  // ⚠️ NÃO EXISTE CAMPO DE CPF AQUI, E A AUSÊNCIA É A DECISÃO.
+  // O briefing pedia CPF (item 8.1) e ele chegou a ser escrito. Saiu em
+  // 07/08/2026, por decisão do Kaxcav, com três motivos:
+  //   1. A finalidade declarada na tela era "vai fazer falta quando existir
+  //      ingresso pago e nominal" — ou seja, o dado mais sensível do projeto
+  //      para uma funcionalidade que NÃO EXISTE (é C6, pós-tração).
+  //   2. A política de privacidade não menciona CPF. Coletar sem o texto
+  //      correspondente é o buraco de LGPD, não o campo em si.
+  //   3. O `@unique` prevenia fraude hipotética (não há pagamento) e em troca
+  //      criava enumeração: dava pra descobrir se um CPF está cadastrado.
+  // Se um dia voltar, volta junto com C6, com finalidade real e política
+  // reescrita. Não reintroduza "porque é fácil".
+  nascimento    DateTime? @db.Date
+  // Gênero AUTODECLARADO, texto livre com sugestões na UI. O briefing pedia
+  // "sexo e gênero" em campos separados; só gênero foi implementado —
+  // DESVIO CONFESSADO, racional na STORY-011 (sexo biológico não tem uso
+  // no produto, e dado sensível sem finalidade é passivo de LGPD, não ativo).
+  genero        String?
+  cidade        String?
+  uf            String?   @db.Char(2)
+  cep           String?   @db.VarChar(9)
+  telefone      String?
+
+  // 11 · Camada pública — o que a comunidade vê.
+  apelido       String?
+  bio           String?
+  fotoUrl       String?   @map("foto_url")
+  // Opt-in explícito: perfil nasce PRIVADO. Quem preenche bio não está
+  // pedindo pra ser listado.
+  perfilPublico Boolean   @default(false) @map("perfil_publico")
+
+  // 11.1 · Tags de interesse (padrão de app de relacionamento, pedido do PO).
+  // Lista escalar em vez de tabela de junção: o catálogo é fechado
+  // (lib/interesses.ts) e ninguém precisa consultar "quem gosta de X" ainda.
+  // Vira tabela própria quando existir busca por interesse — ONDA 2.
+  interesses    String[]  @default([])
+
+  // 8.2 · Camada de personalidade — as perguntas leves.
+  // JSONB de chave → resposta. O catálogo de perguntas vive no código
+  // (lib/perfil-perguntas.ts), não no banco: pergunta some, dado antigo
+  // continua legível. Consultável por `respostas->>'chave'` quando o PO
+  // quiser cruzar.
+  respostas     Json?
+
+  // 10 · CONSENTIMENTO GRANULAR (LGPD). Três finalidades separadas porque
+  // são três decisões diferentes, e a lei não aceita consentimento em
+  // bloco pra finalidades distintas. Guardado como DATA (não boolean):
+  // "quando consentiu" é o que se prova numa fiscalização; boolean só diz
+  // "sim" e não diz desde quando nem contra qual versão da política.
+  consentiuCadastro      DateTime? @map("consentiu_cadastro")
+  consentiuRecomendacao  DateTime? @map("consentiu_recomendacao")
+  consentiuInsights      DateTime? @map("consentiu_insights")
+  // Versão da política vigente no aceite — sem isso, mudar a política
+  // apaga a prova de que a pessoa consentiu com a versão anterior.
+  politicaVersao         String?   @map("politica_versao")
+
   sessions Session[]
   accounts Account[]
   rsvps    Rsvp[]

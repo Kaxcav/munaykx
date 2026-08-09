@@ -508,7 +508,10 @@ model BuscaRegistro {
   /// uma pessoa específica num bairro pequeno.
   dia       DateTime @db.Date
   /// O que a pessoa escreveu, cortado. Sensível — ver o aviso acima.
-  texto     String   @db.Text
+  /// NULL depois da purga de retenção (12 meses, ver lib/ai/retencao.ts): o
+  /// texto some, a linha fica. Anulável por isso, não porque seja opcional na
+  /// gravação.
+  texto     String?  @db.Text
   /// O que a IA ENTENDEU. `null` quando não deu pra interpretar — e esse null
   /// é informação: é a busca que o produto não soube atender.
   modalidade String?

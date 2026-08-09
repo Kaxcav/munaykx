@@ -11,6 +11,7 @@
     "postinstall": "prisma generate",
     "preflight": "node scripts/preflight.mjs",
     "recado": "node scripts/recado.mjs",
+    "purgar-buscas": "node scripts/purgar-buscas.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "tema": "tsx scripts/gerar-tema.mjs"

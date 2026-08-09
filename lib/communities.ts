@@ -31,6 +31,8 @@ export type CommunityFilters = {
   modalidade?: string;
   regiao?: string;
   city?: string;
+  /** `/comunidades?iniciantes=1` — só comunidades que marcaram "acolhe iniciante". */
+  acolheIniciante?: boolean;
 };
 
 /** Comunidades ativas da cidade, com filtro opcional por modalidade e/ou região. */
@@ -48,6 +50,9 @@ export function getCommunities(
       city: semNul(filters.city) ?? CIDADE_PADRAO,
       ...(modalidade ? { modalidade } : {}),
       ...(regiao ? { regiao } : {}),
+      // Filtro "acolhe iniciante": grounded — só marcadas E reais (demo fora,
+      // como no índice de descoberta). Sem a flag, não altera o resultado.
+      ...(filters.acolheIniciante ? { acolheIniciante: true, demo: false } : {}),
     },
     orderBy: { nome: "asc" },
   });

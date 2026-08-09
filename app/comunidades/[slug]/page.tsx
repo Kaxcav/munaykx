@@ -12,6 +12,7 @@ import { sessaoAtual } from "@/lib/sessao";
 import { segue, seguir } from "@/lib/membership";
 import { avisosDaComunidade } from "@/lib/posts";
 import FeedAvisos from "@/components/FeedAvisos";
+import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
 import { seguirAction, deixarDeSeguirAction } from "./seguir-actions";
 
 // Detalhe vem do banco a cada request — nada de pré-render no build.
@@ -100,6 +101,8 @@ export default async function ComunidadePage({
         <h1 className="mt-3 max-w-2xl font-display text-4xl font-extrabold tracking-tight sm:text-5xl">
           {c.nome}
         </h1>
+
+        {c.acolheIniciante && <SeloAcolheIniciante className="mt-4" />}
 
         <div className="mt-6">
           {jaSegue ? (

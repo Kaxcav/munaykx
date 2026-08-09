@@ -39,6 +39,7 @@ export async function editarComunidadeAction(formData: FormData): Promise<void> 
     local: texto(formData, "local"),
     nivel: texto(formData, "nivel"),
     ativo: formData.get("ativo") === "on",
+    acolheIniciante: formData.get("acolheIniciante") === "on",
   });
   if (!r.ok && r.motivo === "nao-dono") redirect("/painel");
   const base = `/painel/comunidades/${encodeURIComponent(slug)}`;

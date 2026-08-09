@@ -41,6 +41,11 @@ export const comunidadeEdicaoSchema = z.object({
   local: z.string().trim().max(200),
   nivel: z.string().trim().max(80),
   ativo: z.boolean(),
+  // Sinal "acolhe iniciante" — opt-in do organizador (default false na coluna).
+  // `.default(false)`: campo OPCIONAL na entrada (chamadas antigas que não mandam
+  // o campo seguem válidas), mas SEMPRE boolean na saída persistida. O form do
+  // painel envia sempre (checkbox → "on"|ausente), então o valor real não se perde.
+  acolheIniciante: z.boolean().default(false),
 });
 export type ComunidadeEdicaoInput = z.infer<typeof comunidadeEdicaoSchema>;
 
@@ -66,6 +71,7 @@ export async function editarComunidade(
       local: d.local || null,
       nivel: d.nivel || null,
       ativo: d.ativo,
+      acolheIniciante: d.acolheIniciante,
     },
   });
   return { ok: true, dados: undefined };

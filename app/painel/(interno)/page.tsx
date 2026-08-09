@@ -2,6 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario, organizacoesDe } from "@/lib/organizacao";
+import Copiloto from "@/components/painel/Copiloto";
+import { iaDisponivel } from "@/lib/ai";
+import { sugestoes } from "@/lib/ai/copiloto";
 
 /**
  * `/painel` — as comunidades da organização da pessoa.
@@ -46,6 +49,14 @@ export default async function PainelHome() {
       <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
         Minhas comunidades
       </h1>
+
+      {/* COPILOTO (ideia #4): só aparece quando a IA está ligada — a UI não
+          oferece o que o ambiente não entrega, mesma regra do e-mail. */}
+      {iaDisponivel() ? (
+        <div className="mt-8">
+          <Copiloto exemplos={sugestoes()} />
+        </div>
+      ) : null}
 
       <ul className="mt-8 space-y-4">
         {comunidades.map((c) => (

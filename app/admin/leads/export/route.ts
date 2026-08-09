@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { toCsv } from "@/lib/admin";
 import { desdeQuando, parseBusca, parsePeriodo } from "@/lib/admin-lista";
+import { assertAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,12 @@ export const dynamic = "force-dynamic";
  * inteiro, não os 50 da tela.
  */
 export async function GET(req: Request) {
+  // Segunda barreira. Este handler despeja nome, e-mail e WhatsApp de gente
+  // real — é o pior alvo do /admin —, e route handler NÃO passa pelo layout
+  // que confere a credencial. O middleware cobre, mas não pode ser ponto
+  // único de falha (CVE-2025-29927 e parentes).
+  await assertAdmin();
+
   const url = new URL(req.url);
   const tipoParam = url.searchParams.get("tipo");
   const origem = url.searchParams.get("origem");

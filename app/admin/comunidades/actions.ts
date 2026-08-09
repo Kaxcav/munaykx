@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { communityAdminSchema, type AdminFormState } from "@/lib/admin";
+import { assertAdmin } from "@/lib/admin-auth";
 
 /**
  * Cria/edita comunidade. Padrão do admin: Server Actions + useActionState
@@ -15,6 +16,11 @@ export async function salvarComunidade(
   _prev: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
+  // Segunda barreira: o middleware cobre esta rota, mas não pode ser ponto
+  // único de falha — bypass de middleware é classe de bug que já apareceu no
+  // Next (CVE-2025-29927). Mesma linha que as actions novas já fazem.
+  await assertAdmin();
+
   // "?? \"\"": campo ausente no POST vira vazio — o Zod responde com a
   // mensagem de negócio em vez de "expected string, received null".
   const parsed = communityAdminSchema.safeParse({

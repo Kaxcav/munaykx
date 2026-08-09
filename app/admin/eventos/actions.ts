@@ -10,12 +10,19 @@ import {
   type AdminFormState,
 } from "@/lib/admin";
 import { dispararAvisosDeEventoNovo } from "@/lib/avisos-evento";
+import { assertAdmin } from "@/lib/admin-auth";
 
 export async function salvarEvento(
   id: string | null,
   _prev: AdminFormState,
   formData: FormData,
 ): Promise<AdminFormState> {
+  // Segunda barreira: o middleware cobre o POST (Server Action bate em
+  // /admin/*), mas ele não pode ser ponto único de falha — bypass de
+  // middleware é classe de bug que já apareceu no Next (CVE-2025-29927).
+  // Mesma linha que as actions de aprovações e avisos já fazem.
+  await assertAdmin();
+
   // "?? \"\"": campo ausente no POST vira vazio — o Zod responde com a
   // mensagem de negócio em vez de "expected string, received null".
   const parsed = eventAdminSchema.safeParse({

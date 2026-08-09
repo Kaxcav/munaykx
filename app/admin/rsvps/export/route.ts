@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { toCsv } from "@/lib/admin";
 import { desdeQuando, parseBusca, parsePeriodo } from "@/lib/admin-lista";
+import { assertAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,11 @@ export const dynamic = "force-dynamic";
  * O token NÃO sai no export de propósito — ele autoriza cancelar a inscrição.
  */
 export async function GET(req: Request) {
+  // Segunda barreira, pelo mesmo motivo do export de leads: route handler não
+  // passa pelo layout que confere a credencial, e este despeja nome, e-mail e
+  // WhatsApp de quem se inscreveu.
+  await assertAdmin();
+
   const url = new URL(req.url);
   const statusParam = url.searchParams.get("status");
   const evento = url.searchParams.get("evento");

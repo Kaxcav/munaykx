@@ -122,11 +122,52 @@ test("o /admin não responde sem credencial", async ({ browser, baseURL }) => {
   // de auth. Sem zerar explicitamente, este teste passaria autenticado e não
   // provaria nada, que é o pior tipo de teste verde.
   const ctx = await browser.newContext({ extraHTTPHeaders: {}, baseURL });
-  for (const rota of ["/admin", "/admin/leads", "/admin/leads/export"]) {
+  for (const rota of [
+    "/admin",
+    "/admin/leads",
+    "/admin/leads/export",
+    "/admin/rsvps/export",
+  ]) {
     const resp = await ctx.request.get(rota, { failOnStatusCode: false });
     expect([401, 404], rota).toContain(resp.status());
   }
   await ctx.close();
+});
+
+/**
+ * A SEGUNDA BARREIRA não pode sumir de quem serve o /admin.
+ *
+ * Por que este teste é estrutural (lê o arquivo) em vez de HTTP: o middleware
+ * responde ANTES, então nenhuma requisição consegue exercitar o `assertAdmin`
+ * sozinho — de fora, remover a linha não muda nada visível. É exatamente por
+ * isso que ela se perde num refactor sem ninguém notar.
+ *
+ * O valor da linha foi medido, não suposto: desligando o middleware
+ * localmente, `/admin/leads/export` SEM ela devolve **200 com o CSV inteiro**
+ * (nome, e-mail, WhatsApp de gente real); com ela, 404. É a defesa que sobra
+ * se um bypass de middleware aparecer — classe de bug que já apareceu no Next
+ * (CVE-2025-29927).
+ */
+test.describe("defesa em profundidade do /admin", () => {
+  const SERVEM_O_ADMIN = [
+    "app/admin/layout.tsx",
+    "app/admin/aprovacoes/actions.ts",
+    "app/admin/avisos/actions.ts",
+    "app/admin/comunidades/actions.ts",
+    "app/admin/eventos/actions.ts",
+    "app/admin/leads/export/route.ts",
+    "app/admin/rsvps/export/route.ts",
+  ];
+
+  for (const arquivo of SERVEM_O_ADMIN) {
+    test(`${arquivo} confere a credencial por conta própria`, async () => {
+      const { readFile } = await import("node:fs/promises");
+      const fonte = await readFile(arquivo, "utf8");
+      expect(fonte, `${arquivo} deixou de chamar assertAdmin()`).toMatch(
+        /assertAdmin\(\)/,
+      );
+    });
+  }
 });
 
 test("o filtro de evento é select, não fileira de chips", async ({ page }) => {

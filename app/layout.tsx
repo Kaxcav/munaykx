@@ -5,6 +5,8 @@ import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // EXPERIMENTO: "./" deve resolver pra própria rota. Verificado abaixo.
+  alternates: { canonical: "./" },
   title: {
     default: "MUNAY — Comunidades esportivas e culturais de Brasília",
     template: "%s · MUNAY",

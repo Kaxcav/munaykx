@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { RegiaoNoMapa } from "@/lib/mapa";
 import { CENTROIDES, BBOX_DF, CENTRO_DF } from "@/lib/mapa-geo";
-import { camadasMunay } from "@/lib/mapa-estilo";
-import { brand } from "@/lib/brand";
-import { misturar } from "@/lib/cor";
+import { estiloDirecao, direcaoDe, type Direcao } from "@/lib/mapa-temas";
 
 /** Inclinação da câmera na abertura — o "3D tipo Waze". ~55° fica bonito sem
  *  deitar demais o horizonte. */
@@ -77,6 +75,7 @@ export default function MapaMapLibre({
   tilesUrl,
   regioes,
   full = false,
+  estilo,
   destaqueId = null,
   focoId = null,
   focoTick = 0,
@@ -85,6 +84,8 @@ export default function MapaMapLibre({
   tilesUrl: string;
   regioes: RegiaoNoMapa[];
   full?: boolean;
+  /** Direção visual do basemap. Se ausente, lê `?estilo=` da URL (exploração). */
+  estilo?: Direcao;
   /** RA a "pulsar" (hover na lista). */
   destaqueId?: string | null;
   /** RA a focar; muda junto com `focoTick` pra revoar mesmo na mesma RA. */
@@ -106,11 +107,22 @@ export default function MapaMapLibre({
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Direção visual: prop explícita, senão a query `?estilo=` (exploração).
+    const dir =
+      estilo ??
+      direcaoDe(
+        typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("estilo") : null,
+      );
+    const est = estiloDirecao(dir);
+
     (async () => {
       try {
         const maplibregl = await import("maplibre-gl");
         const { Protocol } = await import("pmtiles");
         if (cancelado || !container.current) return;
+
+        // Fundo do container = fundo do tema (mata o flash branco no escuro).
+        container.current.style.backgroundColor = est.fundo;
 
         const protocol = new Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -133,7 +145,7 @@ export default function MapaMapLibre({
                   '<a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> · Protomaps',
               },
             },
-            layers: camadasMunay("protomaps", { extrusao3d: true }),
+            layers: est.layers,
           },
         });
         mapaRef.current = m;
@@ -153,15 +165,7 @@ export default function MapaMapLibre({
         // ── Céu/atmosfera — reforça o 3D sob pitch. Cores da marca (areia/sálvia). ──
         m.on("style.load", () => {
           try {
-            (m as unknown as { setSky?: (s: object) => void }).setSky?.({
-              "sky-color": misturar(brand.salvia, brand.areia, 0.35),
-              "sky-horizon-blend": 0.7,
-              "horizon-color": misturar(brand.areia, "#ffffff", 0.55),
-              "horizon-fog-blend": 0.6,
-              "fog-color": brand.areia,
-              "fog-ground-blend": 0.5,
-              "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 5, 0.8, 13, 0.2],
-            });
+            (m as unknown as { setSky?: (s: object) => void }).setSky?.(est.sky);
           } catch {
             /* setSky ausente nesta versão — pitch + extrusão já entregam o 3D */
           }
@@ -221,7 +225,7 @@ export default function MapaMapLibre({
       mapaRef.current?.remove();
       mapaRef.current = null;
     };
-  }, [tilesUrl, regioes, onSelecionar]);
+  }, [tilesUrl, regioes, onSelecionar, estilo]);
 
   // Destaque (pulse) da RA sob hover na lista — imperativo, sem recriar o mapa.
   useEffect(() => {

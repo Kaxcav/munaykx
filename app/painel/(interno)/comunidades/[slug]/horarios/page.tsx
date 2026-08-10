@@ -8,6 +8,8 @@ import {
   horariosDaComunidade,
   rotularHorario,
 } from "@/lib/horarios";
+import { proximasDaComunidade } from "@/lib/ocorrencias";
+import ProximosEncontros from "@/components/painel/ProximosEncontros";
 import { adicionarHorarioAction, removerHorarioAction } from "./actions";
 
 /**
@@ -37,6 +39,7 @@ export default async function HorariosDaComunidade({
   if (!com) notFound(); // não é dela (ou não existe): 404, nunca 403
 
   const horarios = (await horariosDaComunidade(sessao.user.id, slug)) ?? [];
+  const ocorrencias = (await proximasDaComunidade(sessao.user.id, slug)) ?? [];
   const { ok, erro } = await searchParams;
   const cheio = horarios.length >= LIMITE_HORARIOS;
 
@@ -101,6 +104,8 @@ export default async function HorariosDaComunidade({
           ))}
         </ul>
       )}
+
+      <ProximosEncontros ocorrencias={ocorrencias} slug={com.slug} />
 
       {cheio ? (
         <p className="mt-8 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm text-petroleo/70">

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { RegiaoNoMapa } from "@/lib/mapa";
 import { CENTROIDES, BBOX_DF, CENTRO_DF } from "@/lib/mapa-geo";
+import { camadasMunay } from "@/lib/mapa-estilo";
 
 /**
  * Mapa REAL da Fase 1 — MapLibre GL JS lendo um PMTiles do DF direto do R2.
@@ -41,7 +42,6 @@ export default function MapaMapLibre({
         // namespace inteiro. Nada disso está no topo do módulo — só baixa aqui.
         const maplibregl = await import("maplibre-gl");
         const { Protocol } = await import("pmtiles");
-        const temas = await import("protomaps-themes-base");
 
         if (cancelado || !container.current) return;
 
@@ -67,8 +67,8 @@ export default function MapaMapLibre({
                   '<a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> · Protomaps',
               },
             },
-            // O tema é um OBJETO (namedTheme), não a string do nome.
-            layers: temas.layers("protomaps", temas.namedTheme("light")),
+            // Estilo próprio da MUNAY (vibe "tipo Waze", paleta da marca).
+            layers: camadasMunay("protomaps"),
           },
         });
         map = m;

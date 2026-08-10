@@ -24,9 +24,12 @@ import { camadasMunay } from "@/lib/mapa-estilo";
 export default function MapaMapLibre({
   tilesUrl,
   regioes,
+  full = false,
 }: {
   tilesUrl: string;
   regioes: RegiaoNoMapa[];
+  /** true → preenche o pai (tela cheia); false → card com altura fixa. */
+  full?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const [selecionada, setSelecionada] = useState<RegiaoNoMapa | null>(null);
@@ -115,18 +118,27 @@ export default function MapaMapLibre({
   }, [tilesUrl, regioes]);
 
   return (
-    <div className="relative">
+    <div className={full ? "absolute inset-0" : "relative"}>
       <div
         ref={container}
         data-testid="mapa-real"
-        className="h-[28rem] w-full overflow-hidden rounded-card border border-petroleo/10 bg-areia sm:h-[34rem]"
+        className={
+          full
+            ? "h-full w-full bg-areia"
+            : "h-[28rem] w-full overflow-hidden rounded-card border border-petroleo/10 bg-areia sm:h-[34rem]"
+        }
         role="application"
         aria-label="Mapa das comunidades no Distrito Federal"
       />
       {selecionada && (
-        <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-petroleo/15 bg-areia/95 px-3 py-2 text-sm shadow-sm">
-          <span className="font-semibold">{selecionada.regiao}</span>
-          <span className="ml-2 font-mono text-xs text-petroleo/60">
+        <div
+          className={
+            "pointer-events-none absolute z-30 rounded-lg border border-petroleo/15 bg-areia/95 px-3 py-2 text-sm shadow-md backdrop-blur " +
+            (full ? "left-3 top-20 sm:top-3" : "left-3 top-3")
+          }
+        >
+          <span className="font-semibold text-petroleo">{selecionada.regiao}</span>
+          <span className="ml-2 font-mono text-xs text-petroleo/70">
             {selecionada.total > 0
               ? `${selecionada.total} comunidade${selecionada.total === 1 ? "" : "s"}`
               : "ainda sem ninguém"}
@@ -134,8 +146,14 @@ export default function MapaMapLibre({
         </div>
       )}
       {erro && (
-        <p className="mt-2 font-mono text-xs text-petroleo/50">
-          O mapa base não carregou agora — a lista ao lado tem a mesma informação.
+        <p
+          className={
+            full
+              ? "absolute bottom-3 left-3 z-30 rounded-lg bg-areia/95 px-3 py-2 font-mono text-xs text-petroleo/70 shadow-md"
+              : "mt-2 font-mono text-xs text-petroleo/50"
+          }
+        >
+          O mapa base não carregou agora — a lista tem a mesma informação.
         </p>
       )}
     </div>

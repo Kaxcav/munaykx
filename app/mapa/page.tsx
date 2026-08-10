@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { MapaDF } from "@/components/MapaDF";
 import { EixoDeTempo } from "@/components/EixoDeTempo";
-import MapaMapLibre from "@/components/MapaMapLibre";
+import MapaTelaCheia from "@/components/MapaTelaCheia";
 import { regioesNoMapa, mapaIndexavel, type RegiaoNoMapa } from "@/lib/mapa";
 import { matrizTemporal, temEixoDeTempo } from "@/lib/horarios";
 import { mapaTilesUrl } from "@/lib/mapa-geo";
@@ -43,8 +43,13 @@ export default async function MapaPage() {
   const matriz = await matrizTemporal();
   const temEixo = temEixoDeTempo(matriz);
   // Mapa REAL só quando o dono setou a URL dos tiles (runtime, sem rebuild).
-  // Sem ela, tudo abaixo é EXATAMENTE o que renderiza hoje.
+  // Ativo → experiência TELA CHEIA (mapa full-bleed + UI flutuante), sem a nav
+  // padrão. Sem a env → cai no layout normal com o esquemático, idêntico a hoje.
   const tilesUrl = mapaTilesUrl();
+  if (tilesUrl) {
+    return <MapaTelaCheia tilesUrl={tilesUrl} regioes={regioes} />;
+  }
+
   const comDado = regioes.filter((r) => r.estado !== "vazio");
   const vazias = regioes.filter((r) => r.estado === "vazio");
   const reais = regioes.filter((r) => r.estado === "real").length;
@@ -65,28 +70,18 @@ export default async function MapaPage() {
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
           <div>
-            {/* Fase 1: mapa REAL (MapLibre + PMTiles) quando o dono ativa via
-                `MAPA_TILES_URL`. Sem a env, cai no esquemático de sempre —
-                zero JS pesado, nenhum controle novo. O `else` abaixo é
-                idêntico ao que rodava antes desta frente. */}
-            {tilesUrl ? (
-              <MapaMapLibre tilesUrl={tilesUrl} regioes={regioes} />
-            ) : temEixo ? (
+            {/* Aqui já sabemos que MAPA_TILES_URL está vazia (o mapa real deu
+                early-return em tela cheia lá em cima). Então este é o layout
+                normal com o esquemático — idêntico ao de antes desta frente. */}
+            {temEixo ? (
               <EixoDeTempo regioes={regioes} matriz={matriz} />
             ) : (
               <MapaDF regioes={regioes} />
             )}
-            {tilesUrl ? (
-              <p className="mt-4 max-w-xl font-mono text-xs leading-relaxed text-petroleo/50">
-                Mapa real do DF. Os pinos ficam no centro de cada região —
-                descoberta por região, não o endereço exato de um treino.
-              </p>
-            ) : (
-              <p className="mt-4 max-w-xl font-mono text-xs leading-relaxed text-petroleo/50">
-                Esquema, não mapa cartográfico: as posições são aproximadas e
-                servem pra reconhecer a cidade, não pra chegar em lugar nenhum.
-              </p>
-            )}
+            <p className="mt-4 max-w-xl font-mono text-xs leading-relaxed text-petroleo/50">
+              Esquema, não mapa cartográfico: as posições são aproximadas e
+              servem pra reconhecer a cidade, não pra chegar em lugar nenhum.
+            </p>
           </div>
 
           <aside className="space-y-10">

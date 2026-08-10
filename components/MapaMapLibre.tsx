@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { RegiaoNoMapa } from "@/lib/mapa";
 import { CENTROIDES, BBOX_DF, CENTRO_DF } from "@/lib/mapa-geo";
-import { estiloDirecao, direcaoDe, type Direcao } from "@/lib/mapa-temas";
+import { estiloMapa } from "@/lib/mapa-temas";
 
 /** Inclinação da câmera na abertura — o "3D tipo Waze". ~55° fica bonito sem
  *  deitar demais o horizonte. */
@@ -75,7 +75,6 @@ export default function MapaMapLibre({
   tilesUrl,
   regioes,
   full = false,
-  estilo,
   destaqueId = null,
   focoId = null,
   focoTick = 0,
@@ -84,8 +83,6 @@ export default function MapaMapLibre({
   tilesUrl: string;
   regioes: RegiaoNoMapa[];
   full?: boolean;
-  /** Direção visual do basemap. Se ausente, lê `?estilo=` da URL (exploração). */
-  estilo?: Direcao;
   /** RA a "pulsar" (hover na lista). */
   destaqueId?: string | null;
   /** RA a focar; muda junto com `focoTick` pra revoar mesmo na mesma RA. */
@@ -107,13 +104,7 @@ export default function MapaMapLibre({
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Direção visual: prop explícita, senão a query `?estilo=` (exploração).
-    const dir =
-      estilo ??
-      direcaoDe(
-        typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("estilo") : null,
-      );
-    const est = estiloDirecao(dir);
+    const est = estiloMapa();
 
     (async () => {
       try {
@@ -225,7 +216,7 @@ export default function MapaMapLibre({
       mapaRef.current?.remove();
       mapaRef.current = null;
     };
-  }, [tilesUrl, regioes, onSelecionar, estilo]);
+  }, [tilesUrl, regioes, onSelecionar]);
 
   // Destaque (pulse) da RA sob hover na lista — imperativo, sem recriar o mapa.
   useEffect(() => {

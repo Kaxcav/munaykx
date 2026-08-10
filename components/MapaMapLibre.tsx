@@ -5,6 +5,62 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { RegiaoNoMapa } from "@/lib/mapa";
 import { CENTROIDES, BBOX_DF, CENTRO_DF } from "@/lib/mapa-geo";
 import { camadasMunay } from "@/lib/mapa-estilo";
+import { brand } from "@/lib/brand";
+import { misturar } from "@/lib/cor";
+
+/** Inclinação da câmera na abertura — o "3D tipo Waze". ~55° fica bonito sem
+ *  deitar demais o horizonte. */
+const PITCH = 55;
+
+/** O mínimo do mapa que o botão de perspectiva precisa tocar. */
+type MapaCtrl = {
+  getPitch(): number;
+  getBearing(): number;
+  easeTo(o: object): void;
+  on(ev: string, cb: () => void): void;
+};
+
+/**
+ * Controle "2D/3D" no canto — o gesto explícito de VOLTAR AO TOP-DOWN (e ir de
+ * volta pra perspectiva). A bússola do NavigationControl já reendireita o norte;
+ * este resolve o pitch, que ela não zera. Respeita reduced-motion (troca seca).
+ */
+class BotaoPerspectiva {
+  private reduz: boolean;
+  private div?: HTMLDivElement;
+  constructor(reduz: boolean) {
+    this.reduz = reduz;
+  }
+  onAdd(map: MapaCtrl): HTMLElement {
+    const div = document.createElement("div");
+    div.className = "maplibregl-ctrl maplibregl-ctrl-group";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.title = "Alternar 2D / 3D";
+    b.setAttribute("aria-label", "Alternar entre visão 2D e 3D");
+    b.style.font = "700 11px/1 var(--font-mono, monospace)";
+    const rotula = () => {
+      b.textContent = map.getPitch() > 5 ? "2D" : "3D";
+    };
+    rotula();
+    b.addEventListener("click", () => {
+      const em3d = map.getPitch() > 5;
+      map.easeTo({
+        pitch: em3d ? 0 : PITCH,
+        bearing: em3d ? 0 : map.getBearing(),
+        duration: this.reduz ? 0 : 600,
+      });
+      b.textContent = em3d ? "3D" : "2D";
+    });
+    map.on("pitchend", rotula);
+    div.appendChild(b);
+    this.div = div;
+    return div;
+  }
+  onRemove(): void {
+    this.div?.parentNode?.removeChild(this.div);
+  }
+}
 
 /**
  * Mapa REAL da Fase 1 — MapLibre GL JS lendo um PMTiles do DF direto do R2.
@@ -63,6 +119,7 @@ export default function MapaMapLibre({
           container: container.current,
           center: CENTRO_DF,
           zoom: 9.2,
+          pitch: reduz ? PITCH : 0, // reduced-motion já nasce na perspectiva (sem a intro)
           attributionControl: { compact: true },
           style: {
             version: 8,
@@ -76,28 +133,54 @@ export default function MapaMapLibre({
                   '<a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> · Protomaps',
               },
             },
-            layers: camadasMunay("protomaps"),
+            layers: camadasMunay("protomaps", { extrusao3d: true }),
           },
         });
         mapaRef.current = m;
 
-        m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+        // Compass + visualizePitch: o clicar na bússola já volta ao norte; o
+        // botão "2D/3D" abaixo dá o atalho explícito pro top-down.
+        m.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
+        m.addControl(
+          new BotaoPerspectiva(reduz) as unknown as import("maplibre-gl").IControl,
+          "top-right",
+        );
         m.setMaxBounds([
           [BBOX_DF[0] - 0.3, BBOX_DF[1] - 0.3],
           [BBOX_DF[2] + 0.3, BBOX_DF[3] + 0.3],
         ]);
 
-        // ── Intro de câmera: começa um tico mais longe e dá um zoom-in macio ──
+        // ── Céu/atmosfera — reforça o 3D sob pitch. Cores da marca (areia/sálvia). ──
+        m.on("style.load", () => {
+          try {
+            (m as unknown as { setSky?: (s: object) => void }).setSky?.({
+              "sky-color": misturar(brand.salvia, brand.areia, 0.35),
+              "sky-horizon-blend": 0.7,
+              "horizon-color": misturar(brand.areia, "#ffffff", 0.55),
+              "horizon-fog-blend": 0.6,
+              "fog-color": brand.areia,
+              "fog-ground-blend": 0.5,
+              "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 5, 0.8, 13, 0.2],
+            });
+          } catch {
+            /* setSky ausente nesta versão — pitch + extrusão já entregam o 3D */
+          }
+        });
+
+        // ── Intro de câmera: entra de longe/plano e sobe pra perspectiva. ─────
         const alvo = m.cameraForBounds(BBOX_DF, { padding: 24 });
         if (reduz || !alvo) {
-          m.fitBounds(BBOX_DF, { padding: 24, animate: false });
+          // Estático, mas já inclinado (perspectiva sem movimento).
+          if (alvo) m.jumpTo({ center: alvo.center as [number, number], zoom: alvo.zoom, pitch: PITCH });
+          else m.fitBounds(BBOX_DF, { padding: 24, animate: false });
         } else {
-          m.jumpTo({ center: alvo.center as [number, number], zoom: (alvo.zoom ?? 9) - 0.8 });
+          m.jumpTo({ center: alvo.center as [number, number], zoom: (alvo.zoom ?? 9) - 0.8, pitch: 0 });
           m.once("load", () => {
             m.easeTo({
               center: alvo.center as [number, number],
               zoom: alvo.zoom,
-              duration: 1500,
+              pitch: PITCH,
+              duration: 1900,
               easing: (t) => t * (2 - t), // ease-out
             });
           });

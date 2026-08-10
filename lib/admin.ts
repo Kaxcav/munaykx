@@ -83,6 +83,14 @@ export const eventAdminSchema = z.object({
   gratuito: z.boolean(),
   demo: z.boolean(),
   ativo: z.boolean(),
+  // Vínculo opcional com a grade que originou este evento (PR3 "marcar o próximo
+  // treino"). Preenchido quando o evento nasce de uma ocorrência da grade —
+  // serve pra deduplicar a home (a ocorrência já virou evento) e pra futuras
+  // consultas. "" → null. Só o caminho do PAINEL usa; o /admin ignora.
+  horarioRecorrenteId: z.preprocess(
+    (v) => (v === "" || v == null ? null : v),
+    z.string().uuid("Grade inválida").nullable(),
+  ).optional(),
 });
 
 export type EventAdminInput = z.infer<typeof eventAdminSchema>;

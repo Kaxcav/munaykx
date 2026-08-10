@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario, organizacoesDe } from "@/lib/organizacao";
 import Copiloto from "@/components/painel/Copiloto";
+import EstaSemana from "@/components/painel/EstaSemana";
+import { estaSemana } from "@/lib/painel-hoje";
 import { iaDisponivel } from "@/lib/ai";
 import { sugestoes } from "@/lib/ai/copiloto";
 
@@ -42,13 +44,19 @@ export default async function PainelHome() {
   }
 
   const comunidades = await comunidadesDoUsuario(sessao.user.id);
+  const semana = await estaSemana(sessao.user.id);
 
   return (
     <>
       <p className="eyebrow">Sua conta</p>
       <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-        Minhas comunidades
+        Seu painel
       </h1>
+
+      {/* HOJE / ESTA SEMANA (PR3): a home por frequência de uso — o próximo
+          encontro primeiro, com a ação grande à mão. Só aparece quando há o quê
+          mostrar (grade cadastrada ou evento futuro); senão, silêncio. */}
+      <EstaSemana itens={semana} />
 
       {/* COPILOTO (ideia #4): só aparece quando a IA está ligada — a UI não
           oferece o que o ambiente não entrega, mesma regra do e-mail. */}
@@ -58,14 +66,15 @@ export default async function PainelHome() {
         </div>
       ) : null}
 
-      <ul className="mt-8 space-y-4">
+      <h2 className="mt-12 font-display text-2xl font-bold">Minhas comunidades</h2>
+      <ul className="mt-6 space-y-4">
         {comunidades.map((c) => (
           <li
             key={c.id}
             className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-petroleo/10 p-6"
           >
             <div>
-              <h2 className="font-display text-xl font-bold">{c.nome}</h2>
+              <h3 className="font-display text-xl font-bold">{c.nome}</h3>
               <p className="mt-1 text-sm text-petroleo/70">
                 {c.modalidade} · {c.regiao} · {c._count.events} evento(s) ·{" "}
                 {c._count.membros} seguidor(es)

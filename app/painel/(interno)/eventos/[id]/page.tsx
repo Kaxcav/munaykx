@@ -4,6 +4,8 @@ import { sessaoAtual } from "@/lib/sessao";
 import { inscritosDoEvento } from "@/lib/organizacao";
 import { formatDatetimeLocal, formatarDataAdmin } from "@/lib/admin";
 import CampoDuracao from "@/components/painel/CampoDuracao";
+import CompartilharBotoes from "@/components/CompartilharBotoes";
+import { textoCompartilharEvento, urlEvento } from "@/lib/compartilhar";
 import {
   cancelarEventoAction,
   editarEventoAction,
@@ -56,6 +58,24 @@ export default async function GerenciarEvento({
           </span>
         ) : null}
       </h1>
+
+      {/* Texto pronto pro WhatsApp (PR3): o canal real do grupo. Não brigamos
+          com o WhatsApp — a gente entrega o texto + link prontos pra colar. Some
+          no evento cancelado (não faz sentido chamar pra o que não vai rolar). */}
+      {!cancelado_ ? (
+        <div className="mt-6 rounded-2xl border border-petroleo/10 bg-white/70 p-5">
+          <p className="font-display text-lg font-bold">Chame o grupo</p>
+          <p className="mt-1 text-sm text-petroleo/80">
+            Texto e link prontos pra colar no WhatsApp da galera.
+          </p>
+          <CompartilharBotoes
+            className="mt-3"
+            url={urlEvento(evento.slug)}
+            texto={textoCompartilharEvento(evento)}
+            titulo={evento.titulo}
+          />
+        </div>
+      ) : null}
 
       {ok ? (
         <p className="mt-6 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm">

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario } from "@/lib/organizacao";
 import CampoDuracao from "@/components/painel/CampoDuracao";
+import { slugify } from "@/lib/slug";
 import { criarEventoAction } from "../../actions";
 
 /**
@@ -12,7 +13,17 @@ import { criarEventoAction } from "../../actions";
 export default async function NovoEvento({
   searchParams,
 }: {
-  searchParams: Promise<{ comunidade?: string; erro?: string }>;
+  searchParams: Promise<{
+    comunidade?: string;
+    erro?: string;
+    // Pré-preenchimento do "marcar este treino" (PR3): a grade sugere tudo, o
+    // organizador só confirma. `horarioId` vincula o evento à grade (dedup).
+    startsAt?: string;
+    titulo?: string;
+    local?: string;
+    duracaoMin?: string;
+    horarioId?: string;
+  }>;
 }) {
   const sessao = await sessaoAtual();
   if (!sessao) redirect("/entrar");
@@ -20,9 +31,17 @@ export default async function NovoEvento({
   const comunidades = await comunidadesDoUsuario(sessao.user.id);
   if (comunidades.length === 0) redirect("/painel");
 
-  const { comunidade, erro } = await searchParams;
+  const { comunidade, erro, startsAt, titulo, local, duracaoMin, horarioId } =
+    await searchParams;
   const selecionada =
     comunidades.find((c) => c.slug === comunidade) ?? comunidades[0];
+  const preMarcar = Boolean(startsAt); // veio do "marcar este treino"
+  // Slug sugerido quando veio da grade: título + dia, pra o organizador não ter
+  // que inventar um. Continua editável e a unicidade é checada no servidor.
+  const slugSugerido =
+    preMarcar && titulo
+      ? slugify(`${titulo}-${(startsAt ?? "").slice(0, 10).replace(/-/g, "")}`)
+      : "";
 
   return (
     <>
@@ -31,6 +50,13 @@ export default async function NovoEvento({
         Criar evento
       </h1>
 
+      {preMarcar ? (
+        <p className="mt-6 rounded-xl border border-salvia bg-salvia-soft p-4 text-sm text-petroleo/80">
+          Puxamos os dados da sua grade. Confira e{" "}
+          <strong>é só publicar</strong> — depois a gente te dá o texto pronto pro
+          WhatsApp.
+        </p>
+      ) : null}
       {erro ? (
         <p className="mt-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
           {erro}
@@ -39,6 +65,9 @@ export default async function NovoEvento({
 
       <form action={criarEventoAction} className="mt-8 space-y-4">
         <input type="hidden" name="comunidadeSlug" value={selecionada.slug} />
+        {horarioId ? (
+          <input type="hidden" name="horarioRecorrenteId" value={horarioId} />
+        ) : null}
         <label className="block">
           <span className="mb-1 block text-sm font-semibold">Comunidade</span>
           <select
@@ -58,6 +87,7 @@ export default async function NovoEvento({
           <input
             name="titulo"
             required
+            defaultValue={titulo ?? ""}
             className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
           />
         </label>
@@ -69,6 +99,7 @@ export default async function NovoEvento({
             <input
               name="slug"
               required
+              defaultValue={slugSugerido}
               placeholder="treino-domingo-parque"
               className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
@@ -79,6 +110,7 @@ export default async function NovoEvento({
               type="datetime-local"
               name="startsAt"
               required
+              defaultValue={startsAt ?? ""}
               className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
           </label>
@@ -86,6 +118,7 @@ export default async function NovoEvento({
             <span className="mb-1 block text-sm font-semibold">Local</span>
             <input
               name="local"
+              defaultValue={local ?? ""}
               className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
           </label>
@@ -100,7 +133,7 @@ export default async function NovoEvento({
               className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
           </label>
-          <CampoDuracao />
+          <CampoDuracao defaultValue={duracaoMin ?? ""} />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="gratuito" defaultChecked />

@@ -100,7 +100,9 @@ export async function comunidadeDoUsuario(userId: string, slug: string) {
 export async function eventoDoUsuario(userId: string, eventId: string) {
   return prisma.event.findFirst({
     where: { id: eventId, community: daPessoa(userId) },
-    include: { community: { select: { id: true, slug: true, nome: true } } },
+    // `regiao` entra no select para o texto de compartilhar (WhatsApp) cair na
+    // região quando não há local exato — aditivo, não mexe no filtro de dono.
+    include: { community: { select: { id: true, slug: true, nome: true, regiao: true } } },
   });
 }
 

@@ -13,6 +13,8 @@ import { segue, seguir } from "@/lib/membership";
 import { avisosDaComunidade } from "@/lib/posts";
 import FeedAvisos from "@/components/FeedAvisos";
 import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
+import CompartilharBotoes from "@/components/CompartilharBotoes";
+import { textoCompartilharComunidade, urlComunidade } from "@/lib/compartilhar";
 import { seguirAction, deixarDeSeguirAction } from "./seguir-actions";
 
 // Detalhe vem do banco a cada request — nada de pré-render no build.
@@ -38,9 +40,15 @@ export async function generateMetadata({
   const { avisos } = await searchParams;
   const paginado = Number(avisos ?? "1") > 1;
 
+  const descricao = `${comunidade.nome} — ${comunidade.modalidade} · ${comunidade.regiao}, Brasília.`;
+  // openGraph/twitter EXPLÍCITOS pelo mesmo motivo do evento: o layout raiz fixa
+  // um og:title genérico, então sem isto o preview do link mostraria a marca e não
+  // a comunidade. A imagem já vem do `opengraph-image.tsx` (não muda aqui).
   return {
     title: comunidade.nome,
-    description: `${comunidade.nome} — ${comunidade.modalidade} · ${comunidade.regiao}, Brasília.`,
+    description: descricao,
+    openGraph: { title: comunidade.nome, description: descricao, type: "profile" },
+    twitter: { title: comunidade.nome, description: descricao },
     ...(paginado ? { robots: { index: false, follow: true } } : {}),
   };
 }
@@ -140,6 +148,13 @@ export default async function ComunidadePage({
             e você é avisado de eventos novos.
           </p>
         </div>
+
+        <CompartilharBotoes
+          className="mt-6"
+          url={urlComunidade(c.slug)}
+          texto={textoCompartilharComunidade(c)}
+          titulo={c.nome}
+        />
 
         {c.descricao && (
           <p className="mt-6 max-w-2xl text-lg text-petroleo/80">{c.descricao}</p>

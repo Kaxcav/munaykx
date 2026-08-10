@@ -115,6 +115,18 @@ export async function criarEvento(
   const minhas = await comunidadesDoUsuario(userId);
   if (!minhas.some((c) => c.id === dados.communityId)) return naoDono;
 
+  // A grade (se veio do "marcar treino") tem que ser DA MESMA comunidade — senão
+  // um POST forjado linkaria o evento à grade de outra. Grade inexistente/alheia
+  // é ignorada (vira null), não erro: o evento em si é legítimo.
+  let horarioRecorrenteId: string | null = null;
+  if (dados.horarioRecorrenteId) {
+    const grade = await prisma.horarioRecorrente.findFirst({
+      where: { id: dados.horarioRecorrenteId, communityId: dados.communityId },
+      select: { id: true },
+    });
+    horarioRecorrenteId = grade?.id ?? null;
+  }
+
   const quando = parseDataBrasilia(dados.startsAt);
   if (!quando) return { ok: false, motivo: "invalido", erro: "Data e hora inválidas." };
 
@@ -126,6 +138,7 @@ export async function criarEvento(
         slug: dados.slug,
         startsAt: quando,
         terminaEm: calcularTerminaEm(quando, dados.duracaoMin),
+        horarioRecorrenteId,
         city: dados.city,
         local: dados.local ?? null,
         capacidade: dados.capacidade,

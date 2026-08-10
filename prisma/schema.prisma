@@ -160,6 +160,11 @@ model HorarioRecorrente {
   /// local/hora alterados, sem mexer no padrão semanal.
   excecoes ExcecaoHorario[]
 
+  /// Eventos que materializaram UMA ocorrência desta grade (via "marcar o
+  /// próximo treino", PR3). Serve pra deduplicar a home: a ocorrência que já
+  /// virou evento não aparece de novo como sugestão.
+  ocorrencias Event[]
+
   // O índice do eixo de tempo: a consulta central é sempre por (dia, minuto).
   @@index([diaSemana, minutoInicio])
   @@index([communityId])
@@ -227,6 +232,11 @@ model Event {
   // duração volta a cada save). [caro depois]: trocar para duracao_min exigiria
   // migrar o dado, não só a coluna.
   terminaEm   DateTime? @map("termina_em")
+  // Grade que originou este evento ("marcar o próximo treino", PR3). `null` =
+  // evento avulso. `SetNull`: apagar a grade não apaga o evento já publicado —
+  // ele existe por si, o vínculo é só proveniência.
+  horarioRecorrenteId String? @map("horario_recorrente_id")
+  horarioRecorrente   HorarioRecorrente? @relation(fields: [horarioRecorrenteId], references: [id], onDelete: SetNull)
   city        String    @default("Brasília")
   local       String?
   capacidade  Int?
@@ -241,6 +251,7 @@ model Event {
 
   @@index([communityId])
   @@index([startsAt])
+  @@index([horarioRecorrenteId])
   @@map("events")
 }
 

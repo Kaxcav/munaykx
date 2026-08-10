@@ -65,6 +65,7 @@ function entradaEvento(formData: FormData) {
     local: texto(formData, "local"),
     capacidade: texto(formData, "capacidade"),
     duracaoMin: texto(formData, "duracaoMin"),
+    horarioRecorrenteId: texto(formData, "horarioRecorrenteId"),
     gratuito: formData.get("gratuito") === "on",
     demo: false,
     ativo: true,

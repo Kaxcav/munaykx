@@ -139,13 +139,15 @@
       transition: none !important;
     }
   }
+  /* O ACENTO da marca vive aqui: pino coral (queimado) que salta em qualquer
+     basemap — claro, branco ou escuro. O basemap fica com sua paleta própria. */
   .mapa-pino--real {
-    @apply border-transparent bg-petroleo text-areia;
+    @apply border-transparent bg-coral text-areia;
   }
   .mapa-pino--exemplo {
-    @apply border-dashed border-petroleo/60 bg-areia text-petroleo;
+    @apply border border-coral/70 bg-areia text-coral;
   }
   .mapa-pino--vazio {
-    @apply h-3 w-3 min-w-0 border-transparent bg-petroleo/25 p-0;
+    @apply h-3 w-3 min-w-0 border-transparent bg-coral/35 p-0;
   }
 }

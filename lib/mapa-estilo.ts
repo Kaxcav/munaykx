@@ -26,6 +26,8 @@ const C = {
   parque: misturar(brand.salvia, brand.areia, 0.42), //        parque: sálvia visível
   quadra: misturar(brand.salvia, brand.areia, 0.22), //        campo/quadra esportiva: mais forte
   predio: misturar(brand.areia, brand.petroleo, 0.09), //      prédio: cinza-quente sutil
+  predio3d: misturar(brand.areia, brand.petroleo, 0.16), //    prédio extrudado (3D): um tom acima
+  predio3dTopo: misturar(brand.areia, brand.petroleo, 0.1), // topo mais claro (gradiente vertical)
   // Vias — herói. Casing escuro + fill claro (Waze-like), contraste alto.
   viaFill: misturar(brand.areia, "#ffffff", 0.7), //           branco-creme das ruas
   viaBigFill: "#ffffff", //                                    principais: branco puro, saltam
@@ -55,8 +57,13 @@ const PEQUENAS = ["minor_road", "other", "service"];
 /**
  * Camadas do estilo, na ordem de desenho (de baixo pra cima).
  * @param src nome da source vetorial (o mesmo do style: "protomaps")
+ * @param opts.extrusao3d inclui a camada de prédios extrudados (só rende com
+ *   pitch > 0). Fica DESLIGADA por padrão pra não pesar o modo top-down.
  */
-export function camadasMunay(src = "protomaps"): LayerSpecification[] {
+export function camadasMunay(
+  src = "protomaps",
+  opts: { extrusao3d?: boolean } = {},
+): LayerSpecification[] {
   const camadas: LayerSpecification[] = [
     { id: "fundo", type: "background", paint: { "background-color": C.fundo } },
     {
@@ -124,6 +131,7 @@ export function camadasMunay(src = "protomaps"): LayerSpecification[] {
       paint: { "fill-color": C.predio, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 0.6] },
     },
     // Divisas de RA — tracejado discreto.
+    // (a extrusão 3D é anexada mais abaixo, condicional a opts.extrusao3d)
     {
       id: "divisas",
       type: "line",
@@ -246,5 +254,47 @@ export function camadasMunay(src = "protomaps"): LayerSpecification[] {
       paint: { "text-color": C.rotulo, "text-halo-color": C.rotuloHalo, "text-halo-width": 1.6 },
     },
   ];
+
+  // ── Prédios 3D (fill-extrusion) — a "cara de Waze" sob perspectiva ──────────
+  // HONESTIDADE: nossos tiles vão só até z14 e a altura de OSM é esparsa, então
+  // a maioria dos prédios extruda pela ALTURA-FALLBACK (não pela real). Fica
+  // bonito em zoom fechado (ex.: Plano Piloto); espalhado pelo DF a densidade
+  // some. Renderiza só a partir de z14 e apenas quando há pitch.
+  if (opts.extrusao3d) {
+    // Insere logo acima do "predios" plano pra respeitar a ordem de desenho,
+    // mas antes dos rótulos, que precisam ficar por cima.
+    const extrusao: LayerSpecification = {
+      id: "predios-3d",
+      type: "fill-extrusion",
+      source: src,
+      "source-layer": "buildings",
+      minzoom: 14,
+      paint: {
+        "fill-extrusion-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "height"],
+          0, C.predio3d,
+          60, C.predio3dTopo,
+        ] as unknown as string,
+        // Altura real quando existe; senão, um bloco baixo de cortesia (8 m).
+        "fill-extrusion-height": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          14, 0,
+          15.2, ["coalesce", ["get", "height"], ["get", "render_height"], 8],
+        ] as unknown as number,
+        "fill-extrusion-base": ["coalesce", ["get", "min_height"], ["get", "render_min_height"], 0] as unknown as number,
+        "fill-extrusion-opacity": 0.82,
+        "fill-extrusion-vertical-gradient": true,
+      },
+    };
+    // Antes do primeiro rótulo (rotulo-via) pra não tampar texto.
+    const iRotulo = camadas.findIndex((c) => c.id === "rotulo-via");
+    if (iRotulo >= 0) camadas.splice(iRotulo, 0, extrusao);
+    else camadas.push(extrusao);
+  }
+
   return camadas;
 }

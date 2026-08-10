@@ -9,7 +9,7 @@ import {
 import { criarEvento } from "@/lib/painel";
 import { formatDatetimeLocal } from "@/lib/admin";
 import { estaSemana, linkMarcarTreino, tituloSugerido } from "@/lib/painel-hoje";
-import { isoParaDataBanco, dataISOBrasilia } from "@/lib/ocorrencias";
+import { isoParaDataBanco } from "@/lib/ocorrencias";
 
 /**
  * FRENTE 1 — HOJE / ESTA SEMANA (PR3): a home por frequência de uso.

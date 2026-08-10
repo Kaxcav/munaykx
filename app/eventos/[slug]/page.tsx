@@ -66,7 +66,9 @@ export default async function EventoPage({ params }: { params: Params }) {
     // região da comunidade é a verdade disponível — e é o que a página mostra.
     location: {
       "@type": "Place",
-      name: evento.local ?? evento.community.regiao,
+      // No modo rota, a SAÍDA é o lugar honesto do encontro (onde a galera se
+      // junta). Sem rota, o local; sem local, a região. Nunca inventado.
+      name: evento.origem ?? evento.local ?? evento.community.regiao,
       address: {
         "@type": "PostalAddress",
         addressLocality: evento.community.regiao,
@@ -98,7 +100,17 @@ export default async function EventoPage({ params }: { params: Params }) {
 
   const detalhes: Array<{ rotulo: string; valor: string }> = [
     { rotulo: "Quando", valor: formatarDataEvento(evento.startsAt) },
-    ...(evento.local ? [{ rotulo: "Onde", valor: evento.local }] : []),
+    // Modo rota: saída e chegada (texto) no lugar do local único. Percurso é
+    // opcional. Sem modo rota, o "Onde" de sempre.
+    ...(evento.modoRota
+      ? [
+          ...(evento.origem ? [{ rotulo: "Saída", valor: evento.origem }] : []),
+          ...(evento.destino ? [{ rotulo: "Chegada", valor: evento.destino }] : []),
+          ...(evento.percursoObs ? [{ rotulo: "Percurso", valor: evento.percursoObs }] : []),
+        ]
+      : evento.local
+        ? [{ rotulo: "Onde", valor: evento.local }]
+        : []),
     {
       rotulo: "Investimento",
       valor: evento.gratuito ? "Gratuito" : "Consultar organização",

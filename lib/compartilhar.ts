@@ -29,6 +29,10 @@ export type EventoCompartilhavel = {
   titulo: string;
   startsAt: Date;
   local: string | null;
+  // Modo rota (opcional/backward-compatible): quando é trajeto, o texto usa a
+  // SAÍDA como ponto de encontro em vez do local único.
+  modoRota?: boolean;
+  origem?: string | null;
   community: { regiao: string };
 };
 
@@ -47,8 +51,10 @@ export type ComunidadeCompartilhavel = {
  * endereço inventado).
  */
 export function textoCompartilharEvento(ev: EventoCompartilhavel): string {
-  const local = ev.local?.trim() || ev.community.regiao;
-  return `Bora nesse? ${ev.titulo} — ${formatarDataEvento(ev.startsAt)}, no ${local}`;
+  const ponto = ev.modoRota
+    ? ev.origem?.trim() || ev.community.regiao
+    : ev.local?.trim() || ev.community.regiao;
+  return `Bora nesse? ${ev.titulo} — ${formatarDataEvento(ev.startsAt)}, no ${ponto}`;
 }
 
 /**

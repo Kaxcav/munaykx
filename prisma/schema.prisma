@@ -239,6 +239,16 @@ model Event {
   horarioRecorrente   HorarioRecorrente? @relation(fields: [horarioRecorrenteId], references: [id], onDelete: SetNull)
   city        String    @default("Brasília")
   local       String?
+  // MODO ROTA (pedal/corrida/trilha): o encontro tem SAÍDA e CHEGADA, não um
+  // ponto só. `origem`/`destino` são TEXTO — nunca lat/lng, geojson ou linha no
+  // mapa. Coordenada é Fase 1+ do mapa e depende da decisão de privacidade (D6),
+  // pela mesma razão que o `HorarioRecorrente` recusou lat/lng: rota exata +
+  // horário é rastro. Anuláveis: quando `modoRota=false`, `local` manda como
+  // hoje e estes ficam null; quando true, `local` é null e estes valem.
+  modoRota    Boolean   @default(false) @map("modo_rota")
+  origem      String?
+  destino     String?
+  percursoObs String?   @map("percurso_obs")
   capacidade  Int?
   gratuito    Boolean   @default(true)
   demo        Boolean   @default(false)

@@ -91,6 +91,25 @@ export const eventAdminSchema = z.object({
     (v) => (v === "" || v == null ? null : v),
     z.string().uuid("Grade inválida").nullable(),
   ).optional(),
+  // MODO ROTA (pedal/corrida/trilha): o encontro tem SAÍDA e CHEGADA, não um
+  // local único. Origem/destino são TEXTO — nunca coordenada/geojson/linha no
+  // mapa (Fase 1+ do mapa, atrás da decisão de privacidade D6). Default false →
+  // o /admin e chamadas antigas seguem válidos (evento de local único).
+  modoRota: z.boolean().default(false),
+  origem: textoOpcional(200),
+  destino: textoOpcional(200),
+  percursoObs: textoOpcional(280),
+}).superRefine((d, ctx) => {
+  // No modo rota, saída e chegada são o mínimo — senão é "trajeto" sem trajeto.
+  // Fora do modo rota, os campos são ignorados (a escrita os anula).
+  if (d.modoRota) {
+    if (!d.origem) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["origem"], message: "No modo rota, informe a saída." });
+    }
+    if (!d.destino) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["destino"], message: "No modo rota, informe a chegada." });
+    }
+  }
 });
 
 export type EventAdminInput = z.infer<typeof eventAdminSchema>;

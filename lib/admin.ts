@@ -66,6 +66,20 @@ export const eventAdminSchema = z.object({
       .min(1, "Capacidade mínima é 1")
       .nullable(),
   ),
+  // Duração em minutos (opcional). O formulário coleta duração; a escrita compõe
+  // `Event.terminaEm = startsAt + duração`. Vazio → null → o cálculo assume a
+  // duração padrão (lib/horarios.ts). Teto de 24h: evento não atravessa o dia
+  // no modelo do eixo de tempo (ver marcarHoras). Só o caminho do PAINEL grava
+  // terminaEm; o /admin ignora o campo (fica null) sem quebrar.
+  duracaoMin: z.preprocess(
+    (v) => (v === "" || v == null ? null : Number(v)),
+    z
+      .number({ invalid_type_error: "Duração deve ser um número" })
+      .int("Duração deve ser inteira")
+      .min(5, "Duração mínima é 5 minutos")
+      .max(24 * 60, "Duração máxima é 24 horas")
+      .nullable(),
+  ).optional(),
   gratuito: z.boolean(),
   demo: z.boolean(),
   ativo: z.boolean(),

@@ -48,6 +48,14 @@ model Community {
   // que sustenta o filtro `/comunidades?iniciantes=1` e o selo. Default false: quem
   // não marcou não aparece como acolhedor (sinal opt-in, nunca presumido).
   acolheIniciante Boolean @default(false) @map("acolhe_iniciante")
+  // Guia de PRIMEIRA VEZ — a dor central da tese ("atravessar a porta") virando
+  // interface, e o braço de produto do princípio de segurança (o organizador
+  // como anfitrião: "ponto de encontro é a portaria e eu espero até as 6h").
+  // COMPÕE com `acolheIniciante`: aquele é o sinal queryável e o selo; este é o
+  // conteúdo que APARECE para o estreante. JSON com chaves FECHADAS validadas no
+  // código (lib/guia.ts), mesmo padrão de `User.respostas` — chave nova não vira
+  // migration. `null` = sem guia. Ver ULTRAPLAN-SOCIAL-ORGANIZADOR.md §6.3.
+  guiaIniciante Json? @map("guia_iniciante")
   demo       Boolean  @default(false)
   ativo      Boolean  @default(true)
   events     Event[]
@@ -162,6 +170,18 @@ model Event {
   slug        String    @unique
   titulo      String
   startsAt    DateTime  @map("starts_at")
+  // Fim do encontro. Anulável no MESMO espírito do `minutoFim` da recorrência
+  // (`HorarioRecorrente`): muita comunidade sabe a hora que começa e não a que
+  // termina. `null` → o cálculo assume `DURACAO_PADRAO_MIN` (lib/horarios.ts),
+  // em vez de sumir do eixo de tempo. É o pré-requisito de saber o que está
+  // ACONTECENDO às 6h30, não só o que começa às 6h. Guardo o INSTANTE (não a
+  // duração em minutos) para espelhar `minutoInicio`+`minutoFim` do horário
+  // recorrente — a mesma pergunta ("acontece em T?") vira um range simples
+  // `startsAt <= T AND (terminaEm ?? startsAt+padrão) > T`. O formulário coleta
+  // duração e a escrita compõe `terminaEm = startsAt + duração` (sem drift: a
+  // duração volta a cada save). [caro depois]: trocar para duracao_min exigiria
+  // migrar o dado, não só a coluna.
+  terminaEm   DateTime? @map("termina_em")
   city        String    @default("Brasília")
   local       String?
   capacidade  Int?

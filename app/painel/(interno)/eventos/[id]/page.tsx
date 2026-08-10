@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { inscritosDoEvento } from "@/lib/organizacao";
 import { formatDatetimeLocal, formatarDataAdmin } from "@/lib/admin";
+import CampoDuracao from "@/components/painel/CampoDuracao";
 import {
   cancelarEventoAction,
   editarEventoAction,
@@ -32,6 +33,12 @@ export default async function GerenciarEvento({
   const { evento, inscritos } = dados;
   const { ok, erro, cancelado } = await searchParams;
   const cancelado_ = Boolean(evento.canceladoEm);
+  // Pré-preenche a duração a partir do fim guardado (terminaEm − startsAt).
+  const duracaoAtual = evento.terminaEm
+    ? String(
+        Math.round((evento.terminaEm.getTime() - evento.startsAt.getTime()) / 60_000),
+      )
+    : "";
 
   return (
     <>
@@ -118,6 +125,7 @@ export default async function GerenciarEvento({
               className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
           </label>
+          <CampoDuracao defaultValue={duracaoAtual} />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input

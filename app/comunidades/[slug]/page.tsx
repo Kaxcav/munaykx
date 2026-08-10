@@ -13,6 +13,7 @@ import { segue, seguir } from "@/lib/membership";
 import { avisosDaComunidade } from "@/lib/posts";
 import FeedAvisos from "@/components/FeedAvisos";
 import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
+import GuiaIniciantePublico from "@/components/GuiaIniciantePublico";
 import CompartilharBotoes from "@/components/CompartilharBotoes";
 import { textoCompartilharComunidade, urlComunidade } from "@/lib/compartilhar";
 import { seguirAction, deixarDeSeguirAction } from "./seguir-actions";
@@ -159,6 +160,8 @@ export default async function ComunidadePage({
         {c.descricao && (
           <p className="mt-6 max-w-2xl text-lg text-petroleo/80">{c.descricao}</p>
         )}
+
+        <GuiaIniciantePublico guia={c.guiaIniciante} acolheIniciante={c.acolheIniciante} />
 
         <dl className="mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
           {detalhes.map((d) => (

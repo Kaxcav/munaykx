@@ -1,0 +1,51 @@
+name: crons
+
+# Agendador dos endpoints de cron do MUNAY. Eles são POST protegidos por
+# `x-cron-secret` (== secret CRON_SECRET, igual ao do Railway); sem o segredo
+# respondem 503/401, então quem dispara precisa mandá-lo no cabeçalho.
+#
+# Por que aqui e não no Railway: o GitHub Actions já tem cron nativo e guarda o
+# segredo com máscara nos logs — zero infra nova. `-f` no curl faz o step FALHAR
+# se a resposta não for 2xx, então um endpoint quebrado vira e-mail de CI vermelho.
+#
+# Horários em UTC (o cron do GitHub é sempre UTC):
+#   '0 9 * * *'  = 09:00 UTC = 06:00 BRT, todo dia   → retenção (purga LGPD 12 meses)
+#   '0 12 * * 1' = 12:00 UTC = 09:00 BRT, segunda    → resumo "A semana em Brasília"
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+    - cron: "0 12 * * 1"
+  workflow_dispatch: # disparo manual para testar os dois de uma vez
+
+# Nunca deixar dois runs do mesmo cron se sobreporem.
+concurrency:
+  group: crons-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  retencao:
+    # Roda no cron diário OU em disparo manual — nunca no cron da semana.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 9 * * *'
+    name: purga de retenção (LGPD)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST /api/cron/retencao
+        run: |
+          curl -fsS --max-time 60 -X POST \
+            https://sejamunay.com.br/api/cron/retencao \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+
+  semana:
+    # Roda no cron semanal OU em disparo manual — nunca no cron diário.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 12 * * 1'
+    name: resumo da semana
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST /api/cron/semana
+        run: |
+          curl -fsS --max-time 60 -X POST \
+            https://sejamunay.com.br/api/cron/semana \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"

@@ -10,6 +10,7 @@ import {
   editarComunidade,
   editarEvento,
 } from "@/lib/painel";
+import { CAMPOS_GUIA } from "@/lib/guia";
 
 /**
  * Server Actions do painel do organizador (STORY-009, frente C).
@@ -40,6 +41,11 @@ export async function editarComunidadeAction(formData: FormData): Promise<void> 
     nivel: texto(formData, "nivel"),
     ativo: formData.get("ativo") === "on",
     acolheIniciante: formData.get("acolheIniciante") === "on",
+    // Campos do guia de primeira vez, um input por chave (guia_<chave>). A
+    // normalização (vazio → null) mora na camada, não aqui.
+    guiaIniciante: Object.fromEntries(
+      CAMPOS_GUIA.map((c) => [c.chave, texto(formData, `guia_${c.chave}`)]),
+    ),
   });
   if (!r.ok && r.motivo === "nao-dono") redirect("/painel");
   const base = `/painel/comunidades/${encodeURIComponent(slug)}`;
@@ -58,6 +64,7 @@ function entradaEvento(formData: FormData) {
     city: texto(formData, "city"),
     local: texto(formData, "local"),
     capacidade: texto(formData, "capacidade"),
+    duracaoMin: texto(formData, "duracaoMin"),
     gratuito: formData.get("gratuito") === "on",
     demo: false,
     ativo: true,

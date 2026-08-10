@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadeDoUsuario, eventosDoUsuario } from "@/lib/organizacao";
 import { formatarDataEvento } from "@/lib/events";
+import CamposGuia from "@/components/painel/CamposGuia";
 import { editarComunidadeAction } from "../../actions";
 
 /**
@@ -98,6 +99,10 @@ export default async function GerenciarComunidade({
             Acolhe iniciantes (quem tá começando é bem-vindo)
           </label>
         </div>
+        <CamposGuia
+          guiaAtual={com.guiaIniciante}
+          acolheIniciante={com.acolheIniciante}
+        />
         <button
           type="submit"
           className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"

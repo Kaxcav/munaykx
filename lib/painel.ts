@@ -9,6 +9,19 @@ import {
 } from "@/lib/organizacao";
 import { dispararEmail, emailRsvpCancelado } from "@/lib/emails-rsvp";
 import { dispararAvisosDeEventoNovo } from "@/lib/avisos-evento";
+import { guiaInicianteSchema, normalizarGuia } from "@/lib/guia";
+
+/**
+ * Fim do encontro a partir do início + duração. `null`/ausente → `terminaEm`
+ * nulo (o cálculo do eixo de tempo assume a duração padrão). Uma fonte só para
+ * criar e editar, pra os dois não divergirem.
+ */
+function calcularTerminaEm(
+  quando: Date,
+  duracaoMin: number | null | undefined,
+): Date | null {
+  return duracaoMin != null ? new Date(quando.getTime() + duracaoMin * 60_000) : null;
+}
 
 /**
  * MUTAÇÕES DO PAINEL DO ORGANIZADOR (STORY-009, frente C).
@@ -46,6 +59,10 @@ export const comunidadeEdicaoSchema = z.object({
   // o campo seguem válidas), mas SEMPRE boolean na saída persistida. O form do
   // painel envia sempre (checkbox → "on"|ausente), então o valor real não se perde.
   acolheIniciante: z.boolean().default(false),
+  // Guia de primeira vez (lib/guia.ts). Opcional: chamadas antigas seguem
+  // válidas. Validado aqui (limites de tamanho → erro amigável) e normalizado
+  // na escrita (vazio → null, não `{}`).
+  guiaIniciante: guiaInicianteSchema.optional(),
 });
 export type ComunidadeEdicaoInput = z.infer<typeof comunidadeEdicaoSchema>;
 
@@ -72,6 +89,9 @@ export async function editarComunidade(
       nivel: d.nivel || null,
       ativo: d.ativo,
       acolheIniciante: d.acolheIniciante,
+      // `DbNull` (não `null` cru) apaga a coluna JSON: sem guia é SQL NULL, não
+      // um `{}` que finge conteúdo e faria a seção pública aparecer vazia.
+      guiaIniciante: normalizarGuia(d.guiaIniciante) ?? Prisma.DbNull,
     },
   });
   return { ok: true, dados: undefined };
@@ -105,6 +125,7 @@ export async function criarEvento(
         titulo: dados.titulo,
         slug: dados.slug,
         startsAt: quando,
+        terminaEm: calcularTerminaEm(quando, dados.duracaoMin),
         city: dados.city,
         local: dados.local ?? null,
         capacidade: dados.capacidade,
@@ -153,6 +174,9 @@ export async function editarEvento(
         titulo: dados.titulo,
         slug: dados.slug,
         startsAt: quando,
+        // Recomposto do início + duração a cada save: mudar a data reposiciona o
+        // fim sem drift, porque o form sempre reenvia a duração.
+        terminaEm: calcularTerminaEm(quando, dados.duracaoMin),
         city: dados.city,
         local: dados.local ?? null,
         capacidade: dados.capacidade,

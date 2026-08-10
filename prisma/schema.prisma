@@ -156,10 +156,55 @@ model HorarioRecorrente {
   /// `ativo` da comunidade: é do organizador, não da MUNAY.
   ativo Boolean @default(true)
 
+  /// Exceções pontuais desta grade (a "sexta chuvosa"): um dia cancelado ou com
+  /// local/hora alterados, sem mexer no padrão semanal.
+  excecoes ExcecaoHorario[]
+
   // O índice do eixo de tempo: a consulta central é sempre por (dia, minuto).
   @@index([diaSemana, minutoInicio])
   @@index([communityId])
   @@map("horarios_recorrentes")
+}
+
+/// EXCEÇÃO DE OCORRÊNCIA (Frente 1 · ULTRAPLAN-SOCIAL-ORGANIZADOR.md §6.4).
+///
+/// A "sexta chuvosa": cancelar ou alterar UM encontro específico da grade sem
+/// tocar no padrão semanal. Padrão iCal `EXDATE`/override — a grade
+/// (`HorarioRecorrente`) é o `RRULE`, esta tabela é a exceção pontual.
+///
+/// Cascade: exceção sem a grade não significa nada. Anulável só onde a alteração
+/// é opcional (mudou o local mas não a hora). Uma exceção por (grade, dia): o
+/// `@@unique` impede dois registros para o mesmo encontro, e o upsert grava um
+/// só. NÃO afeta o mapa semanal (bitmask por dia-da-semana) — exceção é de uma
+/// DATA, não do padrão; ela filtra só a lista de PRÓXIMAS ocorrências concretas.
+model ExcecaoHorario {
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now()) @map("created_at")
+  horarioRecorrenteId String   @map("horario_recorrente_id")
+  horarioRecorrente   HorarioRecorrente @relation(fields: [horarioRecorrenteId], references: [id], onDelete: Cascade)
+
+  /// A DATA da ocorrência afetada. `@db.Date` (só calendário — a grade já diz a
+  /// hora). Guardada como meia-noite UTC do dia, igual a `User.nascimento`.
+  data DateTime @db.Date
+
+  /// Cancelou o encontro daquele dia? `false` com algum campo alterado = mudou,
+  /// não cancelou.
+  cancelada Boolean @default(false)
+
+  /// Override leve SEM virar Event: mudou o local só naquele dia ("hoje a saída
+  /// é do outro portão"). `null` = herda o local da comunidade.
+  localAlterado String? @map("local_alterado")
+
+  /// Hora de início alterada só naquele dia, em minutos desde 00:00 (mesma
+  /// convenção do `minutoInicio`). `null` = herda a hora da grade.
+  minutoInicioAlterado Int? @map("minuto_inicio_alterado")
+
+  /// Nota curta que aparece pra quem for ("hoje começa 15 min mais tarde").
+  observacao String?
+
+  @@unique([horarioRecorrenteId, data])
+  @@index([data])
+  @@map("excecoes_horario")
 }
 
 model Event {

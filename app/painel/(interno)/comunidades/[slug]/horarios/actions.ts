@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { adicionarHorario, removerHorario } from "@/lib/horarios";
+import {
+  cancelarOcorrencia,
+  alterarLocalOcorrencia,
+  desfazerExcecao,
+} from "@/lib/ocorrencias";
 
 /**
  * Server Actions dos horários recorrentes (FASE 0 do mapa).
@@ -69,4 +74,65 @@ export async function removerHorarioAction(formData: FormData): Promise<void> {
 
   revalidar(base);
   redirect(`${base}?ok=1`);
+}
+
+// ─── Exceções de ocorrência (a "sexta chuvosa") ───────────────────────────
+
+/** Lê sessão + slug + monta a base, ou redireciona. Fecha a repetição das três
+ *  actions de exceção abaixo. */
+async function contextoExcecao(
+  formData: FormData,
+): Promise<{ userId: string; slug: string; base: string }> {
+  const sessao = await sessaoAtual();
+  if (!sessao) redirect("/entrar");
+  const slug = String(formData.get("slug") ?? "").trim();
+  return {
+    userId: sessao.user.id,
+    slug,
+    base: `/painel/comunidades/${encodeURIComponent(slug)}/horarios`,
+  };
+}
+
+function finalizar(base: string, r: { ok: boolean; motivo?: string; erro?: string }): never {
+  if (!r.ok && r.motivo === "nao-dono") redirect("/painel");
+  if (!r.ok) {
+    redirect(`${base}?erro=${encodeURIComponent(r.erro ?? "Não foi possível salvar.")}`);
+  }
+  revalidar(base);
+  redirect(`${base}?ok=1`);
+}
+
+export async function cancelarOcorrenciaAction(formData: FormData): Promise<void> {
+  const { userId, slug, base } = await contextoExcecao(formData);
+  const r = await cancelarOcorrencia(
+    userId,
+    slug,
+    String(formData.get("horarioId") ?? ""),
+    String(formData.get("data") ?? ""),
+    String(formData.get("observacao") ?? ""),
+  );
+  finalizar(base, r);
+}
+
+export async function alterarLocalOcorrenciaAction(formData: FormData): Promise<void> {
+  const { userId, slug, base } = await contextoExcecao(formData);
+  const r = await alterarLocalOcorrencia(
+    userId,
+    slug,
+    String(formData.get("horarioId") ?? ""),
+    String(formData.get("data") ?? ""),
+    String(formData.get("localAlterado") ?? ""),
+    String(formData.get("observacao") ?? ""),
+  );
+  finalizar(base, r);
+}
+
+export async function desfazerExcecaoAction(formData: FormData): Promise<void> {
+  const { userId, slug, base } = await contextoExcecao(formData);
+  const r = await desfazerExcecao(
+    userId,
+    slug,
+    String(formData.get("excecaoId") ?? ""),
+  );
+  finalizar(base, r);
 }

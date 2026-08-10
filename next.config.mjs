@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 
 /**
@@ -48,6 +50,10 @@ const csp = [
   `font-src 'self' ${FONTS_FILES} data:`,
   // OG images e uploads são same-origin; data:/blob: cobrem inline e canvas.
   `img-src 'self' data: blob:`,
+  // ⚠️ QUANDO O CSP VIRAR ENFORCING (hoje é Report-Only, não bloqueia): incluir
+  // aqui a origem de ingestão do Sentry (ex.: https://<id>.ingest.sentry.io) pra
+  // o cliente conseguir enviar erro. Enquanto for Report-Only e sem DSN, não há
+  // envio nenhum, então nada a adicionar agora.
   `connect-src 'self'${umami ? ` ${umami}` : ""}`,
   `frame-ancestors 'self'`,
   `base-uri 'self'`,
@@ -85,4 +91,24 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Opções de BUILD do Sentry (não é o `Sentry.init` — isso mora nos
+ * `sentry.*.config.ts`). `withSentryConfig` COMPÕE com o `nextConfig` acima:
+ * preserva os headers/CSP do #32 e só acrescenta a instrumentação.
+ *
+ * Nada aqui exige rede ou credencial pra buildar:
+ *  - `sourcemaps.disable` liga o upload SÓ quando há `SENTRY_AUTH_TOKEN`. Sem
+ *    token, o build NÃO tenta subir source map e NÃO quebra.
+ *  - `org`/`project` vêm de env (ausentes = sem upload).
+ *  - `silent` fora do CI pra não poluir o log local.
+ * Ou seja: sem env nenhuma de Sentry, o build é idêntico ao de hoje.
+ */
+const sentryBuildOptions = {
+  silent: !process.env.CI,
+  disableLogger: true,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+};
+
+export default withSentryConfig(nextConfig, sentryBuildOptions);

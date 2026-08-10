@@ -88,3 +88,25 @@
     scroll-behavior: auto;
   }
 }
+
+/* Pinos do mapa real (MapLibre, Fase 1). Elemento criado em runtime pelo
+   marcador, então o Tailwind não veria as classes — por isso mora aqui, mas
+   só com @apply (nada de hex solto: a regra 4 vale pro CSS). */
+@layer components {
+  .mapa-pino {
+    @apply flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-full border px-1.5 font-mono text-xs font-semibold shadow-sm;
+    transition: transform 150ms ease;
+  }
+  .mapa-pino:hover {
+    transform: scale(1.12);
+  }
+  .mapa-pino--real {
+    @apply border-transparent bg-petroleo text-areia;
+  }
+  .mapa-pino--exemplo {
+    @apply border-dashed border-petroleo/60 bg-areia text-petroleo;
+  }
+  .mapa-pino--vazio {
+    @apply h-3 w-3 min-w-0 border-transparent bg-petroleo/25 p-0;
+  }
+}

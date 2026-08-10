@@ -4,6 +4,7 @@ import { sessaoAtual } from "@/lib/sessao";
 import { inscritosDoEvento } from "@/lib/organizacao";
 import { formatDatetimeLocal, formatarDataAdmin } from "@/lib/admin";
 import CampoDuracao from "@/components/painel/CampoDuracao";
+import CampoModoRota from "@/components/painel/CampoModoRota";
 import CompartilharBotoes from "@/components/CompartilharBotoes";
 import { textoCompartilharEvento, urlEvento } from "@/lib/compartilhar";
 import {
@@ -147,6 +148,12 @@ export default async function GerenciarEvento({
           </label>
           <CampoDuracao defaultValue={duracaoAtual} />
         </div>
+        <CampoModoRota
+          modoRota={evento.modoRota}
+          origem={evento.origem ?? ""}
+          destino={evento.destino ?? ""}
+          percursoObs={evento.percursoObs ?? ""}
+        />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

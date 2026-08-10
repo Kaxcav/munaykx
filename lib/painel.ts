@@ -24,6 +24,38 @@ function calcularTerminaEm(
 }
 
 /**
+ * Resolve LOCAL × ROTA — os dois são mutuamente exclusivos por construção:
+ *  - modo rota → guarda origem/destino/percurso, e `local` vira null;
+ *  - modo local → guarda `local`, e os campos de rota viram null.
+ * Assim nunca coexistem um "local único" e uma "rota" contando histórias
+ * diferentes na mesma tela. Uma fonte só, pra criar e editar.
+ */
+function camposDeLocalERota(d: {
+  modoRota: boolean;
+  local?: string;
+  origem?: string;
+  destino?: string;
+  percursoObs?: string;
+}) {
+  if (d.modoRota) {
+    return {
+      local: null,
+      modoRota: true,
+      origem: d.origem ?? null,
+      destino: d.destino ?? null,
+      percursoObs: d.percursoObs ?? null,
+    };
+  }
+  return {
+    local: d.local ?? null,
+    modoRota: false,
+    origem: null,
+    destino: null,
+    percursoObs: null,
+  };
+}
+
+/**
  * MUTAÇÕES DO PAINEL DO ORGANIZADOR (STORY-009, frente C).
  *
  * `lib/organizacao.ts` é a camada de LEITURA com o filtro de dono, e é
@@ -140,7 +172,7 @@ export async function criarEvento(
         terminaEm: calcularTerminaEm(quando, dados.duracaoMin),
         horarioRecorrenteId,
         city: dados.city,
-        local: dados.local ?? null,
+        ...camposDeLocalERota(dados),
         capacidade: dados.capacidade,
         gratuito: dados.gratuito,
         demo: false,
@@ -191,7 +223,7 @@ export async function editarEvento(
         // fim sem drift, porque o form sempre reenvia a duração.
         terminaEm: calcularTerminaEm(quando, dados.duracaoMin),
         city: dados.city,
-        local: dados.local ?? null,
+        ...camposDeLocalERota(dados),
         capacidade: dados.capacidade,
         gratuito: dados.gratuito,
         ativo: dados.ativo,

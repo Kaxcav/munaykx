@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario } from "@/lib/organizacao";
 import CampoDuracao from "@/components/painel/CampoDuracao";
+import CampoModoRota from "@/components/painel/CampoModoRota";
 import { slugify } from "@/lib/slug";
 import { criarEventoAction } from "../../actions";
 
@@ -135,6 +136,7 @@ export default async function NovoEvento({
           </label>
           <CampoDuracao defaultValue={duracaoMin ?? ""} />
         </div>
+        <CampoModoRota />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="gratuito" defaultChecked />
           Gratuito

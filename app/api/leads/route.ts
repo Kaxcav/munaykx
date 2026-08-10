@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { leadSchema } from "@/lib/leads";
 import { prisma } from "@/lib/db";
+import { dispararEmail } from "@/lib/emails-rsvp";
+import { emailListaEspera } from "@/lib/emails-lead";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -38,8 +40,9 @@ export async function POST(req: Request) {
   const { tipo, nome, email, whatsapp, modalidades, regiao, organizacao, modalidade } =
     parsed.data;
 
+  let criado;
   try {
-    await prisma.lead.create({
+    criado = await prisma.lead.create({
       data: {
         tipo,
         nome,
@@ -69,6 +72,24 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
+
+  // Confirmação SÓ depois do lead estar gravado, e só quando o `create`
+  // realmente criou: no caminho P2002 a pessoa já está na lista há tempos e
+  // recebeu este e-mail na primeira vez — repetir seria spam do nosso lado.
+  //
+  // `dispararEmail` é fire-and-forget e engole erro de propósito. O contrato
+  // aqui é o mesmo do RSVP: o cadastro já está no banco, então falha de
+  // e-mail vira log, nunca erro para quem preencheu o formulário. Sem
+  // `EMAIL_PROVIDER` configurado, `sendEmail` é no-op logado e este bloco
+  // não muda nada — o lead entra igual.
+  dispararEmail(
+    emailListaEspera({
+      para: criado.email,
+      nome: criado.nome,
+      tipo: criado.tipo,
+      quando: criado.createdAt,
+    }),
+  );
 
   return NextResponse.json({ ok: true });
 }

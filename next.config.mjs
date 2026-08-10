@@ -40,6 +40,13 @@ const umami = origem(process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL);
 const FONTS_CSS = "https://fonts.googleapis.com";
 const FONTS_FILES = "https://fonts.gstatic.com";
 
+// Mapa real (Fase 1): quando o dono ativa `MAPA_TILES_URL`, o NAVEGADOR busca o
+// .pmtiles (por HTTP range) e os glyphs do Protomaps — ambos via fetch, então
+// entram em connect-src. Sem a env, `mapaTiles` é null e não é listado. Como o
+// CSP é Report-Only, no pior caso reporta; nunca bloqueia o mapa.
+const mapaTiles = origem(process.env.MAPA_TILES_URL);
+const PROTOMAPS_GLYPHS = "https://protomaps.github.io";
+
 const csp = [
   `default-src 'self'`,
   // 'unsafe-inline' é necessário porque o Next injeta bootstrap/flight inline.
@@ -54,7 +61,8 @@ const csp = [
   // aqui a origem de ingestão do Sentry (ex.: https://<id>.ingest.sentry.io) pra
   // o cliente conseguir enviar erro. Enquanto for Report-Only e sem DSN, não há
   // envio nenhum, então nada a adicionar agora.
-  `connect-src 'self'${umami ? ` ${umami}` : ""}`,
+  // + tiles do mapa (pmtiles por range) e glyphs do Protomaps, quando ativo.
+  `connect-src 'self'${umami ? ` ${umami}` : ""}${mapaTiles ? ` ${mapaTiles} ${PROTOMAPS_GLYPHS}` : ""}`,
   `frame-ancestors 'self'`,
   `base-uri 'self'`,
   `form-action 'self'`,

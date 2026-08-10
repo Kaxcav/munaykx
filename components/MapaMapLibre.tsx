@@ -9,47 +9,53 @@ import { camadasMunay } from "@/lib/mapa-estilo";
 /**
  * Mapa REAL da Fase 1 — MapLibre GL JS lendo um PMTiles do DF direto do R2.
  *
- * LAZY de propósito: MapLibre é pesado (~200 kB). Nada dele é importado no topo
- * do módulo — `maplibre-gl`, `pmtiles` e o tema entram por `import()` DENTRO do
- * `useEffect`, então só baixam quando esta tela monta, e só quando o mapa real
- * está ativo. As outras páginas não pagam esse custo.
+ * LAZY: `maplibre-gl`/`pmtiles` entram por `import()` DENTRO do `useEffect`, só
+ * baixam quando esta tela monta. Privacidade: pinos no CENTRO da RA, nunca o
+ * ponto exato. Contagem grounded.
  *
- * Só monta quando a `/mapa` recebe `tilesUrl` (o dono setou `MAPA_TILES_URL`).
- * Sem isso a página renderiza o mapa esquemático de sempre — este componente
- * nem é pedido.
- *
- * Privacidade: os pinos ficam no CENTRO da RA (`CENTROIDES`), nunca no ponto
- * exato de um treino. A contagem é grounded — o que o banco diz por região.
+ * Interatividade/movimento (com bom gosto, e honrando `prefers-reduced-motion`):
+ * intro de câmera suave, pinos com entrada escalonada e hover/pulse, clique →
+ * flyTo, e sync com a lista via `destaqueId` (pulse) e `focoTick` (voa até a RA).
  */
 export default function MapaMapLibre({
   tilesUrl,
   regioes,
   full = false,
+  destaqueId = null,
+  focoId = null,
+  focoTick = 0,
+  onSelecionar,
 }: {
   tilesUrl: string;
   regioes: RegiaoNoMapa[];
-  /** true → preenche o pai (tela cheia); false → card com altura fixa. */
   full?: boolean;
+  /** RA a "pulsar" (hover na lista). */
+  destaqueId?: string | null;
+  /** RA a focar; muda junto com `focoTick` pra revoar mesmo na mesma RA. */
+  focoId?: string | null;
+  focoTick?: number;
+  /** Clique num pino. */
+  onSelecionar?: (r: RegiaoNoMapa) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
+  const mapaRef = useRef<import("maplibre-gl").Map | null>(null);
+  const elementos = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [selecionada, setSelecionada] = useState<RegiaoNoMapa | null>(null);
   const [erro, setErro] = useState(false);
 
   useEffect(() => {
-    let map: import("maplibre-gl").Map | null = null;
     let cancelado = false;
+    const els = elementos.current;
+    const reduz =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     (async () => {
       try {
-        // maplibre-gl 6.x exporta tudo como NAMED (sem default); importa o
-        // namespace inteiro. Nada disso está no topo do módulo — só baixa aqui.
         const maplibregl = await import("maplibre-gl");
         const { Protocol } = await import("pmtiles");
-
         if (cancelado || !container.current) return;
 
-        // Registra o protocolo pmtiles:// — o MapLibre passa a ler o arquivo
-        // .pmtiles por HTTP range direto, sem servidor de tiles.
         const protocol = new Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
 
@@ -70,40 +76,55 @@ export default function MapaMapLibre({
                   '<a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> · Protomaps',
               },
             },
-            // Estilo próprio da MUNAY (vibe "tipo Waze", paleta da marca).
             layers: camadasMunay("protomaps"),
           },
         });
-        map = m;
+        mapaRef.current = m;
 
         m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-        // Enquadra o DF e trava o pan longe dele — é um mapa da cidade, não do mundo.
-        m.fitBounds(BBOX_DF, { padding: 24, animate: false });
         m.setMaxBounds([
           [BBOX_DF[0] - 0.3, BBOX_DF[1] - 0.3],
           [BBOX_DF[2] + 0.3, BBOX_DF[3] + 0.3],
         ]);
 
-        // Um pino por RA, no centro, dimensionado/colorido pelo estado.
-        for (const r of regioes) {
+        // ── Intro de câmera: começa um tico mais longe e dá um zoom-in macio ──
+        const alvo = m.cameraForBounds(BBOX_DF, { padding: 24 });
+        if (reduz || !alvo) {
+          m.fitBounds(BBOX_DF, { padding: 24, animate: false });
+        } else {
+          m.jumpTo({ center: alvo.center as [number, number], zoom: (alvo.zoom ?? 9) - 0.8 });
+          m.once("load", () => {
+            m.easeTo({
+              center: alvo.center as [number, number],
+              zoom: alvo.zoom,
+              duration: 1500,
+              easing: (t) => t * (2 - t), // ease-out
+            });
+          });
+        }
+
+        // ── Pinos: entrada escalonada, hover, clique → flyTo ──────────────────
+        regioes.forEach((r, i) => {
           const centro = CENTROIDES[r.regiao];
-          if (!centro) continue;
+          if (!centro) return;
 
           const el = document.createElement("button");
           el.type = "button";
-          el.className = `mapa-pino mapa-pino--${r.estado}`;
+          el.className = `mapa-pino mapa-pino--${r.estado}${reduz ? "" : " mapa-pino--anima"}`;
+          if (!reduz) el.style.animationDelay = `${300 + i * 18}ms`;
           el.setAttribute("aria-label", `${r.regiao}: ${r.total} comunidade(s)`);
           el.textContent = r.total > 0 ? String(r.total) : "";
           el.addEventListener("click", (ev) => {
             ev.stopPropagation();
             setSelecionada(r);
-            m.flyTo({ center: centro, zoom: 12, speed: 0.8 });
+            onSelecionar?.(r);
+            if (reduz) m.jumpTo({ center: centro, zoom: 12.5 });
+            else m.flyTo({ center: centro, zoom: 12.5, speed: 0.7, curve: 1.4, essential: true });
           });
 
-          new maplibregl.Marker({ element: el, anchor: "center" })
-            .setLngLat(centro)
-            .addTo(m);
-        }
+          els.set(r.regiao, el);
+          new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(centro).addTo(m);
+        });
 
         m.on("error", () => setErro(true));
       } catch {
@@ -113,9 +134,29 @@ export default function MapaMapLibre({
 
     return () => {
       cancelado = true;
-      map?.remove();
+      els.clear();
+      mapaRef.current?.remove();
+      mapaRef.current = null;
     };
-  }, [tilesUrl, regioes]);
+  }, [tilesUrl, regioes, onSelecionar]);
+
+  // Destaque (pulse) da RA sob hover na lista — imperativo, sem recriar o mapa.
+  useEffect(() => {
+    for (const [ra, el] of elementos.current) {
+      el.classList.toggle("mapa-pino--destaque", ra === destaqueId);
+    }
+  }, [destaqueId]);
+
+  // Foco: a lista pediu pra voar até uma RA (revoa mesmo na mesma, via tick).
+  useEffect(() => {
+    if (!focoId) return;
+    const centro = CENTROIDES[focoId];
+    const m = mapaRef.current;
+    if (!centro || !m) return;
+    const reduz = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduz) m.jumpTo({ center: centro, zoom: 12.5 });
+    else m.flyTo({ center: centro, zoom: 12.5, speed: 0.7, curve: 1.4, essential: true });
+  }, [focoTick, focoId]);
 
   return (
     <div className={full ? "absolute inset-0" : "relative"}>

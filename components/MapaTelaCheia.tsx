@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import MapaMapLibre from "./MapaMapLibre";
 import type { RegiaoNoMapa } from "@/lib/mapa";
@@ -24,14 +24,37 @@ export default function MapaTelaCheia({
   regioes: RegiaoNoMapa[];
 }) {
   const [aberto, setAberto] = useState(true);
+  // Sync lista ↔ mapa: `destaque` pulsa o pino (hover), `selecionada` é a RA
+  // escolhida (clique), e `foco` (RA + tick) manda o mapa voar — o tick deixa
+  // revoar mesmo clicando na mesma RA duas vezes.
+  const [selecionada, setSelecionada] = useState<string | null>(null);
+  const [destaque, setDestaque] = useState<string | null>(null);
+  const [foco, setFoco] = useState<{ id: string; tick: number }>({ id: "", tick: 0 });
+  const itens = useRef<Map<string, HTMLLIElement>>(new Map());
+
   const comDado = regioes.filter((r) => r.estado !== "vazio");
   const reais = regioes.filter((r) => r.estado === "real").length;
   const vazias = regioes.filter((r) => r.estado === "vazio");
 
+  function escolher(regiao: string) {
+    setSelecionada(regiao);
+    setFoco((f) => ({ id: regiao, tick: f.tick + 1 }));
+    const li = itens.current.get(regiao);
+    li?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-areia">
       {/* Basemap full-bleed atrás de tudo */}
-      <MapaMapLibre full tilesUrl={tilesUrl} regioes={regioes} />
+      <MapaMapLibre
+        full
+        tilesUrl={tilesUrl}
+        regioes={regioes}
+        destaqueId={destaque}
+        focoId={foco.id}
+        focoTick={foco.tick}
+        onSelecionar={(r) => escolher(r.regiao)}
+      />
 
       {/* ── Header flutuante (a nav do site vira overlay discreto) ─────────── */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 p-3 sm:p-4">
@@ -96,26 +119,68 @@ export default function MapaTelaCheia({
           {/* Lista das RAs com comunidade */}
           {comDado.length > 0 ? (
             <ul className="mt-3 space-y-1">
-              {comDado.map((r) => (
-                <li key={r.regiao}>
-                  <Link
-                    href={`/descobrir/${r.slug}`}
-                    className="group flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-petroleo hover:text-areia"
+              {comDado.map((r) => {
+                const ativa = selecionada === r.regiao;
+                return (
+                  <li
+                    key={r.regiao}
+                    ref={(el) => {
+                      if (el) itens.current.set(r.regiao, el);
+                      else itens.current.delete(r.regiao);
+                    }}
+                    className={
+                      "group flex items-center gap-2 rounded-lg pr-1 text-sm transition-colors " +
+                      (ativa ? "bg-petroleo text-areia" : "hover:bg-petroleo/10")
+                    }
+                    onMouseEnter={() => setDestaque(r.regiao)}
+                    onMouseLeave={() => setDestaque((d) => (d === r.regiao ? null : d))}
                   >
-                    <span className="font-medium text-petroleo group-hover:text-areia">
-                      {r.regiao}
-                      {r.estado === "exemplo" && (
-                        <span className="ml-1.5 font-mono text-[0.65rem] uppercase tracking-wider text-petroleo/45 group-hover:text-areia/60">
-                          exemplo
-                        </span>
-                      )}
-                    </span>
-                    <span className="shrink-0 font-mono text-xs text-petroleo/50 group-hover:text-areia/70">
-                      {r.total}
-                    </span>
-                  </Link>
-                </li>
-              ))}
+                    {/* Clicar na linha foca a RA no mapa (não sai da página) */}
+                    <button
+                      type="button"
+                      onClick={() => escolher(r.regiao)}
+                      onFocus={() => setDestaque(r.regiao)}
+                      onBlur={() => setDestaque((d) => (d === r.regiao ? null : d))}
+                      aria-pressed={ativa}
+                      className="flex flex-1 items-baseline justify-between gap-3 px-2 py-1.5 text-left"
+                    >
+                      <span className={"font-medium " + (ativa ? "text-areia" : "text-petroleo")}>
+                        {r.regiao}
+                        {r.estado === "exemplo" && (
+                          <span
+                            className={
+                              "ml-1.5 font-mono text-[0.65rem] uppercase tracking-wider " +
+                              (ativa ? "text-areia/60" : "text-petroleo/45")
+                            }
+                          >
+                            exemplo
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={
+                          "shrink-0 font-mono text-xs " + (ativa ? "text-areia/70" : "text-petroleo/50")
+                        }
+                      >
+                        {r.total}
+                      </span>
+                    </button>
+                    {/* Atalho pra página da RA */}
+                    <Link
+                      href={`/descobrir/${r.slug}`}
+                      aria-label={`Abrir ${r.regiao}`}
+                      className={
+                        "shrink-0 rounded-md px-2 py-1 font-mono text-xs transition-colors " +
+                        (ativa
+                          ? "text-areia/80 hover:bg-areia/15"
+                          : "text-petroleo/40 hover:bg-petroleo/10 hover:text-petroleo")
+                      }
+                    >
+                      abrir →
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-3 text-sm text-petroleo/70">

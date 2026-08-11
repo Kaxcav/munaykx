@@ -5,8 +5,14 @@ import { useMemo, useState, useTransition } from "react";
 import Campo from "@/components/perfil/Campo";
 import PainelAjuda, { type Problema } from "@/components/perfil/PainelAjuda";
 import SeletorInteresses from "@/components/perfil/SeletorInteresses";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SelectNativo } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ChipBotao } from "@/components/ui/chip";
+import { Input, SelectNativo } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { salvarPerfil, limparPerfil } from "@/app/perfil/actions";
 import { formatarCep, perfilSchema } from "@/lib/perfil";
 import { REGIOES_COM_OUTRA } from "@/lib/regioes";
@@ -192,7 +198,7 @@ export default function PerfilForm({
           >
             Quem é você
           </h2>
-          <p className="mt-2 text-sm text-petroleo/65">
+          <p className="mt-2 text-sm text-foreground/65">
             Só o nome é necessário. O resto é seu, no seu tempo.
           </p>
 
@@ -233,10 +239,10 @@ export default function PerfilForm({
             />
 
             <div>
-              <label htmlFor="genero" className="mb-1.5 block text-sm font-medium">
+              <Label htmlFor="genero" className="mb-1.5 font-medium">
                 {ROTULOS.genero}
-                <span className="ml-1.5 font-normal text-petroleo/45">opcional</span>
-              </label>
+                <span className="ml-1.5 font-normal text-foreground/45">opcional</span>
+              </Label>
               <SelectNativo
                 id="genero"
                 value={generoLivre ? "outro" : dados.genero}
@@ -245,7 +251,6 @@ export default function PerfilForm({
                   setGeneroLivre(escolha === "outro");
                   set("genero", escolha === "outro" ? "" : escolha);
                 }}
-                className="border-petroleo/20"
               >
                 <option value="">Selecionar…</option>
                 {GENEROS.map((g) => (
@@ -256,17 +261,17 @@ export default function PerfilForm({
                 <option value="outro">Outro — eu escrevo</option>
               </SelectNativo>
               {generoLivre && (
-                <input
+                <Input
                   aria-label="Escreva seu gênero"
                   value={dados.genero}
                   onChange={(e) => set("genero", e.target.value)}
                   maxLength={40}
                   placeholder="Escreve aí"
                   autoFocus
-                  className="mt-2 h-11 w-full rounded-full border border-petroleo/20 bg-white px-4 text-sm"
+                  className="mt-2"
                 />
               )}
-              <p className="mt-1.5 text-xs text-petroleo/50">
+              <p className="mt-1.5 text-xs text-foreground/50">
                 Autodeclarado. Serve pra gente entender o público — nunca pra
                 filtrar quem entra em quê.
               </p>
@@ -303,15 +308,14 @@ export default function PerfilForm({
               dica="Só o CEP. Rua e número a gente não pergunta."
             />
             <div>
-              <label htmlFor="cidade" className="mb-1.5 block text-sm font-medium">
+              <Label htmlFor="cidade" className="mb-1.5 font-medium">
                 Região / cidade
-                <span className="ml-1.5 font-normal text-petroleo/45">opcional</span>
-              </label>
+                <span className="ml-1.5 font-normal text-foreground/45">opcional</span>
+              </Label>
               <SelectNativo
                 id="cidade"
                 value={dados.cidade}
                 onChange={(e) => set("cidade", e.target.value)}
-                className="border-petroleo/20"
               >
                 <option value="">Selecionar…</option>
                 {REGIOES_COM_OUTRA.map((r) => (
@@ -320,7 +324,7 @@ export default function PerfilForm({
                   </option>
                 ))}
               </SelectNativo>
-              <p className="mt-1.5 text-xs text-petroleo/50">
+              <p className="mt-1.5 text-xs text-foreground/50">
                 Pra mostrar o que rola do seu lado.
               </p>
             </div>
@@ -346,16 +350,16 @@ export default function PerfilForm({
           >
             Como a comunidade te vê
           </h2>
-          <p className="mt-2 text-sm text-petroleo/65">
+          <p className="mt-2 text-sm text-foreground/65">
             Isto aqui é a parte que aparece pros outros — e só se você deixar.
           </p>
 
           <div className="mt-6">
-            <label htmlFor="bio" className="mb-1.5 block text-sm font-medium">
+            <Label htmlFor="bio" className="mb-1.5 font-medium">
               {ROTULOS.bio}
-              <span className="ml-1.5 font-normal text-petroleo/45">opcional</span>
-            </label>
-            <textarea
+              <span className="ml-1.5 font-normal text-foreground/45">opcional</span>
+            </Label>
+            <Textarea
               id="bio"
               name="bio"
               value={dados.bio}
@@ -365,45 +369,67 @@ export default function PerfilForm({
               rows={3}
               placeholder="Corro devagar, converso muito e sempre levo café. Bora?"
               aria-invalid={erroDe("bio") ? true : undefined}
-              className={`w-full rounded-2xl border bg-white px-4 py-3 text-sm ${
-                erroDe("bio") ? "border-coral" : "border-petroleo/20"
-              }`}
+              // O `<Textarea>` do DS é `rounded-card` (1.5rem) onde este campo
+              // era `rounded-2xl` (1rem) — meio raio de diferença, e é a
+              // medida da marca. `min-h` fica de fora porque `rows={3}` já
+              // dita a altura e o DS não deve brigar com ela.
+              className={cn(
+                "min-h-0",
+                erroDe("bio") && "border-destructive focus-visible:border-destructive",
+              )}
             />
             <div className="mt-1.5 flex justify-between gap-4">
-              <p className="text-xs text-petroleo/50">
+              <p className="text-xs text-foreground/50">
                 Uma linha sobre você. Não precisa ser currículo.
               </p>
               <p
-                className={`shrink-0 font-mono text-xs ${
-                  dados.bio.length > 260 ? "text-coral" : "text-petroleo/40"
-                }`}
+                className={cn(
+                  // `tabular-nums` porque o contador muda a cada tecla: sem
+                  // ele o "12/280" empurra o texto de lado a cada dígito.
+                  "shrink-0 font-mono text-xs tabular-nums",
+                  dados.bio.length > 260 ? "text-destructive" : "text-foreground/40",
+                )}
               >
                 {dados.bio.length}/280
               </p>
             </div>
             {erroDe("bio") && (
-              <p role="alert" className="mt-1.5 text-xs font-medium text-coral">
+              <p role="alert" className="mt-1.5 text-xs font-medium text-destructive">
                 ↳ {erroDe("bio")}
               </p>
             )}
           </div>
 
-          <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-card border border-salvia/40 bg-salvia-soft p-5">
-            <input
-              type="checkbox"
-              checked={dados.perfilPublico}
-              onChange={(e) => set("perfilPublico", e.target.checked)}
-              className="mt-1 h-4 w-4 accent-salvia"
-            />
-            <span>
-              <span className="block font-semibold">Deixar meu perfil público</span>
-              <span className="mt-1 block text-sm leading-relaxed text-petroleo/70">
-                Nome, apelido, descrição e interesses ficam visíveis pra quem
-                está nas mesmas comunidades. Nascimento, telefone e CEP{" "}
-                <strong>nunca</strong> aparecem — nem com isso ligado.
+          {/*
+            ⚠️ CAIXA DE MARCAR NATIVA — uma das duas isenções do lote L5.
+
+            O DS não tem `<Checkbox>`, e nesta rodada só o L1 escreve em
+            `components/ui/` (§5 do `docs/QUADRO-SHADCN-MUNAY.md`; L3 e L4 já
+            tinham aberto o mesmo pedido, este é o terceiro). `<Input>` não
+            serve de substituto: ele é `h-11 w-full rounded-full`, desenhado
+            pra campo de texto — numa caixa de 16px isso não é ajuste de
+            classe, é outra peça. Fica contada de propósito, e
+            `tests/usuario-ds.spec.ts` trava o número em 2 (esta e a chave do
+            `<Consentimento>`) pra que uma terceira não entre de carona.
+          */}
+          <Card className="mt-6 border-salvia/40 bg-salvia-soft p-0">
+            <label className="flex cursor-pointer items-start gap-3 p-5">
+              <input
+                type="checkbox"
+                checked={dados.perfilPublico}
+                onChange={(e) => set("perfilPublico", e.target.checked)}
+                className="mt-1 h-4 w-4 accent-salvia"
+              />
+              <span>
+                <span className="block font-semibold">Deixar meu perfil público</span>
+                <span className="mt-1 block text-sm leading-relaxed text-foreground/70">
+                  Nome, apelido, descrição e interesses ficam visíveis pra quem
+                  está nas mesmas comunidades. Nascimento, telefone e CEP{" "}
+                  <strong>nunca</strong> aparecem — nem com isso ligado.
+                </span>
               </span>
-            </span>
-          </label>
+            </label>
+          </Card>
         </section>
 
         {/* ── 11.1 · Tags ────────────────────────────────────────────── */}
@@ -414,7 +440,7 @@ export default function PerfilForm({
           >
             No que você tá
           </h2>
-          <p className="mt-2 text-sm text-petroleo/65">
+          <p className="mt-2 text-sm text-foreground/65">
             Toca no que combina com você. Dá pra mudar quando quiser.
           </p>
           <div className="mt-6">
@@ -434,14 +460,14 @@ export default function PerfilForm({
             >
               Duas perguntas rápidas
             </h2>
-            <p className="mt-2 text-sm text-petroleo/65">
+            <p className="mt-2 text-sm text-foreground/65">
               Sem resposta certa, e nenhuma é obrigatória. É só pra gente te
               conhecer além da ficha.
             </p>
 
             <div className="mt-6 space-y-6">
               {perguntas.map((q) => (
-                <div key={q.id} className="rounded-card border border-petroleo/10 bg-white/60 p-5">
+                <Card key={q.id} className="bg-card/60 p-5">
                   <p id={`q-${q.id}`} className="font-display text-lg font-bold">
                     {q.texto}
                   </p>
@@ -455,9 +481,12 @@ export default function PerfilForm({
                       {q.opcoes.map((op) => {
                         const marcado = dados.respostas[q.id] === op;
                         return (
-                          <button
+                          // Sálvia (e não o petróleo do `ativo`) porque este
+                          // bloco inteiro é sálvia: dentro de um cartão de
+                          // pergunta leve, a opção marcada em petróleo sólido
+                          // pesaria mais que o próprio enunciado.
+                          <ChipBotao
                             key={op}
-                            type="button"
                             aria-pressed={marcado}
                             onClick={() =>
                               set("respostas", {
@@ -467,20 +496,21 @@ export default function PerfilForm({
                                 [q.id]: marcado ? "" : op,
                               })
                             }
-                            className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                            className={cn(
+                              "py-2",
                               marcado
-                                ? "border-salvia bg-salvia text-areia font-semibold"
-                                : "border-petroleo/20 bg-white hover:border-petroleo/40"
-                            }`}
+                                ? "border-salvia bg-salvia font-semibold text-areia"
+                                : "border-primary/20 bg-card hover:border-primary/40",
+                            )}
                           >
                             {marcado && <span aria-hidden>✓ </span>}
                             {op}
-                          </button>
+                          </ChipBotao>
                         );
                       })}
                     </div>
                   ) : (
-                    <input
+                    <Input
                       aria-labelledby={`q-${q.id}`}
                       value={dados.respostas[q.id] ?? ""}
                       onChange={(e) =>
@@ -488,10 +518,10 @@ export default function PerfilForm({
                       }
                       maxLength={200}
                       placeholder={q.exemplo}
-                      className="mt-3 h-11 w-full rounded-full border border-petroleo/20 bg-white px-4 text-sm"
+                      className="mt-3"
                     />
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           </section>
@@ -505,7 +535,7 @@ export default function PerfilForm({
           >
             Você no controle
           </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-petroleo/80">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-foreground/80">
             São três coisas diferentes, então são três chaves separadas. Você
             liga o que faz sentido pra você e desliga quando quiser — nada aqui
             vem ligado por padrão.
@@ -554,15 +584,17 @@ export default function PerfilForm({
         </section>
 
         {erroGeral && (
-          <p
+          <Card
             role="alert"
-            className="rounded-card border border-coral/40 bg-coral/5 p-4 text-sm font-medium text-coral"
+            className="border-destructive/40 bg-destructive/5 p-4 text-sm font-medium text-destructive"
           >
             {erroGeral}
-          </p>
+          </Card>
         )}
 
-        <div className="flex flex-wrap items-center gap-4 border-t border-petroleo/10 pt-8">
+        {/* A régua final `border-t border-border pt-8` é a mesma da /mapa —
+            é o gesto que fecha toda tela da rodada. */}
+        <div className="flex flex-wrap items-center gap-4 border-t border-border pt-8">
           <Button type="submit" size="lg" disabled={pendente}>
             {pendente ? "Salvando…" : salvo ? "Salvo ✓" : "Salvar perfil"}
           </Button>
@@ -576,10 +608,10 @@ export default function PerfilForm({
 
         {/* Direito de eliminação (LGPD art. 18) — dois passos de propósito:
             apagar perfil por engano com um clique seria péssimo. */}
-        <div className="rounded-card border border-petroleo/10 bg-white/50 p-5">
+        <Card className="bg-card/50 p-5">
           {confirmandoLimpeza ? (
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm text-petroleo/75">
+              <p className="text-sm text-foreground/75">
                 Isso apaga data, telefone, CEP, descrição, interesses e
                 respostas. Sua conta e suas inscrições continuam.
               </p>
@@ -602,15 +634,19 @@ export default function PerfilForm({
               </Button>
             </div>
           ) : (
-            <button
-              type="button"
+            // Passo 1 de 2 (o direito de eliminação da LGPD art. 18 não pode
+            // ser um clique). `variant="link"` porque ele PRECISA parecer
+            // discreto: um botão destrutivo cheio aqui convidaria ao acidente
+            // que os dois passos existem pra evitar.
+            <Button
+              variant="link"
               onClick={() => setConfirmandoLimpeza(true)}
-              className="text-sm text-petroleo/55 underline underline-offset-4 hover:text-coral"
+              className="h-auto p-0 text-sm font-normal text-foreground/55 hover:text-destructive"
             >
               Apagar os dados do meu perfil
-            </button>
+            </Button>
           )}
-        </div>
+        </Card>
       </form>
 
       <PainelAjuda problemas={problemas} salvo={salvo} />
@@ -652,48 +688,71 @@ function Consentimento({
   const recomendado = nivel === "recomendado";
   const obrigatorio = nivel === "necessario";
   return (
-    <label
-      htmlFor={id}
-      className={`flex cursor-pointer items-start justify-between gap-4 rounded-card border p-5 transition-colors ${
+    // `<Card asChild>` não existe (a peça é um `<div>` puro, de propósito —
+    // sem Radix Slot ela não vira client component), então o cartão é o
+    // `<Card>` e o `<label>` mora dentro dele com o padding. Trocar a ordem
+    // — `<label>` por fora — devolveria o `rounded-card border` escrito à mão
+    // que este lote existe pra tirar.
+    <Card
+      className={cn(
+        "p-0 transition-colors",
         marcado
           ? "border-salvia/60 bg-salvia-soft"
           : recomendado
-            ? "border-salvia/40 bg-white/60 ring-1 ring-salvia/25 hover:border-salvia/60"
-            : "border-petroleo/15 bg-white/60 hover:border-petroleo/30"
-      }`}
+            ? "bg-card/60 border-salvia/40 ring-1 ring-salvia/25 hover:border-salvia/60"
+            : "bg-card/60 hover:border-primary/30",
+      )}
     >
-      <span className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="font-display text-base font-bold text-petroleo">
-            {titulo}
+      <label
+        htmlFor={id}
+        className="flex cursor-pointer items-start justify-between gap-4 p-5"
+      >
+        <span className="min-w-0">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-display text-base font-bold text-foreground">
+              {titulo}
+            </span>
+            {obrigatorio && (
+              <SeloConsentimento tom="neutro">necessário</SeloConsentimento>
+            )}
+            {recomendado && (
+              <SeloConsentimento tom="salvia">recomendado</SeloConsentimento>
+            )}
           </span>
-          {obrigatorio && <SeloConsentimento tom="neutro">necessário</SeloConsentimento>}
-          {recomendado && <SeloConsentimento tom="salvia">recomendado</SeloConsentimento>}
+          <span className="mt-1.5 block text-sm leading-relaxed text-foreground/80">
+            {texto}
+          </span>
         </span>
-        <span className="mt-1.5 block text-sm leading-relaxed text-petroleo/80">
-          {texto}
-        </span>
-      </span>
 
-      <span className="relative mt-0.5 shrink-0">
-        <input
-          id={id}
-          type="checkbox"
-          role="switch"
-          checked={marcado}
-          onChange={(e) => onChange(e.target.checked)}
-          className="peer sr-only"
-        />
-        <span
-          aria-hidden
-          className="block h-6 w-11 rounded-full bg-petroleo/25 transition-colors peer-checked:bg-salvia peer-focus-visible:ring-2 peer-focus-visible:ring-salvia-deep peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-areia"
-        />
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"
-        />
-      </span>
-    </label>
+        {/*
+          ⚠️ A SEGUNDA (e última) isenção do lote L5 — ver a nota gêmea na
+          caixa de "perfil público". Esta chave não é candidata a `<Switch>`
+          do Radix por um motivo além do §5: ela é um `<input type="checkbox">`
+          REAL só escondido visualmente, o que faz o `<label>` que a envolve
+          dar nome acessível ao controle inteiro e faz o autofill/restauração
+          de formulário do navegador funcionar. Um switch de div com
+          `role="switch"` perderia as duas coisas.
+        */}
+        <span className="relative mt-0.5 shrink-0">
+          <input
+            id={id}
+            type="checkbox"
+            role="switch"
+            checked={marcado}
+            onChange={(e) => onChange(e.target.checked)}
+            className="peer sr-only"
+          />
+          <span
+            aria-hidden
+            className="block h-6 w-11 rounded-full bg-primary/25 transition-colors peer-checked:bg-salvia peer-focus-visible:ring-2 peer-focus-visible:ring-salvia-deep peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-card shadow-sm transition-transform peer-checked:translate-x-5"
+          />
+        </span>
+      </label>
+    </Card>
   );
 }
 
@@ -706,15 +765,17 @@ function SeloConsentimento({
   tom: "neutro" | "salvia";
   children: React.ReactNode;
 }) {
+  // `<Badge>` do DS com a cor por cima: a peça já traz a pílula mono
+  // maiúscula com o tracking certo; o que este selo tem de próprio é só o par
+  // de cores (e o `text-[10px]`, um degrau abaixo do badge padrão porque ele
+  // fica na MESMA linha do título e não pode competir com ele).
   const cls =
     tom === "salvia"
       ? "border-salvia/50 bg-salvia-soft text-salvia-deep"
-      : "border-petroleo/25 bg-white/70 text-petroleo/80";
+      : "border-primary/25 bg-card/70 text-foreground/80";
   return (
-    <span
-      className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${cls}`}
-    >
+    <Badge variant="outline" className={cn("px-2 text-[10px] font-semibold", cls)}>
       {children}
-    </span>
+    </Badge>
   );
 }

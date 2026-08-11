@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 /**
  * O clique que consome o token (STORY-007, decisão 3).
@@ -15,15 +16,21 @@ export default function ConfirmarEntrada({ destino }: { destino: string }) {
   const [indo, setIndo] = useState(false);
 
   return (
-    <button
+    // `h-auto px-7 py-4 font-display text-lg` mantém o botão EXATAMENTE do
+    // tamanho que estava. Nenhum `size` do DS bate com esta medida, e adotar
+    // o mais próximo (`lg`, que é `h-12`) encolheria a única ação da tela em
+    // 12px — mudança de desenho disfarçada de migração. O que sai são as onze
+    // classes de cor e hover copiadas: `bg-petroleo/text-areia/hover:bg-lime`
+    // é literalmente o `variant="default"` do `<Button>`.
+    <Button
+      className="mt-8 h-auto w-full px-7 py-4 font-display text-lg font-bold sm:w-auto"
       onClick={() => {
         setIndo(true);
         window.location.href = destino;
       }}
       disabled={indo}
-      className="mt-8 w-full rounded-full bg-petroleo px-7 py-4 font-display text-lg font-bold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-50 sm:w-auto"
     >
       {indo ? "Entrando…" : "Entrar na MUNAY"}
-    </button>
+    </Button>
   );
 }

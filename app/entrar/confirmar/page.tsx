@@ -3,6 +3,9 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfirmarEntrada from "@/components/ConfirmarEntrada";
+import { Pagina } from "@/components/comum/Pagina";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -47,21 +50,21 @@ export default async function ConfirmarPage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-24">
-        <p className="eyebrow">Sua conta</p>
-
+      <Pagina
+        eyebrow="Sua conta"
+        titulo={
+          destino ? "Tudo certo — é só confirmar." : "Esse link não parece válido."
+        }
+        descricao={
+          destino
+            ? "Clique no botão pra entrar. Pedimos esse clique de propósito: filtros de segurança de e-mail abrem links sozinhos, e sem esse passo eles gastariam seu acesso antes de você."
+            : "Pode ser que ele tenha vindo cortado pelo e-mail, ou que já tenha sido usado. Pedir um novo leva dez segundos."
+        }
+      >
         {destino ? (
           <>
-            <h1 className="mt-3 max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Tudo certo — é só confirmar.
-            </h1>
-            <p className="mt-4 max-w-xl text-petroleo/70">
-              Clique no botão pra entrar. Pedimos esse clique de propósito:
-              filtros de segurança de e-mail abrem links sozinhos, e sem esse
-              passo eles gastariam seu acesso antes de você.
-            </p>
             <ConfirmarEntrada destino={destino} />
-            <p className="mt-6 max-w-xl text-sm text-petroleo/50">
+            <p className="mt-6 max-w-xl text-sm text-foreground/50">
               O link vale por 20 minutos e funciona uma vez só. Se der erro,
               é só{" "}
               <Link href="/entrar" className="underline underline-offset-4">
@@ -71,23 +74,21 @@ export default async function ConfirmarPage({
             </p>
           </>
         ) : (
-          <>
-            <h1 className="mt-3 max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Esse link não parece válido.
-            </h1>
-            <p className="mt-4 max-w-xl text-petroleo/70">
-              Pode ser que ele tenha vindo cortado pelo e-mail, ou que já tenha
-              sido usado. Pedir um novo leva dez segundos.
-            </p>
-            <Link
-              href="/entrar"
-              className="mt-8 inline-block rounded-full bg-petroleo px-7 py-4 font-display text-lg font-bold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-            >
-              Pedir novo link
-            </Link>
-          </>
+          // `buttonVariants` e não `<Button>`: aqui é NAVEGAÇÃO, então tem que
+          // ser `<Link>` de verdade (abre em nova aba, o teclado entende, o
+          // robô segue). O `<Button>` do DS é `<button>` puro justamente pra
+          // não virar client component — quem navega usa as classes dele.
+          <Link
+            href="/entrar"
+            className={cn(
+              buttonVariants(),
+              "mt-8 h-auto px-7 py-4 font-display text-lg font-bold",
+            )}
+          >
+            Pedir novo link
+          </Link>
         )}
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

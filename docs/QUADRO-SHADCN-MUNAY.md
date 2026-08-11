@@ -148,6 +148,16 @@ Por impacto, não por conforto: **L4 (admin)** e **L3 (painel)** primeiro — s�
 76 dos 171 controles crus e as telas onde o organizador trabalha. Depois L5, L2,
 L6, L7.
 
+**L5 fechado em 11/08.** A área do usuário entregou os 30 itens de dívida que
+tinha para entregar. Os 6 que restam têm dono e nome: **4 são falso positivo do
+grep** (a palavra `<input>`/`<button>`/`<select>` dentro de comentário que
+explica por que NÃO usar o elemento solto, em `app/perfil/page.tsx`,
+`components/perfil/Campo.tsx` e `SeletorInteresses.tsx` duas vezes) e **2 são a
+caixa de marcar e a chave de consentimento**, que esperam o `<Checkbox>` do §5.
+Mesma postura do L4: não reescrevi comentário pra baixar contador — o conserto
+certo é o script pular comentário, e isso é lote do F0. O pedido está no §5, com
+a receita pronta (`semComentarios()` em `tests/usuario-ds.spec.ts`).
+
 **L4 fechado em 11/08.** O admin entregou 37 dos 47 controles crus que tinha; os
 10 que sobram têm dono: **6 são caixa de marcar** (esperam o `<Checkbox>` do §5)
 e **4 são falso positivo do grep** — a palavra `<button>`/`<select>` escrita
@@ -191,6 +201,9 @@ L1 implementa.
 | L3 (painel) + L4 (admin) | **`<Checkbox>` em `components/ui/`** — caixa de marcar. **As duas frentes pediram a mesma peça, sem se falar** (o admin tem 6: `ativo`, `demo`, `gratuito` nos dois formulários e o aviso de lançamento; o painel tem 6: `ativo`, `acolheIniciante`, `gratuito` x2, `modoRota` e o aceite de autorização; e o L5 vai ter mais, no consentimento do `/perfil`). É a evidência de que a peça faz falta de verdade, e não é gosto de um lote. **Não dá pra reusar `<Input>`**: ele é `h-11 w-full rounded-full`, desenhado pra campo de texto — numa caixa de 16px isso não é ajuste de classe, é outra peça. Enquanto não existir, os 12 continuam contados como controle cru, de propósito; no painel eles estão concentrados num arquivo só (`components/painel/Campo.tsx` → `<CampoCheck>`), então a troca lá é de uma linha. | **aberto** — só o dono do L1 implementa |
 | L3 (painel) | **Promover `<Campo>` e `<Aviso>` de `components/painel/` pra `components/comum/`.** `<Campo>` é rótulo+controle+dica (matou 23 cópias em 3 dialetos); `<Aviso>` é a faixa de `?ok=`/`?erro=` (matou 15 cópias em 4 receitas). O L4 já resolveu as mesmas duas dívidas do lado dele, e o L5 vai encontrar de novo — se cada lote escrever a sua, a rodada acaba com três "cabeçalho de campo" diferentes, que é exatamente o que ela existe pra matar. **Não copie: peça a promoção.** | aberto |
 | L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
+| **L5 (área do usuário)** | **Reforço do pedido de `<Checkbox>` — TERCEIRA frente a esbarrar.** O `/perfil` tem duas caixas nativas: a de "perfil público" e a chave (`role="switch"`) do consentimento LGPD. Elas ficam contadas de propósito, num arquivo só (`components/perfil/PerfilForm.tsx`), com o número TRAVADO em 2 por `tests/usuario-ds.spec.ts`. **Atenção pra quem for implementar:** a chave de consentimento **não** é o mesmo componente da caixa — ela é `<input type="checkbox">` real só escondido visualmente, e é isso que faz o `<label>` envolvente dar nome acessível e o autofill do navegador funcionar. Se o `<Checkbox>` nascer como div com `role="checkbox"`, ele resolve o L3/L4 e **não** resolve a chave do L5. | aberto |
+| **L5 (área do usuário)** | **`<Secao>` aceitar `id` (e repassar `aria-labelledby` na `<section>`).** As cinco seções do `PerfilForm` são `<section aria-labelledby="sec-…">` com `<h2 id="sec-…">` — o vínculo é o que faz o leitor de tela anunciar "Você no controle, região". Como o `<Secao>` do L1 não expõe `id`, adotar a peça ali significaria **perder** acessibilidade, então mantive os `<h2>` locais e só tokenizei a cor. Duas props, sem mudança visual. | aberto |
+| **L5 (área do usuário)** | **`verificar:higiene` deveria pular COMENTÁRIO** (pedido pro F0, dono de `scripts/`). Dos 22 controles crus que ele acusa na raia do L5, **4 são a palavra `<input>`/`<button>`/`<select>` escrita dentro de documentação** que explica por que o elemento não deve ser usado solto. O L4 já tinha registrado o mesmo em `Paginacao.tsx`/`SeletorEvento.tsx`/`CommunityForm.tsx`; com o L5 são 8 falsos positivos no total, e o número só cresce conforme os lotes documentam suas decisões. Enquanto isso, o teste local do L5 já varre com os comentários removidos — a receita está lá (`semComentarios()`), são 5 linhas. | aberto |
 
 ---
 
@@ -245,7 +258,8 @@ Atualizado por quem executa, no próprio PR.
 | F0 + L1 | `C:\munay-043` · `feat/shadcn-fundacao` | **entregue** | 584 testes verdes (8 novos), build e guardrails verdes. Baseline: controle-cru 171→165, superfície-à-mão 93→84, adoção 12→21 arquivos |
 | **L3 · Painel** | `C:\munay-045` · `feat/shadcn-l3-painel` | **entregue** | 11 telas + 9 componentes. Dívida do lote: **108 → 1** (67 controles crus → 1, 41 superfícies à mão → 0). 588 testes verdes (4 novos, `tests/painel-ds.spec.ts`). Três pedidos no §5. |
 | **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
-| L2, L5, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nem o L3 nem o L4 tocaram pasta fora da própria raia |
+| **L5 · Área do usuário** | `C:\munay-048` · `feat/shadcn-l5-usuario` | **entregue** | 9 telas + 4 componentes de perfil + `EntrarForm`/`ConfirmarEntrada`. Dívida do lote: **36 → 6** (22 controles crus → 6, dos quais **4 são comentário** e 2 são a isenção de caixa/chave; 14 superfícies à mão → 0). 616 testes verdes (12 novos, `tests/usuario-ds.spec.ts`). Três pedidos no §5. Achado: bug de layout PRÉ-EXISTENTE (37px de overflow em 375px na `/minhas-comunidades`) medido em `b50c4d7` e consertado — desvio confessado no próprio arquivo |
+| L2, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nenhum lote entregue tocou pasta fora da própria raia |
 
 **Baseline depois do L3 + L4** (recontado no merge, porque os dois lotes
 derrubaram contadores diferentes e escolher um lado do conflito daria número

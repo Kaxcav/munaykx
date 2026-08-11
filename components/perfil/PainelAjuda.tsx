@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
 /**
  * PAINEL DE AJUDA — briefing 07/08/2026, item 8.3.
  *
@@ -74,14 +78,15 @@ export default function PainelAjuda({
 
   return (
     <aside className="lg:sticky lg:top-24" aria-label="Ajuda do cadastro">
-      <div
-        className={`rounded-card border p-6 transition-colors ${
+      <Card
+        className={cn(
+          "p-6 transition-colors",
           temProblema
-            ? "border-coral/40 bg-coral/5"
-            : "border-salvia/40 bg-salvia-soft"
-        }`}
+            ? "border-destructive/40 bg-destructive/5"
+            : "border-salvia/40 bg-salvia-soft",
+        )}
       >
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/55">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-foreground/55">
           Painel de ajuda
         </p>
 
@@ -98,13 +103,18 @@ export default function PainelAjuda({
               <ul className="mt-4 space-y-3">
                 {problemas.map((p) => (
                   <li key={p.campo + p.mensagem} className="text-sm">
-                    <button
-                      type="button"
+                    {/* `variant="link"` com o sublinhado do painel por cima:
+                        o item é um atalho de texto que leva o foco pro campo,
+                        não um botão de ação — dar a ele o corpo de um
+                        `<Button>` cheio transformaria uma lista de pendências
+                        numa fileira de pílulas. */}
+                    <Button
+                      variant="link"
                       onClick={() => irPara(p.campo)}
-                      className="text-left leading-relaxed text-petroleo/80 underline decoration-coral/50 underline-offset-4 hover:text-petroleo"
+                      className="h-auto justify-start whitespace-normal p-0 text-left text-sm font-normal leading-relaxed text-foreground/80 decoration-destructive/50 hover:text-foreground"
                     >
                       {p.mensagem}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -114,7 +124,7 @@ export default function PainelAjuda({
               <p className="mt-2 font-display text-lg font-bold">
                 {salvo ? "Salvo ✓" : "Tá tudo certo por aqui"}
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-petroleo/70">
+              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 {salvo
                   ? "Seu perfil está guardado. Pode fechar ou continuar mexendo."
                   : "Nenhum campo com problema. Preenche o que quiser e salva — dá pra voltar e completar depois."}
@@ -122,29 +132,29 @@ export default function PainelAjuda({
             </>
           )}
         </div>
-      </div>
+      </Card>
 
-      <div className="mt-4 rounded-card border border-petroleo/10 bg-white/60 p-6">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/55">
+      <Card className="mt-4 bg-card/60 p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-foreground/55">
           Dúvidas sobre os dados
         </p>
-        <div className="mt-3 divide-y divide-petroleo/10">
+        <div className="mt-3 divide-y divide-border">
           {DUVIDAS.map((d) => (
             <details key={d.p} className="group py-3">
               <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-medium marker:content-none">
                 {d.p}
                 <span
                   aria-hidden
-                  className="mt-0.5 shrink-0 text-petroleo/40 transition-transform group-open:rotate-45"
+                  className="mt-0.5 shrink-0 text-foreground/40 transition-transform group-open:rotate-45"
                 >
                   +
                 </span>
               </summary>
-              <p className="mt-2 text-sm leading-relaxed text-petroleo/70">{d.r}</p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/70">{d.r}</p>
             </details>
           ))}
         </div>
-      </div>
+      </Card>
     </aside>
   );
 }

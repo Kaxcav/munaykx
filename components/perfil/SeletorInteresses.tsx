@@ -6,7 +6,9 @@ import {
   acentoDoInteresse,
   type Interesse,
 } from "@/lib/interesses";
+import { ChipBotao } from "@/components/ui/chip";
 import { classesDoAcento } from "@/lib/modalidades";
+import { cn } from "@/lib/utils";
 
 /**
  * SELEÇÃO DE INTERESSES POR TAG — briefing 07/08/2026, item 11.1.
@@ -49,7 +51,18 @@ export default function SeletorInteresses({
     onChange([...novo]);
   }
 
-  function Chip({ interesse }: { interesse: Interesse }) {
+  /**
+   * O `<ChipBotao>` do DS é a peça certa aqui: chip que EXECUTA algo na
+   * própria tela (o `<Chip>` irmão é `<Link>`, pra filtro que vive na URL).
+   *
+   * O `ativo` dele pinta petróleo sólido, e é justamente o que NÃO serve
+   * neste seletor: a cor de cada tag é o ACENTO DA MODALIDADE
+   * (`lib/modalidades.ts`), que é informação — "corrida é laranja" é o que
+   * torna a grade legível de relance. Por isso o marcado entra como
+   * `ativo={false}` + as classes de acento por cima: a forma, o alvo de
+   * toque e o `aria-pressed` vêm do DS; só a cor é do domínio.
+   */
+  function TagInteresse({ interesse }: { interesse: Interesse }) {
     const marcado = marcados.has(interesse.id);
     const acento = acentoDoInteresse(interesse);
     const cor = acento ? classesDoAcento(acento) : null;
@@ -57,23 +70,24 @@ export default function SeletorInteresses({
 
     const estiloMarcado = cor
       ? `${cor.fundo} ${cor.borda} ${cor.tinta} font-semibold`
-      : "bg-petroleo text-areia border-petroleo font-semibold";
+      : "bg-primary text-primary-foreground border-primary font-semibold";
 
     return (
-      <button
-        type="button"
+      <ChipBotao
         onClick={() => alternar(interesse.id)}
         aria-pressed={marcado}
         disabled={cheio}
-        className={`rounded-full border px-4 py-2 text-sm transition-all ${
+        className={cn(
+          "py-2 transition-all",
           marcado
             ? estiloMarcado
-            : "border-petroleo/20 bg-white/60 text-petroleo/75 hover:border-petroleo/45"
-        } ${cheio ? "cursor-not-allowed opacity-40" : ""}`}
+            : "border-primary/20 bg-card/60 text-foreground/75 hover:border-primary/45",
+          cheio && "cursor-not-allowed opacity-40",
+        )}
       >
         {marcado && <span aria-hidden>✓ </span>}
         {interesse.rotulo}
-      </button>
+      </ChipBotao>
     );
   }
 
@@ -83,13 +97,13 @@ export default function SeletorInteresses({
         <p id="grupo-pratica" className="text-sm font-medium">
           O que você pratica (ou quer praticar)
         </p>
-        <p className="mt-1 text-xs text-petroleo/50">
+        <p className="mt-1 text-xs text-foreground/50">
           É isso que a gente usa pra te mostrar comunidade e evento que
           combinam com você.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {INTERESSES_PRATICA.map((i) => (
-            <Chip key={i.id} interesse={i} />
+            <TagInteresse key={i.id} interesse={i} />
           ))}
         </div>
       </div>
@@ -98,19 +112,19 @@ export default function SeletorInteresses({
         <p id="grupo-estilo" className="text-sm font-medium">
           Seu estilo
         </p>
-        <p className="mt-1 text-xs text-petroleo/50">
+        <p className="mt-1 text-xs text-foreground/50">
           A parte que não é esporte — e que costuma dizer mais sobre com quem
           você vai se dar bem.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {INTERESSES_ESTILO.map((i) => (
-            <Chip key={i.id} interesse={i} />
+            <TagInteresse key={i.id} interesse={i} />
           ))}
         </div>
       </div>
 
       <p
-        className="font-mono text-xs text-petroleo/45"
+        className="font-mono text-xs text-foreground/45"
         aria-live="polite"
       >
         {marcados.size} de {max} escolhidos

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PerfilForm, { type PerfilInicial } from "@/components/perfil/PerfilForm";
+import { Pagina } from "@/components/comum/Pagina";
+import { Card } from "@/components/ui/card";
 import { prisma } from "@/lib/db";
 import { sessaoAtual } from "@/lib/sessao";
 import { perguntasDoDia } from "@/lib/perfil-perguntas";
@@ -95,22 +97,22 @@ export default async function PerfilPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-16">
-        <p className="eyebrow">Sua conta</p>
-        <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Meu perfil
-        </h1>
-        <p className="mt-4 max-w-xl text-petroleo/70">
-          Conta logada com <strong>{usuario.email}</strong>. Preenche o que
-          quiser — nada aqui é obrigatório e dá pra voltar depois.
-        </p>
-
+      <Pagina
+        eyebrow="Sua conta"
+        titulo="Meu perfil"
+        descricao={
+          <>
+            Conta logada com <strong>{usuario.email}</strong>. Preenche o que
+            quiser — nada aqui é obrigatório e dá pra voltar depois.
+          </>
+        }
+      >
         {inferido.total > 0 && (
-          <section className="mt-10 rounded-card border border-salvia/40 bg-salvia-soft p-6">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-petroleo/55">
+          <Card className="mt-10 border-salvia/40 bg-salvia-soft p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-foreground/55">
               O que seu histórico diz
             </p>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-petroleo/75">
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/75">
               Isto vem das suas {inferido.total}{" "}
               {inferido.total === 1 ? "inscrição" : "inscrições"} — o que você
               fez, não o que você marcou. Só você vê.
@@ -132,7 +134,7 @@ export default async function PerfilPage() {
             </ul>
 
             {inferido.sugestoesDeTag.length > 0 && (
-              <p className="mt-4 text-sm text-petroleo/75">
+              <p className="mt-4 text-sm text-foreground/75">
                 Você já foi em{" "}
                 <strong>
                   {inferido.sugestoesDeTag.map((s) => s.rotulo).join(", ")}
@@ -140,14 +142,14 @@ export default async function PerfilPage() {
                 e ainda não marcou {inferido.sugestoesDeTag.length === 1 ? "essa tag" : "essas tags"} ali embaixo. Bora marcar?
               </p>
             )}
-          </section>
+          </Card>
         )}
 
         <div className="mt-12">
           <PerfilForm inicial={inicial} perguntas={perguntas} />
         </div>
 
-        <p className="mt-12 max-w-2xl text-xs leading-relaxed text-petroleo/50">
+        <p className="mt-12 max-w-2xl text-xs leading-relaxed text-foreground/50">
           A MUNAY trata seus dados conforme a LGPD. Você pode consultar,
           corrigir ou apagar o que está aqui a qualquer momento — pela própria
           página ou falando com a gente. Detalhes na{" "}
@@ -156,7 +158,7 @@ export default async function PerfilPage() {
           </Link>
           .
         </p>
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

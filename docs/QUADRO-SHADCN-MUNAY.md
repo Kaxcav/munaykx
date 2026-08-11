@@ -148,6 +148,14 @@ Por impacto, não por conforto: **L4 (admin)** e **L3 (painel)** primeiro — s�
 76 dos 171 controles crus e as telas onde o organizador trabalha. Depois L5, L2,
 L6, L7.
 
+**L2 fechado em 11/08.** Entregou 11 dos 12 controles crus e as 11 superfícies
+à mão. O que sobra é UM: o honeypot anti-spam do `RsvpForm`, que só funciona se
+o bot ler um campo comum — vesti-lo com as classes do `<Input>` (`h-11
+rounded-full`) seria estilizar um elemento que ninguém enxerga só pra baixar o
+contador, e o `CLAUDE.md` já avisa que aquilo não é bug. A isenção está amarrada
+por ARQUIVO no `tests/evento-ds.spec.ts`: um segundo controle cru em qualquer
+outra tela do lote deixa o teste vermelho.
+
 **L4 fechado em 11/08.** O admin entregou 37 dos 47 controles crus que tinha; os
 10 que sobram têm dono: **6 são caixa de marcar** (esperam o `<Checkbox>` do §5)
 e **4 são falso positivo do grep** — a palavra `<button>`/`<select>` escrita
@@ -190,6 +198,8 @@ L1 implementa.
 |---|---|---|
 | L3 (painel) + L4 (admin) | **`<Checkbox>` em `components/ui/`** — caixa de marcar. **As duas frentes pediram a mesma peça, sem se falar** (o admin tem 6: `ativo`, `demo`, `gratuito` nos dois formulários e o aviso de lançamento; o painel tem 6: `ativo`, `acolheIniciante`, `gratuito` x2, `modoRota` e o aceite de autorização; e o L5 vai ter mais, no consentimento do `/perfil`). É a evidência de que a peça faz falta de verdade, e não é gosto de um lote. **Não dá pra reusar `<Input>`**: ele é `h-11 w-full rounded-full`, desenhado pra campo de texto — numa caixa de 16px isso não é ajuste de classe, é outra peça. Enquanto não existir, os 12 continuam contados como controle cru, de propósito; no painel eles estão concentrados num arquivo só (`components/painel/Campo.tsx` → `<CampoCheck>`), então a troca lá é de uma linha. | **aberto** — só o dono do L1 implementa |
 | L3 (painel) | **Promover `<Campo>` e `<Aviso>` de `components/painel/` pra `components/comum/`.** `<Campo>` é rótulo+controle+dica (matou 23 cópias em 3 dialetos); `<Aviso>` é a faixa de `?ok=`/`?erro=` (matou 15 cópias em 4 receitas). O L4 já resolveu as mesmas duas dívidas do lado dele, e o L5 vai encontrar de novo — se cada lote escrever a sua, a rodada acaba com três "cabeçalho de campo" diferentes, que é exatamente o que ela existe pra matar. **Não copie: peça a promoção.** | aberto |
+| L2 (evento) | **`asChild` no `<Card>`** (Slot do Radix, como o `<Button>` do registry faz). O `<Card>` é `<div>` fixa, e a `/agenda` tem DUAS listas onde o card É o item semântico: o aviso é `<article>` e o evento é `<li>` dentro de `<ul>`. Sem `asChild` a saída é `<li><Card>…</Card></li>` — funciona e foi o que entrou, mas empilha uma `<div>` por item e, no caso do `<article>`, faz a região do leitor de tela e a superfície visual serem caixas diferentes. Não é bloqueio: é a diferença entre a peça servir a lista e a lista contornar a peça. O L5 (`/minhas-inscricoes`, `/meus-ingressos`) vai bater no mesmo. | **aberto** — só o dono do L1 implementa |
+| L2 (evento) | **Uma `<Secao>` que aceite eyebrow E chamada display juntos.** Hoje é ou/ou: `destaque={false}` dá `eyebrow` + descrição em `text-sm`, `destaque` dá `h2` display sem eyebrow. A `/eventos/[slug]` precisava dos dois (eyebrow "Confirmar presença" + a chamada "Garante sua vaga…"), e a saída foi manter a chamada como `<p>` display dentro da seção. Ficou correto e o esqueleto de heading até melhorou — mas é o tipo de coisa que, repetida em quatro telas por quatro lotes, volta a virar quatro dialetos. | aberto |
 | L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
 
 ---
@@ -245,7 +255,8 @@ Atualizado por quem executa, no próprio PR.
 | F0 + L1 | `C:\munay-043` · `feat/shadcn-fundacao` | **entregue** | 584 testes verdes (8 novos), build e guardrails verdes. Baseline: controle-cru 171→165, superfície-à-mão 93→84, adoção 12→21 arquivos |
 | **L3 · Painel** | `C:\munay-045` · `feat/shadcn-l3-painel` | **entregue** | 11 telas + 9 componentes. Dívida do lote: **108 → 1** (67 controles crus → 1, 41 superfícies à mão → 0). 588 testes verdes (4 novos, `tests/painel-ds.spec.ts`). Três pedidos no §5. |
 | **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
-| L2, L5, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nem o L3 nem o L4 tocaram pasta fora da própria raia |
+| **L2 · Evento + RSVP + agenda** | `C:\munay-046` · `feat/shadcn-l2-evento` | **entregue** | 8 telas + 5 componentes. Dívida do lote: **23 → 1** (12 controles crus → 1, 11 superfícies à mão → 0). 612 testes verdes (7 novos, `tests/evento-ds.spec.ts`), 4 deles validados VERMELHOS contra a `main` antes de entrar. Um pedido novo no §5. |
+| L5, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nem o L2, nem o L3, nem o L4 tocaram pasta fora da própria raia |
 
 **Baseline depois do L3 + L4** (recontado no merge, porque os dois lotes
 derrubaram contadores diferentes e escolher um lado do conflito daria número

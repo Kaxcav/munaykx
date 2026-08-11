@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { linkWhatsApp } from "@/lib/compartilhar";
 
 /**
@@ -18,10 +20,24 @@ import { linkWhatsApp } from "@/lib/compartilhar";
  * aparece após a checagem de suporte no cliente — senão o SSR e o cliente
  * divergiriam (erro de hidratação).
  *
- * Acessibilidade: cada controle tem rótulo textual visível + `aria-label`;
- * as cores usam tinta cheia (`text-petroleo` sobre claro, `text-areia` sobre
- * escuro), nunca as variantes esmaecidas — contraste AA conferido.
+ * Acessibilidade: cada controle tem rótulo textual visível + `aria-label`; a
+ * cor do texto é tinta cheia (`text-foreground`), nunca variante esmaecida —
+ * contraste AA conferido.
  */
+
+/**
+ * Os três controles são a MESMA peça (`Button` outline), e um deles é `<a>` —
+ * daí o `buttonVariants` em vez de três `<Button>`: link de compartilhar
+ * precisa ser navegável e abrir em aba nova, o que um botão nativo não faz.
+ *
+ * Os ajustes sobre o `outline` são pra manter o botão discreto: a borda
+ * inteira do `outline` competiria com o conteúdo numa barra que é
+ * secundária na página, e o hover que inverte pra tinta cheia daria a três
+ * botões lado a lado o peso de uma ação principal.
+ */
+const CLASSES_DISCRETO =
+  "border-primary/25 bg-card text-sm hover:border-primary/50 hover:bg-card hover:text-foreground";
+
 export default function CompartilharBotoes({
   url,
   texto,
@@ -60,37 +76,51 @@ export default function CompartilharBotoes({
     }
   }
 
-  const classeBotao =
-    "inline-flex items-center gap-2 rounded-full border border-petroleo/25 bg-white/70 px-4 py-2 text-sm font-semibold text-petroleo transition-colors hover:border-petroleo/50 hover:bg-white";
-
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      <span className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
+    <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      <span className="font-mono text-xs uppercase tracking-[0.14em] text-foreground/70">
         Compartilhar
       </span>
 
       {podeNativo && (
-        <button type="button" onClick={compartilharNativo} className={classeBotao} aria-label="Compartilhar por outros aplicativos">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={compartilharNativo}
+          className={CLASSES_DISCRETO}
+          aria-label="Compartilhar por outros aplicativos"
+        >
           <IconeCompartilhar />
           Compartilhar
-        </button>
+        </Button>
       )}
 
       <a
         href={linkWhatsApp(texto, url)}
         target="_blank"
         rel="noopener noreferrer"
-        className={classeBotao}
+        className={cn(
+          buttonVariants({ variant: "outline", size: "sm" }),
+          CLASSES_DISCRETO,
+        )}
         aria-label="Compartilhar no WhatsApp"
       >
         <IconeWhatsApp />
         WhatsApp
       </a>
 
-      <button type="button" onClick={copiar} className={classeBotao} aria-label="Copiar o link desta página">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={copiar}
+        className={CLASSES_DISCRETO}
+        aria-label="Copiar o link desta página"
+      >
         {copiado ? <IconeCheck /> : <IconeLink />}
         <span aria-live="polite">{copiado ? "Link copiado" : "Copiar link"}</span>
-      </button>
+      </Button>
     </div>
   );
 }

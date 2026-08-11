@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 type Etapa = "idle" | "confirmando" | "enviando" | "erro";
 
@@ -44,20 +45,16 @@ export default function CancelarInscricao({ token }: { token: string }) {
           Cancelar mesmo? Sua vaga vai pra quem está na fila.
         </p>
         <div className="mt-3 flex flex-wrap gap-3">
-          <button
-            onClick={cancelar}
-            disabled={etapa === "enviando"}
-            className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-50"
-          >
+          <Button onClick={cancelar} disabled={etapa === "enviando"}>
             {etapa === "enviando" ? "Cancelando…" : "Sim, cancelar inscrição"}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setEtapa("idle")}
             disabled={etapa === "enviando"}
-            className="rounded-full border border-petroleo/20 px-6 py-3 text-sm font-semibold text-petroleo transition-colors hover:border-petroleo disabled:opacity-50"
           >
             Voltar
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -66,16 +63,24 @@ export default function CancelarInscricao({ token }: { token: string }) {
   return (
     <div className="mt-6">
       {erro && (
-        <p role="alert" className="mb-3 text-sm text-coral">
+        <p role="alert" className="mb-3 text-sm text-destructive">
           {erro}
         </p>
       )}
-      <button
+      {/*
+        A ação destrutiva NÃO nasce vermelha: aqui o primeiro clique só abre a
+        confirmação, e pintar de `destructive` o botão que ainda não destrói
+        nada seria alarme falso. O vermelho aparece no hover — que é quando a
+        intenção já existe — e o `variant="destructive"` fica reservado pro dia
+        em que este botão cancelar de primeira.
+      */}
+      <Button
+        variant="outline"
         onClick={() => setEtapa("confirmando")}
-        className="rounded-full border border-petroleo/20 px-6 py-3 text-sm font-semibold text-petroleo transition-colors hover:border-coral hover:text-coral"
+        className="border-primary/20 hover:border-destructive hover:bg-transparent hover:text-destructive"
       >
         Cancelar inscrição
-      </button>
+      </Button>
     </div>
   );
 }

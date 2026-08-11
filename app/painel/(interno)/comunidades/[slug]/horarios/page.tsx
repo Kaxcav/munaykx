@@ -9,7 +9,9 @@ import {
   rotularHorario,
 } from "@/lib/horarios";
 import { proximasDaComunidade } from "@/lib/ocorrencias";
+import { iaDisponivel } from "@/lib/ai";
 import ProximosEncontros from "@/components/painel/ProximosEncontros";
+import GradePorTexto from "@/components/painel/GradePorTexto";
 import { adicionarHorarioAction, removerHorarioAction } from "./actions";
 
 /**
@@ -106,6 +108,11 @@ export default async function HorariosDaComunidade({
       )}
 
       <ProximosEncontros ocorrencias={ocorrencias} slug={com.slug} />
+
+      {/* O normalizador só aparece quando há IA configurada E ainda cabe
+          horário. Sem chave, a seção nem renderiza: melhor não existir do que
+          existir quebrada — o formulário manual abaixo é o caminho de sempre. */}
+      {iaDisponivel() && !cheio ? <GradePorTexto slug={com.slug} /> : null}
 
       {cheio ? (
         <p className="mt-8 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm text-petroleo/70">

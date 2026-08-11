@@ -1,9 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
-import { adicionarHorario, removerHorario } from "@/lib/horarios";
+import {
+  adicionarHorario,
+  removerHorario,
+  horariosDaComunidade,
+} from "@/lib/horarios";
+import { normalizarGrade, type SugestaoGrade } from "@/lib/ai/grade";
 import {
   cancelarOcorrencia,
   alterarLocalOcorrencia,
@@ -74,6 +80,57 @@ export async function removerHorarioAction(formData: FormData): Promise<void> {
 
   revalidar(base);
   redirect(`${base}?ok=1`);
+}
+
+// ─── Normalizador por texto (a IA propõe, a pessoa adiciona) ──────────────
+
+export type EstadoGrade =
+  | { status: "vazio" }
+  | { status: "indisponivel" }
+  | { status: "nao-entendi"; observacao: string | null }
+  | { status: "ok"; sugestao: SugestaoGrade };
+
+/**
+ * Lê o texto colado e devolve a grade sugerida. **Não grava nada.**
+ *
+ * A escrita continua sendo a `adicionarHorarioAction` acima, uma linha por
+ * vez, com a pessoa clicando. Esta action é de LEITURA — é o que mantém a
+ * regra "a IA propõe, a pessoa decide" valendo por construção, e não por
+ * disciplina de quem mexer no arquivo depois.
+ *
+ * O dono é conferido mesmo assim, antes de gastar chamada de modelo:
+ * `horariosDaComunidade` devolve `null` para comunidade que não é da pessoa.
+ * Sem isso, qualquer sessão válida usaria o slug alheio como bilhete para
+ * consumir a cota de IA da casa.
+ */
+export async function sugerirGradeAction(
+  _prev: EstadoGrade,
+  formData: FormData,
+): Promise<EstadoGrade> {
+  const sessao = await sessaoAtual();
+  if (!sessao) redirect("/entrar");
+
+  const slug = String(formData.get("slug") ?? "").trim();
+  const texto = String(formData.get("texto") ?? "").trim();
+  if (!texto) return { status: "vazio" };
+
+  const dela = await horariosDaComunidade(sessao.user.id, slug);
+  if (dela === null) redirect("/painel");
+
+  // Mesmo padrão de identificação das outras features de IA: atrás de proxy o
+  // IP real vem no cabeçalho. Serve só para o teto de custo e morre aqui.
+  const h = await headers();
+  const ip =
+    h.get("cf-connecting-ip") ??
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "painel";
+
+  const sugestao = await normalizarGrade(texto, ip);
+  if (!sugestao) return { status: "indisponivel" };
+  if (sugestao.itens.length === 0) {
+    return { status: "nao-entendi", observacao: sugestao.observacao };
+  }
+  return { status: "ok", sugestao };
 }
 
 // ─── Exceções de ocorrência (a "sexta chuvosa") ───────────────────────────

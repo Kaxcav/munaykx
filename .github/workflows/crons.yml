@@ -11,12 +11,22 @@ name: crons
 # Horários em UTC (o cron do GitHub é sempre UTC):
 #   '0 9 * * *'  = 09:00 UTC = 06:00 BRT, todo dia   → retenção (purga LGPD 12 meses)
 #   '0 12 * * 1' = 12:00 UTC = 09:00 BRT, segunda    → resumo "A semana em Brasília"
+#   '0 12 * * *' = 12:00 UTC = 09:00 BRT, todo dia   → véspera "O que esperar"
+#
+# ⚠️ SEGUNDA às 12:00 UTC dispara DOIS agendamentos ('0 12 * * *' e '0 12 * * 1').
+# O GitHub cria um run por entrada de cron, e cada job roda só no run do SEU
+# `github.event.schedule` — então na segunda a véspera e o resumo saem em runs
+# separados, sem um pisar no outro (a `concurrency` abaixo os enfileira).
+#
+# Por que 09h BRT pra véspera: a lógica pega "eventos de AMANHÃ", então mandar de
+# manhã dá ~1 dia inteiro de antecedência — tempo de a pessoa se organizar.
 
 on:
   schedule:
     - cron: "0 9 * * *"
     - cron: "0 12 * * 1"
-  workflow_dispatch: # disparo manual para testar os dois de uma vez
+    - cron: "0 12 * * *"
+  workflow_dispatch: # disparo manual para testar os três de uma vez
 
 # Nunca deixar dois runs do mesmo cron se sobreporem.
 concurrency:
@@ -48,4 +58,18 @@ jobs:
         run: |
           curl -fsS --max-time 60 -X POST \
             https://sejamunay.com.br/api/cron/semana \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+
+  vespera:
+    # Roda no cron diário das 12:00 UTC OU em disparo manual — o lembrete
+    # "O que esperar" pros confirmados de eventos de amanhã.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 12 * * *'
+    name: lembrete de véspera
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: POST /api/cron/vespera
+        run: |
+          curl -fsS --max-time 60 -X POST \
+            https://sejamunay.com.br/api/cron/vespera \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"

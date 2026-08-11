@@ -45,7 +45,10 @@ export function criarFornecedorAnthropic(): Fornecedor {
       // esperando a API: a pessoa fica olhando spinner enquanto o filtro
       // normal já teria respondido.
       const controle = new AbortController();
-      const relogio = setTimeout(() => controle.abort(), TIMEOUT_MS);
+      const relogio = setTimeout(
+        () => controle.abort(),
+        pedido.timeoutMs ?? TIMEOUT_MS,
+      );
 
       try {
         const resp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -60,7 +63,27 @@ export function criarFornecedorAnthropic(): Fornecedor {
             model: modelo,
             max_tokens: pedido.maxTokens,
             system: pedido.sistema,
-            messages: [{ role: "user", content: pedido.usuario }],
+            messages: [
+              {
+                role: "user",
+                // Com imagem (visão), o conteúdo vira um array [imagem, texto] —
+                // o formato que a Messages API espera. Sem imagem, segue string
+                // pura, byte a byte o de sempre (aditivo, não muda o texto).
+                content: pedido.imagem
+                  ? [
+                      {
+                        type: "image",
+                        source: {
+                          type: "base64",
+                          media_type: pedido.imagem.mediaType,
+                          data: pedido.imagem.dados,
+                        },
+                      },
+                      { type: "text", text: pedido.usuario },
+                    ]
+                  : pedido.usuario,
+              },
+            ],
           }),
         });
 

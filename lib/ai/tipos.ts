@@ -27,6 +27,17 @@ export type PedidoIa = {
   usuario: string;
   /** Teto de tokens da resposta. Pequeno de propósito: saída é sempre JSON curto. */
   maxTokens: number;
+  /**
+   * IMAGEM opcional (visão) — para o fluxo flyer→evento. Quando presente, o
+   * modelo recebe a imagem + o texto de `usuario` (a instrução do que extrair).
+   * ADITIVO: sem `imagem`, o comportamento é byte a byte o de texto de sempre.
+   * `dados` é base64 puro (sem o prefixo `data:`), `mediaType` é o MIME
+   * (`image/png`, `image/jpeg`, `image/webp`, `image/gif`).
+   */
+  imagem?: { dados: string; mediaType: string };
+  /** Timeout desta chamada em ms. Default do adapter (8s) quando ausente — a
+   *  visão pede mais folga que a busca de texto, então o flyer passa um maior. */
+  timeoutMs?: number;
 };
 
 /**

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario } from "@/lib/organizacao";
+import { iaDisponivel } from "@/lib/ai";
 import CampoDuracao from "@/components/painel/CampoDuracao";
 import CampoModoRota from "@/components/painel/CampoModoRota";
 import { slugify } from "@/lib/slug";
@@ -24,6 +26,12 @@ export default async function NovoEvento({
     local?: string;
     duracaoMin?: string;
     horarioId?: string;
+    // Retorno do fluxo Flyer → evento: `doFlyer` marca que veio do cartaz,
+    // `flyerObs` é o que a IA pediu pra revisar, `flyerFalhou` é a mensagem
+    // quando não deu pra ler (form em branco, nada salvo).
+    doFlyer?: string;
+    flyerObs?: string;
+    flyerFalhou?: string;
   }>;
 }) {
   const sessao = await sessaoAtual();
@@ -32,16 +40,21 @@ export default async function NovoEvento({
   const comunidades = await comunidadesDoUsuario(sessao.user.id);
   if (comunidades.length === 0) redirect("/painel");
 
-  const { comunidade, erro, startsAt, titulo, local, duracaoMin, horarioId } =
-    await searchParams;
+  const {
+    comunidade, erro, startsAt, titulo, local, duracaoMin, horarioId,
+    doFlyer, flyerObs, flyerFalhou,
+  } = await searchParams;
   const selecionada =
     comunidades.find((c) => c.slug === comunidade) ?? comunidades[0];
   const preMarcar = Boolean(startsAt); // veio do "marcar este treino"
-  // Slug sugerido quando veio da grade: título + dia, pra o organizador não ter
-  // que inventar um. Continua editável e a unicidade é checada no servidor.
+  const veioDoFlyer = Boolean(doFlyer); // veio do cartaz (IA de visão)
+  // Slug sugerido quando algo foi pré-preenchido (grade ou flyer): título + dia,
+  // pra o organizador não ter que inventar um. Editável; unicidade no servidor.
   const slugSugerido =
-    preMarcar && titulo
-      ? slugify(`${titulo}-${(startsAt ?? "").slice(0, 10).replace(/-/g, "")}`)
+    (preMarcar || veioDoFlyer) && titulo
+      ? slugify(
+          `${titulo}${startsAt ? `-${startsAt.slice(0, 10).replace(/-/g, "")}` : ""}`,
+        )
       : "";
 
   return (
@@ -51,11 +64,41 @@ export default async function NovoEvento({
         Criar evento
       </h1>
 
+      {iaDisponivel() && !preMarcar && !veioDoFlyer ? (
+        <p className="mt-4 text-sm">
+          <Link
+            href="/painel/eventos/flyer"
+            className="font-semibold text-petroleo underline underline-offset-4 hover:opacity-70"
+          >
+            📸 Tem o cartaz? Manda o print e a gente pré-preenche →
+          </Link>
+        </p>
+      ) : null}
+
       {preMarcar ? (
         <p className="mt-6 rounded-xl border border-salvia bg-salvia-soft p-4 text-sm text-petroleo/80">
           Puxamos os dados da sua grade. Confira e{" "}
           <strong>é só publicar</strong> — depois a gente te dá o texto pronto pro
           WhatsApp.
+        </p>
+      ) : null}
+      {veioDoFlyer ? (
+        <div className="mt-6 rounded-xl border border-salvia bg-salvia-soft p-4 text-sm text-petroleo/80">
+          <p>
+            Lemos o cartaz e pré-preenchemos o que deu.{" "}
+            <strong>Confira tudo antes de publicar</strong> — campos que não
+            estavam no cartaz ficaram em branco.
+          </p>
+          {flyerObs ? (
+            <p className="mt-2">
+              <span className="font-semibold">Revisar:</span> {flyerObs}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {flyerFalhou ? (
+        <p className="mt-6 rounded-xl border border-petroleo/20 bg-white/70 p-4 text-sm text-petroleo/80">
+          {flyerFalhou}
         </p>
       ) : null}
       {erro ? (

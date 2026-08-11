@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { sessaoAtual } from "@/lib/sessao";
+import { Pagina } from "@/components/comum/Pagina";
+import { buttonVariants } from "@/components/ui/button";
 import { comunidadePorCodigo, entrarPorCodigo } from "@/lib/convite-aberto";
 
 export const dynamic = "force-dynamic";
@@ -56,63 +58,50 @@ export default async function ConvitePage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-5 py-24">
-        <p className="eyebrow">Convite</p>
-        {comunidade ? (
-          <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Pronto — você segue {comunidade.nome}
-            </h1>
-            <p className="mt-4 text-petroleo/70">
-              {comunidade.modalidade} · {comunidade.regiao}. Os próximos eventos
-              dela entram na sua agenda, e os avisos da comunidade aparecem lá
-              também.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={`/comunidades/${comunidade.slug}`}
-                className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-              >
-                Ver a comunidade
-              </Link>
-              <Link
-                href="/agenda"
-                className="rounded-full border border-petroleo/20 px-6 py-3 text-sm font-semibold transition-colors hover:border-petroleo/50"
-              >
-                Minha agenda
-              </Link>
-            </div>
-            <p className="mt-6 text-sm text-petroleo/60">
-              Mudou de ideia? Você deixa de seguir na página da comunidade, e
-              controla os avisos por e-mail em{" "}
-              <Link
-                href="/minhas-comunidades"
-                className="underline underline-offset-4"
-              >
-                Minhas comunidades
-              </Link>
-              .
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Convite inválido
-            </h1>
-            <p className="mt-4 text-petroleo/70">
-              Este link não vale mais — pode ter sido trocado por quem
-              organiza, ou a comunidade ainda não está publicada. Peça o link
-              novo, ou procure a comunidade pela busca.
-            </p>
+      {comunidade ? (
+        <Pagina
+          eyebrow="Convite"
+          titulo={`Pronto — você segue ${comunidade.nome}`}
+          className="max-w-2xl"
+          descricao={`${comunidade.modalidade} · ${comunidade.regiao}. Os próximos eventos dela entram na sua agenda, e os avisos da comunidade aparecem lá também.`}
+        >
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/comunidades"
-              className="mt-8 inline-block rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+              href={`/comunidades/${comunidade.slug}`}
+              className={buttonVariants()}
             >
+              Ver a comunidade
+            </Link>
+            <Link href="/agenda" className={buttonVariants({ variant: "outline" })}>
+              Minha agenda
+            </Link>
+          </div>
+          <p className="mt-6 text-sm text-foreground/60">
+            Mudou de ideia? Você deixa de seguir na página da comunidade, e
+            controla os avisos por e-mail em{" "}
+            <Link
+              href="/minhas-comunidades"
+              className="underline underline-offset-4"
+            >
+              Minhas comunidades
+            </Link>
+            .
+          </p>
+        </Pagina>
+      ) : (
+        <Pagina
+          eyebrow="Convite"
+          titulo="Convite inválido"
+          className="max-w-2xl"
+          descricao="Este link não vale mais — pode ter sido trocado por quem organiza, ou a comunidade ainda não está publicada. Peça o link novo, ou procure a comunidade pela busca."
+        >
+          <div className="mt-8">
+            <Link href="/comunidades" className={buttonVariants()}>
               Explorar comunidades
             </Link>
-          </>
-        )}
-      </main>
+          </div>
+        </Pagina>
+      )}
       <Footer />
     </>
   );

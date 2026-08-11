@@ -178,7 +178,9 @@ L1 implementa.
 
 | Quem pediu | O quê | Estado |
 |---|---|---|
-| — | — | — |
+| L3 (painel) | **`Checkbox` em `components/ui/`.** É o único controle nativo que sobrou no painel inteiro (6 caixas de marcar, hoje concentradas num arquivo: `components/painel/Campo.tsx` → `<CampoCheck>`). O L3 NÃO criou a peça porque `components/ui/**` é do L1. Quando existir, é só trocar dentro do `CampoCheck` — as seis telas não mudam. | aberto |
+| L3 (painel) | **Promover `<Campo>` e `<Aviso>` de `components/painel/` pra `components/comum/`.** `<Campo>` é rótulo+controle+dica (matou 23 cópias em 3 dialetos); `<Aviso>` é a faixa de `?ok=`/`?erro=` (matou 15 cópias em 4 receitas). O L4 (admin) e o L5 (área do usuário) têm exatamente as mesmas duas dívidas — se cada lote escrever a sua, a rodada acaba com três "cabeçalho de campo" diferentes. **Não copie: peça a promoção.** | aberto |
+| L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
 
 ---
 
@@ -231,7 +233,8 @@ Atualizado por quem executa, no próprio PR.
 | Lote | Worktree · branch | Estado | Nota |
 |---|---|---|---|
 | F0 + L1 | `C:\munay-043` · `feat/shadcn-fundacao` | **entregue** | 584 testes verdes (8 novos), build e guardrails verdes. Baseline: controle-cru 171→165, superfície-à-mão 93→84, adoção 12→21 arquivos |
-| L2…L7 | — | livre | podem abrir em paralelo agora: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**` |
+| **L3** | `C:\munay-045` · `feat/shadcn-l3-painel` | **entregue** | 11 telas + 9 componentes. Dívida do lote: **108 → 1** (67 controles crus → 1, 41 superfícies à mão → 0). Baseline global: controle-cru 165→**99**, superfície-à-mão 84→**43**, adoção 21→**42** arquivos. 588 testes verdes (4 novos, `tests/painel-ds.spec.ts`). Três pedidos no §5. |
+| L2 · L4…L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**` |
 
 **Coordenação:** claim e diário em `C:\munay-site\docs\comunicacao\`
 (`S-shadcn.md`), conforme `docs/PROTOCOLO-sessoes.md`. As três frentes de

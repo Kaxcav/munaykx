@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadesDoUsuario } from "@/lib/organizacao";
 import { iaDisponivel } from "@/lib/ai";
+import { Pagina } from "@/components/comum/Pagina";
+import { Button } from "@/components/ui/button";
+import { Input, SelectNativo } from "@/components/ui/input";
+import { Aviso } from "@/components/painel/Aviso";
+import { Campo, CampoCheck } from "@/components/painel/Campo";
 import CampoDuracao from "@/components/painel/CampoDuracao";
 import CampoModoRota from "@/components/painel/CampoModoRota";
 import { slugify } from "@/lib/slug";
@@ -58,17 +63,12 @@ export default async function NovoEvento({
       : "";
 
   return (
-    <>
-      <p className="eyebrow">Novo evento</p>
-      <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-        Criar evento
-      </h1>
-
+    <Pagina eyebrow="Novo evento" titulo="Criar evento">
       {iaDisponivel() && !preMarcar && !veioDoFlyer ? (
         <p className="mt-4 text-sm">
           <Link
             href="/painel/eventos/flyer"
-            className="font-semibold text-petroleo underline underline-offset-4 hover:opacity-70"
+            className="font-semibold underline underline-offset-4 hover:opacity-70"
           >
             📸 Tem o cartaz? Manda o print e a gente pré-preenche →
           </Link>
@@ -76,14 +76,13 @@ export default async function NovoEvento({
       ) : null}
 
       {preMarcar ? (
-        <p className="mt-6 rounded-xl border border-salvia bg-salvia-soft p-4 text-sm text-petroleo/80">
-          Puxamos os dados da sua grade. Confira e{" "}
-          <strong>é só publicar</strong> — depois a gente te dá o texto pronto pro
-          WhatsApp.
-        </p>
+        <Aviso tom="destaque">
+          Puxamos os dados da sua grade. Confira e <strong>é só publicar</strong> —
+          depois a gente te dá o texto pronto pro WhatsApp.
+        </Aviso>
       ) : null}
       {veioDoFlyer ? (
-        <div className="mt-6 rounded-xl border border-salvia bg-salvia-soft p-4 text-sm text-petroleo/80">
+        <Aviso tom="destaque">
           <p>
             Lemos o cartaz e pré-preenchemos o que deu.{" "}
             <strong>Confira tudo antes de publicar</strong> — campos que não
@@ -94,103 +93,59 @@ export default async function NovoEvento({
               <span className="font-semibold">Revisar:</span> {flyerObs}
             </p>
           ) : null}
-        </div>
+        </Aviso>
       ) : null}
       {flyerFalhou ? (
-        <p className="mt-6 rounded-xl border border-petroleo/20 bg-white/70 p-4 text-sm text-petroleo/80">
-          {flyerFalhou}
-        </p>
+        <Aviso className="text-foreground/80">{flyerFalhou}</Aviso>
       ) : null}
-      {erro ? (
-        <p className="mt-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-          {erro}
-        </p>
-      ) : null}
+      {erro ? <Aviso tom="erro">{erro}</Aviso> : null}
 
       <form action={criarEventoAction} className="mt-8 space-y-4">
         <input type="hidden" name="comunidadeSlug" value={selecionada.slug} />
         {horarioId ? (
           <input type="hidden" name="horarioRecorrenteId" value={horarioId} />
         ) : null}
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Comunidade</span>
-          <select
-            name="communityId"
-            defaultValue={selecionada.id}
-            className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-          >
+        <Campo rotulo="Comunidade">
+          <SelectNativo name="communityId" defaultValue={selecionada.id}>
             {comunidades.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nome}
               </option>
             ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Título</span>
-          <input
-            name="titulo"
-            required
-            defaultValue={titulo ?? ""}
-            className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-          />
-        </label>
+          </SelectNativo>
+        </Campo>
+        <Campo rotulo="Título">
+          <Input name="titulo" required defaultValue={titulo ?? ""} />
+        </Campo>
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">
-              Slug (na URL)
-            </span>
-            <input
+          <Campo rotulo="Slug (na URL)">
+            <Input
               name="slug"
               required
               defaultValue={slugSugerido}
               placeholder="treino-domingo-parque"
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Data e hora</span>
-            <input
+          </Campo>
+          <Campo rotulo="Data e hora">
+            <Input
               type="datetime-local"
               name="startsAt"
               required
               defaultValue={startsAt ?? ""}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
             />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Local</span>
-            <input
-              name="local"
-              defaultValue={local ?? ""}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">
-              Capacidade (vazio = sem limite)
-            </span>
-            <input
-              name="capacidade"
-              type="number"
-              min={1}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-            />
-          </label>
+          </Campo>
+          <Campo rotulo="Local">
+            <Input name="local" defaultValue={local ?? ""} />
+          </Campo>
+          <Campo rotulo="Capacidade" dica="Vazio = sem limite.">
+            <Input name="capacidade" type="number" min={1} />
+          </Campo>
           <CampoDuracao defaultValue={duracaoMin ?? ""} />
         </div>
         <CampoModoRota />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="gratuito" defaultChecked />
-          Gratuito
-        </label>
-        <button
-          type="submit"
-          className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-        >
-          Criar evento
-        </button>
+        <CampoCheck nome="gratuito" defaultChecked rotulo="Gratuito" />
+        <Button type="submit">Criar evento</Button>
       </form>
-    </>
+    </Pagina>
   );
 }

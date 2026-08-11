@@ -2,6 +2,12 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Aviso } from "@/components/painel/Aviso";
 import {
   perguntarAction,
   type EstadoCopiloto,
@@ -22,13 +28,9 @@ import {
 function BotaoPerguntar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Consultando…" : "Perguntar"}
-    </button>
+    </Button>
   );
 }
 
@@ -39,75 +41,79 @@ export default function Copiloto({ exemplos }: { exemplos: string[] }) {
   );
 
   return (
-    <section className="rounded-card border border-petroleo/15 bg-white/70 p-6">
-      <h2 className="font-display text-lg font-bold">Pergunte sobre os seus dados</h2>
-      <p className="mt-1 text-sm text-petroleo/70">
+    <Card className="p-6">
+      <h2 className="font-display text-lg font-bold">
+        Pergunte sobre os seus dados
+      </h2>
+      <p className="mt-1 text-sm text-foreground/70">
         Em português, do seu jeito. A resposta sai dos seus eventos — ninguém
         mais vê, e você não vê de mais ninguém.
       </p>
 
       <form action={perguntar} className="mt-4 flex flex-wrap gap-2">
-        <input
+        <Label htmlFor="copiloto-pergunta" className="sr-only">
+          Sua pergunta
+        </Label>
+        <Input
+          id="copiloto-pergunta"
           name="pergunta"
           maxLength={200}
           placeholder="quantas pessoas faltaram nas últimas 3 semanas?"
-          className="min-w-[16rem] flex-1 rounded-full border border-petroleo/20 bg-white px-5 py-3 text-sm outline-none transition-colors placeholder:text-petroleo/35 focus:border-petroleo"
+          className="min-w-[16rem] flex-1"
         />
         <BotaoPerguntar />
       </form>
 
       {estado.status === "ok" ? (
-        <div className="mt-5 rounded-xl border border-petroleo/10 bg-white p-5">
+        <Card className="mt-5 rounded-xl p-5">
           {/* Texto montado por template com os números do banco — o modelo não
               escreve número. Renderizado pelo React, que escapa. */}
           <p className="whitespace-pre-line leading-relaxed">{estado.texto}</p>
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
+          <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-foreground/45">
             leitura: {estado.intencao.replace(/_/g, " ")}
           </p>
-        </div>
+        </Card>
       ) : null}
 
       {estado.status === "nao-entendi" ? (
-        <div className="mt-5 rounded-xl border border-petroleo/15 p-5">
-          <p className="text-sm font-semibold">Não entendi essa.</p>
-          <p className="mt-1 text-sm text-petroleo/70">
-            Tenta perguntar assim:
-          </p>
-          <ul className="mt-3 space-y-1 text-sm text-petroleo/80">
+        <Aviso className="mt-5 p-5">
+          <p className="font-semibold">Não entendi essa.</p>
+          <p className="mt-1 text-foreground/70">Tenta perguntar assim:</p>
+          <ul className="mt-3 space-y-1 text-foreground/80">
             {estado.sugestoes.map((s) => (
               <li key={s}>• {s}</li>
             ))}
           </ul>
-        </div>
+        </Aviso>
       ) : null}
 
       {estado.status === "indisponivel" ? (
-        <div className="mt-5 rounded-xl border border-petroleo/15 p-5">
-          <p className="text-sm font-semibold">
+        <Aviso className="mt-5 p-5">
+          <p className="font-semibold">
             A consulta por pergunta está indisponível agora.
           </p>
-          <p className="mt-1 text-sm text-petroleo/70">
+          <p className="mt-1 text-foreground/70">
             Seus dados continuam no painel de sempre — nas telas de evento e de
             inscritos.
           </p>
-        </div>
+        </Aviso>
       ) : null}
 
       {estado.status === "vazio" ? (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
+          <span className="font-mono text-[11px] uppercase tracking-wider text-foreground/45">
             exemplos
           </span>
+          {/* `<Badge>` e não `<Chip>`: estes exemplos são ESTADO (não clicam,
+              só mostram o que a caixa entende). Chip prometeria um clique que
+              não existe. */}
           {exemplos.slice(0, 3).map((ex) => (
-            <span
-              key={ex}
-              className="rounded-full border border-petroleo/15 px-3 py-1 text-xs text-petroleo/70"
-            >
+            <Badge key={ex} variant="outline" className="normal-case tracking-normal">
               {ex}
-            </span>
+            </Badge>
           ))}
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

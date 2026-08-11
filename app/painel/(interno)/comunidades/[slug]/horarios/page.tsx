@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadeDoUsuario } from "@/lib/organizacao";
@@ -10,6 +9,13 @@ import {
 } from "@/lib/horarios";
 import { proximasDaComunidade } from "@/lib/ocorrencias";
 import { iaDisponivel } from "@/lib/ai";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input, SelectNativo } from "@/components/ui/input";
+import { Aviso } from "@/components/painel/Aviso";
+import { Campo } from "@/components/painel/Campo";
 import ProximosEncontros from "@/components/painel/ProximosEncontros";
 import GradePorTexto from "@/components/painel/GradePorTexto";
 import { adicionarHorarioAction, removerHorarioAction } from "./actions";
@@ -46,66 +52,69 @@ export default async function HorariosDaComunidade({
   const cheio = horarios.length >= LIMITE_HORARIOS;
 
   return (
-    <>
-      <p className="eyebrow">Horários</p>
-      <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-        {com.nome}
-      </h1>
-      <p className="mt-4 max-w-2xl text-petroleo/70">
-        Os dias e horas que se repetem toda semana. É isto que coloca a{" "}
-        <strong>{com.regiao}</strong> no mapa por horário — quem procura
-        &ldquo;terça 6h&rdquo; só encontra quem cadastrou aqui.
-      </p>
-      <p className="mt-3 max-w-2xl text-sm text-petroleo/60">
+    <Pagina
+      eyebrow="Horários"
+      titulo={com.nome}
+      voltar={{
+        href: `/painel/comunidades/${encodeURIComponent(com.slug)}`,
+        texto: "Voltar para a comunidade",
+      }}
+      descricao={
+        <>
+          Os dias e horas que se repetem toda semana. É isto que coloca a{" "}
+          <strong>{com.regiao}</strong> no mapa por horário — quem procura
+          &ldquo;terça 6h&rdquo; só encontra quem cadastrou aqui.
+        </>
+      }
+    >
+      <p className="mt-3 max-w-2xl text-sm text-foreground/60">
         O mapa mostra a <strong>região</strong>, nunca o ponto exato de encontro.
         Seu campo de horário escrito à mão continua aparecendo na página da
         comunidade, do jeito que você escreveu.
       </p>
 
-      {ok ? (
-        <p className="mt-6 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm">
-          Pronto ✓
-        </p>
-      ) : null}
-      {erro ? (
-        <p className="mt-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-          {erro}
-        </p>
-      ) : null}
+      {ok ? <Aviso>Pronto ✓</Aviso> : null}
+      {erro ? <Aviso tom="erro">{erro}</Aviso> : null}
 
-      <h2 className="mt-10 font-display text-xl font-bold">
-        {horarios.length === 0
-          ? "Nenhum horário ainda"
-          : `${horarios.length} ${horarios.length === 1 ? "horário" : "horários"}`}
-      </h2>
-
-      {horarios.length === 0 ? (
-        <p className="mt-3 max-w-2xl text-petroleo/70">
-          Sem horário cadastrado, a comunidade continua no site normalmente — ela
-          só não aparece quando alguém filtra o mapa por dia e hora.
-        </p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {horarios.map((h) => (
-            <li
-              key={h.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/60 px-5 py-3"
-            >
-              <span className="font-medium">{rotularHorario(h)}</span>
-              <form action={removerHorarioAction}>
-                <input type="hidden" name="slug" value={com.slug} />
-                <input type="hidden" name="horarioId" value={h.id} />
-                <button
-                  type="submit"
-                  className="text-sm font-semibold text-destructive underline underline-offset-4 hover:opacity-70"
-                >
-                  Remover
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Secao
+        titulo={
+          horarios.length === 0
+            ? "Nenhum horário ainda"
+            : `${horarios.length} ${horarios.length === 1 ? "horário" : "horários"}`
+        }
+        destaque
+      >
+        {horarios.length === 0 ? (
+          <p className="max-w-2xl text-foreground/70">
+            Sem horário cadastrado, a comunidade continua no site normalmente — ela
+            só não aparece quando alguém filtra o mapa por dia e hora.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {horarios.map((h) => (
+              <li key={h.id}>
+                <Card className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                  <span className="font-medium tabular-nums">
+                    {rotularHorario(h)}
+                  </span>
+                  <form action={removerHorarioAction}>
+                    <input type="hidden" name="slug" value={com.slug} />
+                    <input type="hidden" name="horarioId" value={h.id} />
+                    <Button
+                      type="submit"
+                      variant="link"
+                      size="sm"
+                      className="h-auto px-0 text-destructive hover:text-destructive/70"
+                    >
+                      Remover
+                    </Button>
+                  </form>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Secao>
 
       <ProximosEncontros ocorrencias={ocorrencias} slug={com.slug} />
 
@@ -115,74 +124,41 @@ export default async function HorariosDaComunidade({
       {iaDisponivel() && !cheio ? <GradePorTexto slug={com.slug} /> : null}
 
       {cheio ? (
-        <p className="mt-8 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm text-petroleo/70">
+        <Aviso className="mt-8 text-foreground/70">
           Você chegou ao limite de {LIMITE_HORARIOS} horários. Remova um para
           adicionar outro.
-        </p>
+        </Aviso>
       ) : (
-        <form
-          action={adicionarHorarioAction}
-          className="mt-10 rounded-2xl border border-petroleo/10 bg-white/60 p-6"
-        >
-          <input type="hidden" name="slug" value={com.slug} />
-          <h2 className="font-display text-xl font-bold">Adicionar horário</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold">Dia</span>
-              <select
-                name="diaSemana"
-                defaultValue={2}
-                className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-              >
-                {DIAS.map((d) => (
-                  <option key={d.indice} value={d.indice}>
-                    {d.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold">Começa</span>
-              <input
-                type="time"
-                name="horaInicio"
-                required
-                defaultValue="06:15"
-                className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold">
-                Termina{" "}
-                <span className="font-normal text-petroleo/50">(opcional)</span>
-              </span>
-              <input
-                type="time"
-                name="horaFim"
-                className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-              />
-            </label>
-          </div>
-          <p className="mt-3 text-xs text-petroleo/55">
-            Sem hora de término, a gente considera uma hora de duração no mapa.
-          </p>
-          <button
-            type="submit"
-            className="mt-5 rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-          >
-            Adicionar
-          </button>
-        </form>
+        <Card className="mt-10 p-6">
+          <form action={adicionarHorarioAction}>
+            <input type="hidden" name="slug" value={com.slug} />
+            <h2 className="font-display text-xl font-bold">Adicionar horário</h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <Campo rotulo="Dia">
+                <SelectNativo name="diaSemana" defaultValue={2}>
+                  {DIAS.map((d) => (
+                    <option key={d.indice} value={d.indice}>
+                      {d.nome}
+                    </option>
+                  ))}
+                </SelectNativo>
+              </Campo>
+              <Campo rotulo="Começa">
+                <Input type="time" name="horaInicio" required defaultValue="06:15" />
+              </Campo>
+              <Campo rotulo="Termina" opcional>
+                <Input type="time" name="horaFim" />
+              </Campo>
+            </div>
+            <p className="mt-3 text-xs text-foreground/55">
+              Sem hora de término, a gente considera uma hora de duração no mapa.
+            </p>
+            <Button type="submit" className="mt-5">
+              Adicionar
+            </Button>
+          </form>
+        </Card>
       )}
-
-      <p className="mt-10">
-        <Link
-          href={`/painel/comunidades/${encodeURIComponent(com.slug)}`}
-          className="text-sm font-semibold underline underline-offset-4 hover:opacity-70"
-        >
-          ← Voltar para a comunidade
-        </Link>
-      </p>
-    </>
+    </Pagina>
   );
 }

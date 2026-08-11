@@ -3,6 +3,16 @@ import { notFound, redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { comunidadeDoUsuario, eventosDoUsuario } from "@/lib/organizacao";
 import { formatarDataEvento } from "@/lib/events";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Aviso } from "@/components/painel/Aviso";
+import { Campo, CampoCheck } from "@/components/painel/Campo";
 import CamposGuia from "@/components/painel/CamposGuia";
 import { editarComunidadeAction } from "../../actions";
 
@@ -32,182 +42,161 @@ export default async function GerenciarComunidade({
   });
 
   return (
-    <>
-      <p className="eyebrow">Comunidade</p>
-      <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-        {com.nome}
-      </h1>
-      <p className="mt-1 font-mono text-xs text-petroleo/60">/{com.slug}</p>
-
-      {ok ? (
-        <p className="mt-6 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm">
-          Alterações salvas ✓
-        </p>
-      ) : null}
-      {erro ? (
-        <p className="mt-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-          {erro}
-        </p>
-      ) : null}
+    <Pagina
+      eyebrow="Comunidade"
+      titulo={com.nome}
+      descricao={
+        <span className="font-mono text-sm text-foreground/60">/{com.slug}</span>
+      }
+      tamanho="grande"
+    >
+      {ok ? <Aviso>Alterações salvas ✓</Aviso> : null}
+      {erro ? <Aviso tom="erro">{erro}</Aviso> : null}
 
       <form action={editarComunidadeAction} className="mt-8 space-y-4">
         <input type="hidden" name="slug" value={com.slug} />
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Descrição</span>
-          <textarea
-            name="descricao"
-            defaultValue={com.descricao ?? ""}
-            rows={3}
-            className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-          />
-        </label>
+        <Campo rotulo="Descrição">
+          <Textarea name="descricao" defaultValue={com.descricao ?? ""} rows={3} />
+        </Campo>
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Horários</span>
-            <input
-              name="horarios"
-              defaultValue={com.horarios ?? ""}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
+          <Campo rotulo="Horários">
+            <Input name="horarios" defaultValue={com.horarios ?? ""} />
+          </Campo>
+          <Campo rotulo="Local">
+            <Input name="local" defaultValue={com.local ?? ""} />
+          </Campo>
+          <Campo rotulo="Nível">
+            <Input name="nivel" defaultValue={com.nivel ?? ""} />
+          </Campo>
+          <div className="flex flex-col justify-end gap-3 pb-2">
+            <CampoCheck
+              nome="ativo"
+              defaultChecked={com.ativo}
+              rotulo="Ativa (aparece no site)"
             />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Local</span>
-            <input
-              name="local"
-              defaultValue={com.local ?? ""}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Nível</span>
-            <input
-              name="nivel"
-              defaultValue={com.nivel ?? ""}
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-            />
-          </label>
-          <label className="flex items-center gap-2 self-end pb-3 text-sm">
-            <input type="checkbox" name="ativo" defaultChecked={com.ativo} />
-            Ativa (aparece no site)
-          </label>
-          <label className="flex items-center gap-2 self-end pb-3 text-sm">
-            <input
-              type="checkbox"
-              name="acolheIniciante"
+            <CampoCheck
+              nome="acolheIniciante"
               defaultChecked={com.acolheIniciante}
+              rotulo="Acolhe iniciantes (quem tá começando é bem-vindo)"
             />
-            Acolhe iniciantes (quem tá começando é bem-vindo)
-          </label>
+          </div>
         </div>
         <CamposGuia
           guiaAtual={com.guiaIniciante}
           acolheIniciante={com.acolheIniciante}
         />
-        <button
-          type="submit"
-          className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-        >
-          Salvar
-        </button>
+        <Button type="submit">Salvar</Button>
       </form>
 
-      {/* STORY-010: entrada do feed de avisos desta comunidade. */}
-      <div className="mt-12 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
-        <div>
-          <p className="font-display text-lg font-bold">Avisos</p>
-          <p className="mt-1 text-sm text-petroleo/70">
-            Mudou o local, caiu por chuva: avise quem segue sem depender do
-            grupo de WhatsApp.
-          </p>
-        </div>
-        <Link
+      {/* As três sub-rotas da comunidade. Eram três `div`s com a mesma receita
+          de card copiada; agora são o mesmo `<Card>`, com a mesma altura. */}
+      <div className="mt-12 space-y-4">
+        <AtalhoDaComunidade
+          titulo="Avisos"
+          descricao="Mudou o local, caiu por chuva: avise quem segue sem depender do grupo de WhatsApp."
           href={`/painel/comunidades/${encodeURIComponent(com.slug)}/avisos`}
-          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
-        >
-          Avisar quem segue →
-        </Link>
-      </div>
-
-      {/* Frente D: link aberto — concede seguir, nunca poder. */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
-        <div>
-          <p className="font-display text-lg font-bold">Link de convite</p>
-          <p className="mt-1 text-sm text-petroleo/70">
-            Um link pro grupo de WhatsApp. Quem abrir passa a seguir — não vira
-            organizador nem vê inscritos.
-          </p>
-        </div>
-        <Link
+          rotulo="Avisar quem segue →"
+        />
+        {/* Frente D: link aberto — concede seguir, nunca poder. */}
+        <AtalhoDaComunidade
+          titulo="Link de convite"
+          descricao="Um link pro grupo de WhatsApp. Quem abrir passa a seguir — não vira organizador nem vê inscritos."
           href={`/painel/comunidades/${encodeURIComponent(com.slug)}/convite`}
-          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
-        >
-          {com.codigoConvite ? "Ver o link →" : "Criar link →"}
-        </Link>
-      </div>
-
-      {/* FASE 0 do mapa: horário estruturado é o que coloca a comunidade no
-          eixo de tempo. Fica como sub-rota (igual avisos e convite) porque é
-          uma lista, e lista não cabe num form de salvar-tudo. */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 bg-white/70 p-5">
-        <div>
-          <p className="font-display text-lg font-bold">Horários da semana</p>
-          <p className="mt-1 text-sm text-petroleo/70">
-            Os dias e horas que se repetem. É o que faz sua comunidade aparecer
-            quando alguém filtra o mapa por &ldquo;terça 6h&rdquo;.
-          </p>
-        </div>
-        <Link
+          rotulo={com.codigoConvite ? "Ver o link →" : "Criar link →"}
+        />
+        {/* FASE 0 do mapa: horário estruturado é o que coloca a comunidade no
+            eixo de tempo. Fica como sub-rota (igual avisos e convite) porque é
+            uma lista, e lista não cabe num form de salvar-tudo. */}
+        <AtalhoDaComunidade
+          titulo="Horários da semana"
+          descricao={
+            <>
+              Os dias e horas que se repetem. É o que faz sua comunidade aparecer
+              quando alguém filtra o mapa por &ldquo;terça 6h&rdquo;.
+            </>
+          }
           href={`/painel/comunidades/${encodeURIComponent(com.slug)}/horarios`}
-          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
-        >
-          Cadastrar horários →
-        </Link>
+          rotulo="Cadastrar horários →"
+        />
       </div>
 
-      <div className="mt-12 flex items-center justify-between">
-        <h2 className="font-display text-2xl font-bold">Eventos</h2>
-        <Link
-          href={`/painel/eventos/novo?comunidade=${encodeURIComponent(com.slug)}`}
-          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
-        >
-          + Novo evento
-        </Link>
-      </div>
+      <Secao
+        titulo="Eventos"
+        destaque
+        acoes={
+          <Link
+            href={`/painel/eventos/novo?comunidade=${encodeURIComponent(com.slug)}`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            + Novo evento
+          </Link>
+        }
+      >
+        {eventos.length === 0 ? (
+          <EstadoVazio
+            className="mt-0"
+            titulo="Nenhum evento ainda"
+            descricao="Crie o primeiro no botão acima — ele entra na descoberta assim que a data estiver no futuro."
+          />
+        ) : (
+          <ul className="space-y-3">
+            {eventos.map((e) => (
+              <li key={e.id}>
+                <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
+                  <div>
+                    <p className="font-semibold">
+                      {e.titulo}
+                      {e.canceladoEm ? (
+                        <Badge variant="demo" className="ml-2 align-middle">
+                          cancelado
+                        </Badge>
+                      ) : null}
+                    </p>
+                    <p className="text-sm tabular-nums text-foreground/70">
+                      {formatarDataEvento(e.startsAt)} · {e._count.rsvps}{" "}
+                      inscrito(s)
+                    </p>
+                  </div>
+                  <Link
+                    href={`/painel/eventos/${e.id}`}
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Gerenciar
+                  </Link>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Secao>
+    </Pagina>
+  );
+}
 
-      {eventos.length === 0 ? (
-        <p className="mt-6 text-petroleo/70">
-          Nenhum evento ainda. Crie o primeiro no botão acima.
-        </p>
-      ) : (
-        <ul className="mt-6 space-y-3">
-          {eventos.map((e) => (
-            <li
-              key={e.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-petroleo/10 p-5"
-            >
-              <div>
-                <p className="font-semibold">
-                  {e.titulo}
-                  {e.canceladoEm ? (
-                    <span className="ml-2 text-xs font-normal text-destructive">
-                      cancelado
-                    </span>
-                  ) : null}
-                </p>
-                <p className="text-sm text-petroleo/70">
-                  {formatarDataEvento(e.startsAt)} · {e._count.rsvps} inscrito(s)
-                </p>
-              </div>
-              <Link
-                href={`/painel/eventos/${e.id}`}
-                className="text-sm font-semibold underline underline-offset-4 hover:text-petroleo/70"
-              >
-                Gerenciar
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+/** Card de entrada pra uma sub-rota da comunidade (avisos, convite, horários). */
+function AtalhoDaComunidade({
+  titulo,
+  descricao,
+  href,
+  rotulo,
+}: {
+  titulo: string;
+  descricao: React.ReactNode;
+  href: string;
+  rotulo: string;
+}) {
+  return (
+    <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
+      <div className="max-w-xl">
+        <p className="font-display text-lg font-bold">{titulo}</p>
+        <p className="mt-1 text-sm text-foreground/70">{descricao}</p>
+      </div>
+      <Link
+        href={href}
+        className={buttonVariants({ variant: "outline", size: "sm" })}
+      >
+        {rotulo}
+      </Link>
+    </Card>
   );
 }

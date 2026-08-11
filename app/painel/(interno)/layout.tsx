@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { NavPainel } from "@/components/painel/NavPainel";
 import { sessaoAtual } from "@/lib/sessao";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +21,11 @@ export const metadata: Metadata = {
  * derrubaria a página inteira). Sem sessão, o painel não existe: manda pro
  * /entrar. Cada página e cada action reconfere a sessão — este layout não é
  * ponto único de falha.
+ *
+ * O layout NÃO renderiza mais `<main>`: quem abre a tela é o `<Pagina>` de
+ * cada página, que já é o `<main>`. Dois `<main>` aninhados é HTML inválido e
+ * confunde o "pular para o conteúdo" do leitor de tela — foi o que ia
+ * acontecer ao adotar o container padrão da rodada.
  */
 export default async function PainelLayout({
   children,
@@ -31,20 +36,8 @@ export default async function PainelLayout({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-5xl px-5 py-16">
-        <nav className="mb-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          <Link href="/painel" className="font-semibold hover:text-lime">
-            Minhas comunidades
-          </Link>
-          <Link
-            href="/painel/nova"
-            className="text-petroleo/70 hover:text-petroleo"
-          >
-            + Cadastrar comunidade
-          </Link>
-        </nav>
-        {children}
-      </main>
+      <NavPainel />
+      {children}
       <Footer />
     </>
   );

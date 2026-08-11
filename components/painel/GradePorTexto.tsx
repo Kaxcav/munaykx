@@ -3,6 +3,12 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { DIAS } from "@/lib/horarios";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input, SelectNativo } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Aviso } from "@/components/painel/Aviso";
 import {
   sugerirGradeAction,
   adicionarHorarioAction,
@@ -26,18 +32,18 @@ import {
  *
  * Quando a IA não está disponível ou não entendeu, a tela diz isso em uma
  * frase e o formulário manual continua logo abaixo, intacto.
+ *
+ * As linhas de sugestão usam `<Label htmlFor>` e não o `<Campo>` do painel: o
+ * rótulo aqui é `text-xs` (a linha é densa, três campos e um botão numa faixa)
+ * e cada linha já carrega um id único derivado de dia+hora.
  */
 
 function BotaoEstruturar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Lendo…" : "Estruturar"}
-    </button>
+    </Button>
   );
 }
 
@@ -48,27 +54,26 @@ export default function GradePorTexto({ slug }: { slug: string }) {
   );
 
   return (
-    <section className="mt-10 rounded-card border border-petroleo/15 bg-white/70 p-6">
+    <Card className="mt-10 p-6">
       <h2 className="font-display text-xl font-bold">
         Cola o horário do jeito que você escreve
       </h2>
-      <p className="mt-1 text-sm text-petroleo/80">
+      <p className="mt-1 text-sm text-foreground/80">
         Do Instagram, do grupo, de onde for. A gente separa por dia e hora — e
         você confere antes de entrar no ar.
       </p>
 
       <form action={sugerir} className="mt-4">
         <input type="hidden" name="slug" value={slug} />
-        <label htmlFor="texto-grade" className="sr-only">
+        <Label htmlFor="texto-grade" className="sr-only">
           Texto com os horários
-        </label>
-        <textarea
+        </Label>
+        <Textarea
           id="texto-grade"
           name="texto"
           rows={3}
           maxLength={1500}
           placeholder="segunda e quarta 6h30 no Parque da Cidade, e sábado 8h"
-          className="w-full rounded-xl border border-petroleo/20 bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-petroleo/35 focus:border-petroleo"
         />
         <div className="mt-3">
           <BotaoEstruturar />
@@ -76,22 +81,20 @@ export default function GradePorTexto({ slug }: { slug: string }) {
       </form>
 
       {estado.status === "indisponivel" ? (
-        <p className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm text-petroleo/80">
+        <Aviso className="mt-4 text-foreground/80">
           Não deu para ler o texto agora. Sem problema — o formulário de
           adicionar horário, logo abaixo, continua funcionando normalmente.
-        </p>
+        </Aviso>
       ) : null}
 
       {estado.status === "nao-entendi" ? (
-        <div className="mt-4 rounded-xl border border-petroleo/15 p-4">
-          <p className="text-sm font-semibold">
-            Não achei um horário claro nesse texto.
-          </p>
-          <p className="mt-1 text-sm text-petroleo/80">
+        <Aviso className="mt-4">
+          <p className="font-semibold">Não achei um horário claro nesse texto.</p>
+          <p className="mt-1 text-foreground/80">
             {estado.observacao ??
               "Tenta escrever com o dia e a hora, assim: “terça e quinta, 6h15”."}
           </p>
-        </div>
+        </Aviso>
       ) : null}
 
       {estado.status === "ok" ? (
@@ -100,12 +103,12 @@ export default function GradePorTexto({ slug }: { slug: string }) {
             Confere e adiciona o que estiver certo:
           </p>
           {estado.sugestao.observacao ? (
-            <p className="mt-1 text-sm text-petroleo/80">
+            <p className="mt-1 text-sm text-foreground/80">
               {estado.sugestao.observacao}
             </p>
           ) : null}
           {estado.sugestao.descartados > 0 ? (
-            <p className="mt-1 text-sm text-petroleo/80">
+            <p className="mt-1 text-sm text-foreground/80">
               {estado.sugestao.descartados === 1
                 ? "1 linha foi descartada por não bater com dia e hora válidos."
                 : `${estado.sugestao.descartados} linhas foram descartadas por não baterem com dia e hora válidos.`}
@@ -114,86 +117,82 @@ export default function GradePorTexto({ slug }: { slug: string }) {
 
           <ul className="mt-4 space-y-3">
             {estado.sugestao.itens.map((item) => (
-              <li
-                key={`${item.diaSemana}-${item.horaInicio}`}
-                className="rounded-xl border border-petroleo/10 bg-white p-4"
-              >
-                {/* Cada linha é um formulário próprio, apontando para a MESMA
-                    action de escrita do cadastro manual. Nenhum caminho novo
-                    até o banco nasceu com esta feature. */}
-                <form
-                  action={adicionarHorarioAction}
-                  className="flex flex-wrap items-end gap-3"
-                >
-                  <input type="hidden" name="slug" value={slug} />
-                  <div>
-                    <label
-                      htmlFor={`dia-${item.diaSemana}-${item.horaInicio}`}
-                      className="mb-1 block text-xs font-medium text-petroleo/70"
-                    >
-                      Dia
-                    </label>
-                    <select
-                      id={`dia-${item.diaSemana}-${item.horaInicio}`}
-                      name="diaSemana"
-                      defaultValue={item.diaSemana}
-                      className="rounded-lg border border-petroleo/20 bg-white px-3 py-2 text-sm"
-                    >
-                      {DIAS.map((d) => (
-                        <option key={d.indice} value={d.indice}>
-                          {d.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`ini-${item.diaSemana}-${item.horaInicio}`}
-                      className="mb-1 block text-xs font-medium text-petroleo/70"
-                    >
-                      Começa
-                    </label>
-                    <input
-                      id={`ini-${item.diaSemana}-${item.horaInicio}`}
-                      type="time"
-                      name="horaInicio"
-                      defaultValue={item.horaInicio}
-                      className="rounded-lg border border-petroleo/20 bg-white px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`fim-${item.diaSemana}-${item.horaInicio}`}
-                      className="mb-1 block text-xs font-medium text-petroleo/70"
-                    >
-                      Termina (opcional)
-                    </label>
-                    <input
-                      id={`fim-${item.diaSemana}-${item.horaInicio}`}
-                      type="time"
-                      name="horaFim"
-                      defaultValue={item.horaFim ?? ""}
-                      className="rounded-lg border border-petroleo/20 bg-white px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-petroleo/25 px-5 py-2 text-sm font-semibold transition-colors hover:bg-petroleo hover:text-areia"
+              <li key={`${item.diaSemana}-${item.horaInicio}`}>
+                <Card className="bg-secondary p-4">
+                  {/* Cada linha é um formulário próprio, apontando para a MESMA
+                      action de escrita do cadastro manual. Nenhum caminho novo
+                      até o banco nasceu com esta feature. */}
+                  <form
+                    action={adicionarHorarioAction}
+                    className="flex flex-wrap items-end gap-3"
                   >
-                    Adicionar
-                  </button>
-                  {item.regiao ? (
-                    <span className="text-xs text-petroleo/70">
-                      texto menciona {item.regiao} — a região do horário se
-                      ajusta na lista acima
-                    </span>
-                  ) : null}
-                </form>
+                    <input type="hidden" name="slug" value={slug} />
+                    <div>
+                      <Label
+                        htmlFor={`dia-${item.diaSemana}-${item.horaInicio}`}
+                        className="mb-1 text-xs font-medium text-foreground/70"
+                      >
+                        Dia
+                      </Label>
+                      <SelectNativo
+                        id={`dia-${item.diaSemana}-${item.horaInicio}`}
+                        name="diaSemana"
+                        defaultValue={item.diaSemana}
+                        className="w-auto"
+                      >
+                        {DIAS.map((d) => (
+                          <option key={d.indice} value={d.indice}>
+                            {d.nome}
+                          </option>
+                        ))}
+                      </SelectNativo>
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor={`ini-${item.diaSemana}-${item.horaInicio}`}
+                        className="mb-1 text-xs font-medium text-foreground/70"
+                      >
+                        Começa
+                      </Label>
+                      <Input
+                        id={`ini-${item.diaSemana}-${item.horaInicio}`}
+                        type="time"
+                        name="horaInicio"
+                        defaultValue={item.horaInicio}
+                        className="w-auto"
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor={`fim-${item.diaSemana}-${item.horaInicio}`}
+                        className="mb-1 text-xs font-medium text-foreground/70"
+                      >
+                        Termina (opcional)
+                      </Label>
+                      <Input
+                        id={`fim-${item.diaSemana}-${item.horaInicio}`}
+                        type="time"
+                        name="horaFim"
+                        defaultValue={item.horaFim ?? ""}
+                        className="w-auto"
+                      />
+                    </div>
+                    <Button type="submit" variant="outline">
+                      Adicionar
+                    </Button>
+                    {item.regiao ? (
+                      <span className="text-xs text-foreground/70">
+                        texto menciona {item.regiao} — a região do horário se
+                        ajusta na lista acima
+                      </span>
+                    ) : null}
+                  </form>
+                </Card>
               </li>
             ))}
           </ul>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

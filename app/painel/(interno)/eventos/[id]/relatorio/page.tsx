@@ -3,6 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { sessaoAtual } from "@/lib/sessao";
 import { formatarDataAdmin } from "@/lib/admin";
 import { relatorioPosEvento } from "@/lib/relatorio-evento";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { Card, CardNumero } from "@/components/ui/card";
+import { Aviso } from "@/components/painel/Aviso";
 
 /**
  * RELATÓRIO PÓS-EVENTO — a tela agregada do organizador (interno, LGPD).
@@ -26,51 +30,47 @@ export default async function RelatorioEvento({
   const { evento, metricas, publico, anterior, passado } = rel;
 
   return (
-    <>
-      <Link
-        href={`/painel/eventos/${evento.id}`}
-        className="font-mono text-xs uppercase tracking-wider text-petroleo/60 hover:text-petroleo"
-      >
-        ← {evento.titulo}
-      </Link>
-      <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-        Relatório do encontro
-      </h1>
-      <p className="mt-2 text-sm text-petroleo/70">
-        {evento.comunidadeNome} · {formatarDataAdmin(evento.startsAt)}
-      </p>
-
+    <Pagina
+      eyebrow="Relatório"
+      titulo="Relatório do encontro"
+      voltar={{ href: `/painel/eventos/${evento.id}`, texto: evento.titulo }}
+      descricao={
+        <span className="tabular-nums">
+          {evento.comunidadeNome} · {formatarDataAdmin(evento.startsAt)}
+        </span>
+      }
+    >
       {!passado ? (
-        <p className="mt-6 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm text-petroleo/80">
-          Este encontro ainda não aconteceu — os números são <strong>preliminares</strong> e vão se
-          fechar depois do evento (principalmente a presença, que depende do check-in).
-        </p>
+        <Aviso className="text-foreground/80">
+          Este encontro ainda não aconteceu — os números são{" "}
+          <strong>preliminares</strong> e vão se fechar depois do evento
+          (principalmente a presença, que depende do check-in).
+        </Aviso>
       ) : !metricas.houveCheckin ? (
-        <p className="mt-6 rounded-xl border border-petroleo/15 bg-white/70 p-4 text-sm text-petroleo/80">
+        <Aviso className="text-foreground/80">
           Você ainda não marcou presença de ninguém. Marque o check-in na{" "}
           <Link href={`/painel/eventos/${evento.id}`} className="underline">
             tela do evento
           </Link>{" "}
           pra ver comparecimento e faltas.
-        </p>
+        </Aviso>
       ) : null}
 
       {/* ── Presença ─────────────────────────────────────────────── */}
-      <section className="mt-8">
-        <h2 className="font-display text-xl font-bold">Presença</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Cartao rotulo="Confirmados" valor={metricas.confirmados} />
-          <Cartao
+      <Secao titulo="Presença" destaque>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <CardNumero rotulo="Confirmados" valor={metricas.confirmados} />
+          <CardNumero
             rotulo="Presentes"
             valor={metricas.houveCheckin ? metricas.presentes : "—"}
-            dica={metricas.houveCheckin ? "check-in marcado" : "sem check-in"}
+            nota={metricas.houveCheckin ? "check-in marcado" : "sem check-in"}
           />
-          <Cartao
+          <CardNumero
             rotulo="Faltas"
             valor={metricas.houveCheckin ? metricas.faltas : "—"}
-            dica={metricas.houveCheckin ? "confirmaram e não vieram" : undefined}
+            nota={metricas.houveCheckin ? "confirmaram e não vieram" : undefined}
           />
-          <Cartao
+          <CardNumero
             rotulo="Comparecimento"
             valor={
               metricas.houveCheckin ? formatarPct(metricas.taxaComparecimento) : "—"
@@ -79,115 +79,93 @@ export default async function RelatorioEvento({
           />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Cartao rotulo="Lista de espera" valor={metricas.fila} />
-          <Cartao rotulo="Cancelaram" valor={metricas.cancelados} />
-          <Cartao
+          <CardNumero rotulo="Lista de espera" valor={metricas.fila} />
+          <CardNumero rotulo="Cancelaram" valor={metricas.cancelados} />
+          <CardNumero
             rotulo="Capacidade"
             valor={metricas.capacidade ?? "—"}
-            dica={metricas.capacidade ? undefined : "não definida"}
+            nota={metricas.capacidade ? undefined : "não definida"}
           />
-          <Cartao
+          <CardNumero
             rotulo="Lotação"
             valor={metricas.lotacao !== null ? formatarPct(metricas.lotacao) : "—"}
           />
         </div>
-      </section>
+      </Secao>
 
       {/* ── Público (agregado) ───────────────────────────────────── */}
-      <section className="mt-10">
-        <h2 className="font-display text-xl font-bold">Quem veio</h2>
-        <p className="mt-1 text-sm text-petroleo/60">
-          Só números — o público em agregado, nunca pessoa a pessoa.
-        </p>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Cartao
+      <Secao
+        titulo="Quem veio"
+        destaque
+        descricao="Só números — o público em agregado, nunca pessoa a pessoa."
+      >
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <CardNumero
             rotulo="De primeira vez"
             valor={publico.novos}
-            dica="nunca tinham se inscrito"
+            nota="nunca tinham se inscrito"
             destaque
           />
-          <Cartao rotulo="Já conheciam" valor={publico.retornantes} dica="voltaram" />
-          <Cartao rotulo="Seguidores da comunidade" valor={publico.seguidores} />
+          <CardNumero
+            rotulo="Já conheciam"
+            valor={publico.retornantes}
+            nota="voltaram"
+          />
+          <CardNumero
+            rotulo="Seguidores da comunidade"
+            valor={publico.seguidores}
+          />
         </div>
-      </section>
+      </Secao>
 
       {/* ── Comparação com o anterior ────────────────────────────── */}
-      <section className="mt-10">
-        <h2 className="font-display text-xl font-bold">Comparado ao encontro anterior</h2>
-        {anterior ? (
-          <>
-            <p className="mt-1 text-sm text-petroleo/60">
+      <Secao
+        titulo="Comparado ao encontro anterior"
+        destaque
+        descricao={
+          anterior ? (
+            <span className="tabular-nums">
               {anterior.titulo} · {formatarDataAdmin(anterior.startsAt)}
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Comparativo
-                rotulo="Confirmados"
-                agora={metricas.confirmados}
-                antes={anterior.metricas.confirmados}
-              />
-              <Comparativo
-                rotulo="Presentes"
-                agora={metricas.houveCheckin ? metricas.presentes : null}
-                antes={anterior.metricas.houveCheckin ? anterior.metricas.presentes : null}
-              />
-              <Comparativo
-                rotulo="Comparecimento"
-                agora={metricas.houveCheckin ? metricas.taxaComparecimento : null}
-                antes={anterior.metricas.houveCheckin ? anterior.metricas.taxaComparecimento : null}
-                percentual
-              />
-            </div>
-          </>
+            </span>
+          ) : undefined
+        }
+      >
+        {anterior ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Comparativo
+              rotulo="Confirmados"
+              agora={metricas.confirmados}
+              antes={anterior.metricas.confirmados}
+            />
+            <Comparativo
+              rotulo="Presentes"
+              agora={metricas.houveCheckin ? metricas.presentes : null}
+              antes={anterior.metricas.houveCheckin ? anterior.metricas.presentes : null}
+            />
+            <Comparativo
+              rotulo="Comparecimento"
+              agora={metricas.houveCheckin ? metricas.taxaComparecimento : null}
+              antes={anterior.metricas.houveCheckin ? anterior.metricas.taxaComparecimento : null}
+              percentual
+            />
+          </div>
         ) : (
-          <p className="mt-3 text-sm text-petroleo/70">
-            Este é o primeiro encontro da comunidade por aqui — a partir do próximo, dá pra
-            comparar a evolução.
+          <p className="text-sm text-foreground/70">
+            Este é o primeiro encontro da comunidade por aqui — a partir do próximo,
+            dá pra comparar a evolução.
           </p>
         )}
-      </section>
+      </Secao>
 
-      <p className="mt-10 text-xs text-petroleo/50">
-        Relatório interno e agregado. Para a lista nominal dos inscritos (nome, e-mail), use a{" "}
+      <p className="mt-10 text-xs text-foreground/50">
+        Relatório interno e agregado. Para a lista nominal dos inscritos (nome,
+        e-mail), use a{" "}
         <Link href={`/painel/eventos/${evento.id}`} className="underline">
           tela do evento
         </Link>{" "}
         ou o CSV.
       </p>
-    </>
-  );
-}
-
-function Cartao({
-  rotulo,
-  valor,
-  dica,
-  destaque,
-}: {
-  rotulo: string;
-  valor: number | string;
-  dica?: string;
-  destaque?: boolean;
-}) {
-  return (
-    <div
-      className={
-        "rounded-2xl border p-4 " +
-        (destaque ? "border-petroleo/20 bg-petroleo text-areia" : "border-petroleo/10 bg-white/70")
-      }
-    >
-      <p
-        className={
-          "font-mono text-[0.65rem] uppercase tracking-wider " +
-          (destaque ? "text-areia/70" : "text-petroleo/50")
-        }
-      >
-        {rotulo}
-      </p>
-      <p className="mt-1 font-display text-2xl font-extrabold leading-none">{valor}</p>
-      {dica ? (
-        <p className={"mt-1 text-xs " + (destaque ? "text-areia/70" : "text-petroleo/55")}>{dica}</p>
-      ) : null}
-    </div>
+    </Pagina>
   );
 }
 
@@ -200,6 +178,10 @@ function formatarPct(v: number | null): string {
 /**
  * Um número agora vs. antes, com a variação. Aceita razões (percentual) ou
  * contagens. `null` em qualquer lado = "sem base pra comparar".
+ *
+ * Não vira `<CardNumero>` porque ele mostra UM número e este mostra três
+ * (agora, antes e o delta) — forçar a peça aqui seria remontar o miolo dela
+ * por fora. O que ele reusa é o `<Card>`, que é onde estava a duplicação.
  */
 function Comparativo({
   rotulo,
@@ -219,22 +201,28 @@ function Comparativo({
   if (agora !== null && antes !== null) {
     const diff = percentual ? Math.round(agora * 100) - Math.round(antes * 100) : agora - antes;
     const sufixo = percentual ? " p.p." : "";
-    if (diff === 0) delta = { texto: "igual", cor: "text-petroleo/50" };
+    if (diff === 0) delta = { texto: "igual", cor: "text-muted-foreground" };
     else if (diff > 0)
-      delta = { texto: `+${diff}${sufixo}`, cor: "text-petroleo" };
+      delta = { texto: `+${diff}${sufixo}`, cor: "text-foreground" };
     else delta = { texto: `${diff}${sufixo}`, cor: "text-destructive" };
   }
 
   return (
-    <div className="rounded-2xl border border-petroleo/10 bg-white/70 p-4">
-      <p className="font-mono text-[0.65rem] uppercase tracking-wider text-petroleo/50">{rotulo}</p>
-      <p className="mt-1 font-display text-2xl font-extrabold leading-none">
+    <Card className="p-6">
+      <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+        {rotulo}
+      </p>
+      <p className="mt-2 font-display text-4xl font-extrabold tabular-nums leading-none">
         {fmt(agora)}
-        <span className="ml-2 align-middle text-sm font-normal text-petroleo/50">
+        <span className="ml-2 align-middle text-sm font-normal text-muted-foreground">
           antes {fmt(antes)}
         </span>
       </p>
-      {delta ? <p className={"mt-1 text-xs font-semibold " + delta.cor}>{delta.texto}</p> : null}
-    </div>
+      {delta ? (
+        <p className={"mt-1 text-xs font-semibold tabular-nums " + delta.cor}>
+          {delta.texto}
+        </p>
+      ) : null}
+    </Card>
   );
 }

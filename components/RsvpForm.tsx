@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { track } from "@/lib/analytics";
 import { rsvpSchema } from "@/lib/rsvps";
 
@@ -12,9 +16,6 @@ type Status =
   | "lista_espera"
   | "jaExistia"
   | "erro";
-
-const inputCls =
-  "w-full rounded-xl border border-petroleo/15 bg-white/70 px-4 py-3 text-petroleo placeholder:text-petroleo/40 focus:border-petroleo";
 
 export default function RsvpForm({
   eventSlug,
@@ -96,36 +97,48 @@ export default function RsvpForm({
     const m = mensagens[status];
     const linkGestao = token ? `/rsvp/${token}` : null;
     return (
-      <div className="rounded-card border border-petroleo/15 bg-white/70 p-8">
+      <Card className="p-8">
         <p className="font-display text-2xl font-bold">{m.titulo}</p>
-        <p className="mt-2 text-petroleo/70">{m.corpo}</p>
+        <p className="mt-2 text-foreground/70">{m.corpo}</p>
         {linkGestao && (
-          <div className="mt-5 rounded-xl border border-petroleo/10 bg-areia/60 p-4">
+          // O link de gestão é um card DENTRO do card de sucesso: `bg-muted`
+          // é a superfície rebaixada do tema (a mistura areia×petróleo que o
+          // `bg-areia/60` desenhava à mão), pra ele se destacar do branco sem
+          // virar uma terceira cor.
+          <Card className="mt-5 bg-muted p-4">
             <p className="text-sm font-semibold">
               Guarda esse link pra gerenciar tua inscrição
               {status === "lista_espera" ? " e acompanhar a fila" : ""}:
             </p>
             <a
               href={linkGestao}
-              className="mt-1 block break-all font-mono text-sm text-petroleo underline underline-offset-4"
+              className="mt-1 block break-all font-mono text-sm text-foreground underline underline-offset-4"
             >
               {typeof window !== "undefined"
                 ? `${window.location.origin}${linkGestao}`
                 : linkGestao}
             </a>
-            <p className="mt-2 text-xs text-petroleo/50">
+            <p className="mt-2 text-xs text-foreground/50">
               É por ele que você cancela — e, se estiver na fila, vê quando
               sua vaga for confirmada.
             </p>
-          </div>
+          </Card>
         )}
-      </div>
+      </Card>
     );
   }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-      {/* Honeypot anti-spam — invisível para humanos */}
+      {/*
+        Honeypot anti-spam — invisível para humanos.
+
+        Continua um campo NATIVO de propósito, e é a única exceção do lote. A
+        armadilha só funciona se o bot ler um campo comum; vesti-la com as
+        classes do `Input` (`h-11 rounded-full`…) seria pintar de estilo um
+        elemento que ninguém enxerga, só pra agradar o contador de higiene.
+        O `CLAUDE.md` já avisa: isto não é bug, não "conserte".
+      */}
       <div aria-hidden="true" className="hidden">
         <label>
           Não preencha este campo
@@ -134,71 +147,66 @@ export default function RsvpForm({
       </div>
 
       <div className="sm:col-span-1">
-        <label htmlFor="rsvp-nome" className="mb-1.5 block text-sm font-medium">
+        <Label htmlFor="rsvp-nome" className="mb-1.5">
           Nome
-        </label>
-        <input
+        </Label>
+        <Input
           id="rsvp-nome"
           name="nome"
           required
           autoComplete="name"
           placeholder="Seu nome"
-          className={inputCls}
         />
       </div>
 
       <div className="sm:col-span-1">
-        <label htmlFor="rsvp-email" className="mb-1.5 block text-sm font-medium">
+        <Label htmlFor="rsvp-email" className="mb-1.5">
           E-mail
-        </label>
-        <input
+        </Label>
+        <Input
           id="rsvp-email"
           name="email"
           type="email"
           required
           autoComplete="email"
           placeholder="voce@email.com"
-          className={inputCls}
         />
       </div>
 
       <div className="sm:col-span-1">
-        <label
-          htmlFor="rsvp-whatsapp"
-          className="mb-1.5 block text-sm font-medium"
-        >
-          WhatsApp <span className="text-petroleo/50">(opcional)</span>
-        </label>
-        <input
+        <Label htmlFor="rsvp-whatsapp" className="mb-1.5">
+          WhatsApp <span className="font-normal text-foreground/50">(opcional)</span>
+        </Label>
+        <Input
           id="rsvp-whatsapp"
           name="whatsapp"
           inputMode="tel"
           autoComplete="tel"
           placeholder="(61) 9…"
-          className={inputCls}
         />
       </div>
 
       {erro && (
-        <p role="alert" className="sm:col-span-2 text-sm text-coral">
+        <p role="alert" className="sm:col-span-2 text-sm text-destructive">
           {erro}
         </p>
       )}
 
       <div className="sm:col-span-2">
-        <button
+        <Button
           type="submit"
+          size="lg"
           disabled={status === "enviando"}
-          className="w-full rounded-full bg-petroleo px-7 py-4 font-display text-lg font-bold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-50 sm:w-auto"
+          className="w-full font-display text-lg font-bold sm:w-auto"
         >
           {status === "enviando" ? "Enviando…" : "Confirmar presença"}
-        </button>
-        <p className="mt-3 text-xs text-petroleo/50">
+        </Button>
+        <p className="mt-3 text-xs text-foreground/50">
           Usamos seu contato só pra falar deste evento e da MUNAY. Nada de
           spam. Ao enviar, você concorda com a{" "}
           <Link
             href="/privacidade"
-            className="underline underline-offset-2 hover:text-petroleo"
+            className="underline underline-offset-2 hover:text-foreground"
           >
             política de privacidade
           </Link>

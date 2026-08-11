@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { acentoDaModalidade, classesDoAcento } from "@/lib/modalidades";
 import { selo, situacaoDe } from "@/lib/inscricoes";
+import { cn } from "@/lib/utils";
 
 /**
  * O INGRESSO — briefing 07/08/2026, itens 12 e 12.1.
@@ -85,118 +89,144 @@ function Dado({ rotulo, valor }: { rotulo: string; valor: string }) {
       <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-areia/45">
         {rotulo}
       </dt>
-      <dd className="mt-0.5 text-sm font-medium leading-snug text-areia">{valor}</dd>
+      <dd className="mt-0.5 text-sm font-medium leading-snug text-areia">
+        {valor}
+      </dd>
     </div>
   );
 }
 
 export default function Ingresso({ dados }: { dados: IngressoDados }) {
-  const cor = classesDoAcento(acentoDaModalidade(dados.event.community.modalidade));
+  const cor = classesDoAcento(
+    acentoDaModalidade(dados.event.community.modalidade),
+  );
   const s = selo(dados);
   const situacao = situacaoDe(dados);
   const inativo = situacao === "cancelada";
 
   const data = new Date(dados.event.startsAt);
-  const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const hora = data.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   const diaSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
 
   return (
-    <article
-      className={`overflow-hidden rounded-card bg-petroleo-soft transition-opacity ${
-        inativo ? "opacity-55" : ""
-      }`}
-    >
-      {/* Zona 1 — faixa da categoria: identifica antes de ler. */}
-      <div className={`flex items-center justify-between gap-3 px-6 py-3 ${cor.traco}`}>
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-petroleo">
-          {dados.event.community.modalidade}
-        </p>
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-petroleo/70">
-          {dados.event.community.regiao}
-        </p>
-      </div>
-
-      <div className="px-6 pb-6 pt-5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-lime">
-          {dados.event.community.nome}
-        </p>
-        <h3 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-areia">
-          {dados.event.titulo}
-        </h3>
-
-        {/* Zona 2 — a grade densa. Quatro dados sempre no mesmo lugar, em
-            todo ingresso: é a repetição de posição que deixa o denso legível. */}
-        <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-y border-areia/15 py-5 sm:grid-cols-4">
-          <Dado
-            rotulo="Data"
-            valor={data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-          />
-          <Dado rotulo="Hora" valor={hora} />
-          <Dado rotulo="Dia" valor={diaSemana} />
-          <Dado rotulo="Valor" valor={dados.event.gratuito ? "Gratuito" : "Pago"} />
-          <div className="col-span-2 sm:col-span-4">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-areia/45">
-              Onde
-            </dt>
-            <dd className="mt-0.5 text-sm font-medium text-areia">
-              {dados.event.local ?? "Local a confirmar com a comunidade"}
-            </dd>
-          </div>
-        </dl>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span
-            className={`rounded-full border px-3 py-1 font-mono text-[11px] uppercase tracking-wider ${
-              situacao === "ativa" && dados.status === "confirmado"
-                ? "border-lime bg-lime text-petroleo"
-                : "border-areia/25 text-areia/70"
-            }`}
-          >
-            {s.rotulo}
-          </span>
-          <p className="text-xs leading-relaxed text-areia/55">
-            {dados.status === "lista_espera" && situacao === "ativa"
-              ? "Você entra assim que alguém liberar vaga — a gente te avisa por e-mail."
-              : situacao === "ativa"
-                ? "Tá tudo certo. É só aparecer."
-                : "Este ingresso já cumpriu o papel dele."}
+    // O ingresso é `<Card>`, mas com a tinta invertida — e isso não é exceção
+    // à toa: o item 12 do briefing pede EXPLICITAMENTE que esta tela fuja do
+    // minimalismo claro do resto do site. O que o DS entrega aqui é a forma
+    // (raio, recorte, comportamento); a cor escura é o pedido do PO.
+    // A borda some porque em superfície escura ela viraria um fio claro em
+    // volta do papel — o oposto do efeito de ingresso.
+    <article className={cn("transition-opacity", inativo && "opacity-55")}>
+      <Card className="overflow-hidden border-transparent bg-petroleo-soft">
+        {/* Zona 1 — faixa da categoria: identifica antes de ler. */}
+        <div
+          className={`flex items-center justify-between gap-3 px-6 py-3 ${cor.traco}`}
+        >
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-petroleo">
+            {dados.event.community.modalidade}
+          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-petroleo/70">
+            {dados.event.community.regiao}
           </p>
         </div>
-      </div>
 
-      {/* Zona 3 — o canhoto. Os dois círculos "mordem" as laterais na cor
-          do fundo da página e produzem o efeito de papel picotado. */}
-      <div className="relative border-t border-dashed border-areia/25 px-6 py-5">
-        <span
-          aria-hidden
-          className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-petroleo"
-        />
-        <span
-          aria-hidden
-          className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-petroleo"
-        />
+        <div className="px-6 pb-6 pt-5">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-lime">
+            {dados.event.community.nome}
+          </p>
+          <h3 className="mt-1.5 font-display text-2xl font-extrabold leading-tight text-areia">
+            {dados.event.titulo}
+          </h3>
 
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-areia/45">
-              Seu código
-            </p>
-            <p className="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-lime">
-              {codigoDe(dados.token)}
-            </p>
-            <p className="mt-1 text-xs text-areia/50">
-              É isso que você fala na entrada. Sem app, sem print.
+          {/* Zona 2 — a grade densa. Quatro dados sempre no mesmo lugar, em
+            todo ingresso: é a repetição de posição que deixa o denso legível. */}
+          <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-y border-areia/15 py-5 sm:grid-cols-4">
+            <Dado
+              rotulo="Data"
+              valor={data.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+              })}
+            />
+            <Dado rotulo="Hora" valor={hora} />
+            <Dado rotulo="Dia" valor={diaSemana} />
+            <Dado
+              rotulo="Valor"
+              valor={dados.event.gratuito ? "Gratuito" : "Pago"}
+            />
+            <div className="col-span-2 sm:col-span-4">
+              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-areia/45">
+                Onde
+              </dt>
+              <dd className="mt-0.5 text-sm font-medium text-areia">
+                {dados.event.local ?? "Local a confirmar com a comunidade"}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Badge
+              variant="outline"
+              className={
+                situacao === "ativa" && dados.status === "confirmado"
+                  ? "border-lime bg-lime text-petroleo"
+                  : "border-areia/25 text-areia/70"
+              }
+            >
+              {s.rotulo}
+            </Badge>
+            <p className="text-xs leading-relaxed text-areia/55">
+              {dados.status === "lista_espera" && situacao === "ativa"
+                ? "Você entra assim que alguém liberar vaga — a gente te avisa por e-mail."
+                : situacao === "ativa"
+                  ? "Tá tudo certo. É só aparecer."
+                  : "Este ingresso já cumpriu o papel dele."}
             </p>
           </div>
-
-          <Link
-            href={`/rsvp/${dados.token}`}
-            className="rounded-full border-2 border-lime px-5 py-2.5 text-sm font-semibold text-lime transition-colors hover:bg-lime hover:text-petroleo"
-          >
-            Gerenciar
-          </Link>
         </div>
-      </div>
+
+        {/* Zona 3 — o canhoto. Os dois círculos "mordem" as laterais na cor
+          do fundo da página e produzem o efeito de papel picotado. */}
+        <div className="relative border-t border-dashed border-areia/25 px-6 py-5">
+          <span
+            aria-hidden
+            className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-petroleo"
+          />
+          <span
+            aria-hidden
+            className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-petroleo"
+          />
+
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-areia/45">
+                Seu código
+              </p>
+              <p className="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-lime">
+                {codigoDe(dados.token)}
+              </p>
+              <p className="mt-1 text-xs text-areia/50">
+                É isso que você fala na entrada. Sem app, sem print.
+              </p>
+            </div>
+
+            <Link
+              href={`/rsvp/${dados.token}`}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                // Sobre fundo escuro o `outline` do DS (borda petróleo) some. O
+                // lime é o único acento que sobrevive aqui — e é o uso raro que
+                // o checklist item 5 autoriza: uma ação por ingresso.
+                "border-2 border-lime px-5 text-sm text-lime hover:bg-lime hover:text-petroleo",
+              )}
+            >
+              Gerenciar
+            </Link>
+          </div>
+        </div>
+      </Card>
     </article>
   );
 }

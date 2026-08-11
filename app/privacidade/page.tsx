@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Pagina } from "@/components/comum/Pagina";
+import { Card } from "@/components/ui/card";
 import { conteudo } from "@/lib/conteudo";
 
 // ⚠️ REVISÃO JURÍDICA PENDENTE. Este texto foi montado a partir do que o
@@ -30,18 +31,19 @@ export default async function PrivacidadePage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-5 py-20">
-        <p className="eyebrow mb-3">LGPD</p>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Política de privacidade
-        </h1>
-        <p className="mt-4 text-petroleo/70">
-          Sem juridiquês: o que coletamos, pra quê, com qual base legal e como
-          você exerce seus direitos. Versão preliminar de agosto de 2026.
-        </p>
-
+      {/* `max-w-3xl` em vez do `max-w-6xl` padrão do `<Pagina>`: isto é
+          TEXTO CORRIDO, e linha de 1150px é ilegível. A régua de leitura
+          ganha da régua de layout — o container e a abertura (eyebrow → h1 →
+          descrição) continuam os mesmos do resto do site. */}
+      <Pagina
+        className="max-w-3xl"
+        eyebrow="LGPD"
+        titulo="Política de privacidade"
+        descricao="Sem juridiquês: o que coletamos, pra quê, com qual base legal e como você exerce seus direitos. Versão preliminar de agosto de 2026."
+        voltar={{ href: "/", texto: "Voltar pro início" }}
+      >
         {/* AVISO — não some sem as duas pendências resolvidas (ver comentário no topo). */}
-        <div className="mt-8 rounded-card border border-petroleo/30 bg-white/70 p-6 text-sm text-petroleo/80">
+        <Card className="mt-8 border-petroleo/30 p-6 text-sm text-petroleo/80">
           <p className="font-display text-base font-bold text-petroleo">
             ⚠️ Versão preliminar — revisão jurídica pendente
           </p>
@@ -59,7 +61,7 @@ export default async function PrivacidadePage() {
             — para o canal de LGPD funcionar. Enquanto isso, o endereço de
             contato exibido abaixo é provisório.
           </p>
-        </div>
+        </Card>
 
         <div className="mt-12 space-y-10">
           {/* 1 — Controlador */}
@@ -362,14 +364,7 @@ export default async function PrivacidadePage() {
             </p>
           </section>
         </div>
-
-        <Link
-          href="/"
-          className="mt-14 inline-block font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60 hover:text-petroleo"
-        >
-          ← Voltar pro início
-        </Link>
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

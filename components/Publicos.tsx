@@ -1,3 +1,7 @@
+import { BLOCO_ESCURO, BOTAO_CONTORNO_ESCURO } from "@/components/landing/Escuro";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 /**
  * Os dois lados do marketplace, lado a lado.
  *
@@ -12,7 +16,7 @@ export default function Publicos() {
     <section className="mx-auto max-w-6xl px-5 py-6">
       <div className="grid gap-5 lg:grid-cols-2">
         {/* B2C */}
-        <div className="rounded-card border border-salvia/35 bg-salvia-soft p-8 md:p-10">
+        <Card className="border-salvia/35 bg-salvia-soft p-8 md:p-10">
           <p className="eyebrow mb-3">Pra quem quer começar</p>
           <h3 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
             Não é coragem que falta. É contexto.
@@ -31,16 +35,16 @@ export default function Publicos() {
               </li>
             ))}
           </ul>
-          <a
-            href="#cadastro"
-            className="mt-8 inline-block rounded-full bg-petroleo px-6 py-3 font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-          >
+          {/* Continua `<a>` com âncora relativa, não `<Link>`: `#cadastro`
+              está NESTA página, e o scroll suave do `globals.css` faz o
+              trabalho sem passar pelo roteador. Só a classe mudou. */}
+          <a href="#cadastro" className={buttonVariants({ className: "mt-8" })}>
             Entrar na lista
           </a>
-        </div>
+        </Card>
 
         {/* B2B/B2S — ver PainelFuncional para a definição do modelo (item 4.1) */}
-        <div className="rounded-card bg-petroleo p-8 text-areia md:p-10">
+        <Card className={`p-8 md:p-10 ${BLOCO_ESCURO}`}>
           <p className="eyebrow-dark mb-3">Pra quem já organiza</p>
           <h3 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
             Sua comunidade merece ser achada.
@@ -61,11 +65,14 @@ export default function Publicos() {
           </ul>
           <a
             href="#organizador"
-            className="mt-8 inline-block rounded-full border-2 border-areia/30 px-6 py-3 font-semibold text-areia transition-colors hover:border-lime hover:text-lime"
+            className={buttonVariants({
+              variant: "outline",
+              className: `mt-8 ${BOTAO_CONTORNO_ESCURO}`,
+            })}
           >
             Quero ser parceiro
           </a>
-        </div>
+        </Card>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { CAMPOS_GUIA, lerGuia, temGuia } from "@/lib/guia";
 
 /**
@@ -21,22 +22,28 @@ export default function GuiaIniciantePublico({
   if (!temGuia(g)) return null;
 
   return (
-    <section className="mt-8 max-w-2xl rounded-card border border-salvia bg-salvia-soft p-6">
-      <h2 className="font-display text-lg font-bold text-salvia-deep">
-        É sua primeira vez? Bora, a gente te espera.
-      </h2>
-      <dl className="mt-4 space-y-3">
-        {CAMPOS_GUIA.map((c) =>
-          g[c.chave] ? (
-            <div key={c.chave}>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-salvia-deep">
-                {c.rotulo}
-              </dt>
-              <dd className="mt-0.5 text-sm text-petroleo/80">{g[c.chave]}</dd>
-            </div>
-          ) : null,
-        )}
-      </dl>
+    // `<Card>` com a superfície `salvia` por cima: o guia é o único bloco da
+    // página pública que muda de cor de fundo, e é de propósito — ele fala com
+    // quem nunca foi, e precisa se destacar do resto. O raio, a borda e o
+    // comportamento continuam sendo os do DS; só a tinta é da marca.
+    <section className="mt-8 max-w-2xl">
+      <Card className="border-salvia bg-salvia-soft p-6">
+        <h2 className="font-display text-lg font-bold text-salvia-deep">
+          É sua primeira vez? Bora, a gente te espera.
+        </h2>
+        <dl className="mt-4 space-y-3">
+          {CAMPOS_GUIA.map((c) =>
+            g[c.chave] ? (
+              <div key={c.chave}>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-salvia-deep">
+                  {c.rotulo}
+                </dt>
+                <dd className="mt-0.5 text-sm text-foreground/80">{g[c.chave]}</dd>
+              </div>
+            ) : null,
+          )}
+        </dl>
+      </Card>
     </section>
   );
 }

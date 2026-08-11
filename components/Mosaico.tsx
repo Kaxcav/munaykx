@@ -1,5 +1,7 @@
 import Link from "next/link";
 import MidiaPlaceholder from "@/components/MidiaPlaceholder";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { FEED_MIDIA, temMidiaReal, type ItemMidia } from "@/lib/midia";
 import { acentoDaModalidade, classesDoAcento } from "@/lib/modalidades";
 
@@ -86,9 +88,9 @@ function Tile({ item }: { item: ItemMidia }) {
       />
 
       {item.tipo === "video" && (
-        <span className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full bg-areia/90 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-petroleo">
+        <Badge className="absolute right-4 top-4 gap-1.5 border-transparent bg-areia/90 text-petroleo">
           <span aria-hidden>▶</span> vídeo
-        </span>
+        </Badge>
       )}
 
       <figcaption className="absolute inset-x-0 bottom-0 p-5 text-areia">
@@ -118,7 +120,11 @@ export default function Mosaico() {
           </div>
           <Link
             href="/comunidades"
-            className="rounded-full border-2 border-salvia bg-areia px-6 py-3 font-semibold text-salvia-deep transition-colors hover:bg-salvia-deep hover:text-areia"
+            className={buttonVariants({
+              variant: "outline",
+              className:
+                "border-2 border-salvia bg-areia text-salvia-deep hover:bg-salvia-deep hover:text-areia",
+            })}
           >
             Ver o que tem hoje
           </Link>

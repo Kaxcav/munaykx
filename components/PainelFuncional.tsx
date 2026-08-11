@@ -1,4 +1,13 @@
 import Link from "next/link";
+import {
+  BLOCO_ESCURO,
+  BOTAO_CONTORNO_ESCURO,
+  BOTAO_LIME,
+  CARD_ESCURO,
+} from "@/components/landing/Escuro";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 /**
  * O PAINEL FUNCIONAL — briefing 07/08/2026, itens 4, 4.1 e 5.
@@ -146,31 +155,34 @@ export default function PainelFuncional() {
 
       <div className="mt-12 grid gap-5 md:grid-cols-2">
         {BLOCOS.map((b) => (
-          <Link
-            key={b.titulo}
-            href={b.href}
-            className="group rounded-card border border-salvia/40 bg-salvia-soft p-8 transition-all hover:-translate-y-0.5 hover:border-salvia"
-          >
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-salvia-deep">
-              {b.eyebrow}
-            </p>
-            <h3 className="mt-3 font-display text-2xl font-extrabold tracking-tight">
-              {b.titulo}
-            </h3>
-            <p className="mt-3 leading-relaxed text-petroleo/75">{b.texto}</p>
-            <ul className="mt-5 flex flex-wrap gap-2">
-              {b.itens.map((i) => (
-                <li
-                  key={i}
-                  className="rounded-full border border-salvia/50 bg-areia/60 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-salvia-deep"
-                >
-                  {i}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 text-sm font-semibold underline underline-offset-4 group-hover:text-salvia-deep">
-              Dá uma conferida →
-            </p>
+          <Link key={b.titulo} href={b.href} className="group block">
+            <Card className="h-full border-salvia/40 bg-salvia-soft p-8 transition-all group-hover:-translate-y-0.5 group-hover:border-salvia">
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-salvia-deep">
+                {b.eyebrow}
+              </p>
+              <h3 className="mt-3 font-display text-2xl font-extrabold tracking-tight">
+                {b.titulo}
+              </h3>
+              <p className="mt-3 leading-relaxed text-petroleo/75">{b.texto}</p>
+              {/* As três etiquetas são `<Badge>`: informação, não ação —
+                  quem clica é o card inteiro. É a distinção que o DS faz
+                  entre `Badge` (estado) e `Chip` (ação). */}
+              <ul className="mt-5 flex flex-wrap gap-2">
+                {b.itens.map((i) => (
+                  <li key={i}>
+                    <Badge
+                      variant="outline"
+                      className="border-salvia/50 bg-areia/60 text-salvia-deep"
+                    >
+                      {i}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-sm font-semibold underline underline-offset-4 group-hover:text-salvia-deep">
+                Dá uma conferida →
+              </p>
+            </Card>
           </Link>
         ))}
       </div>
@@ -178,7 +190,7 @@ export default function PainelFuncional() {
       {/* Bloco 03 — o motor. Ver a nota no topo do arquivo sobre a
           hierarquia: largura inteira e fundo escuro são a recomendação
           estratégica do briefing traduzida em layout. */}
-      <div className="mt-5 overflow-hidden rounded-card bg-petroleo text-areia">
+      <Card className={`mt-5 overflow-hidden ${BLOCO_ESCURO}`}>
         <div className="p-8 md:p-12">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-lime">
             Bloco 03 · o motor
@@ -197,10 +209,7 @@ export default function PainelFuncional() {
               "que serve pros dois". */}
           <div className="mt-10 grid gap-5 lg:grid-cols-2">
             {TRILHAS.map((t) => (
-              <div
-                key={t.id}
-                className="flex flex-col rounded-card border border-areia/15 bg-areia/5 p-7"
-              >
+              <Card key={t.id} className={`flex flex-col p-7 ${CARD_ESCURO}`}>
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-lime">
                   {t.etiqueta}
                 </p>
@@ -227,22 +236,23 @@ export default function PainelFuncional() {
 
                 <Link
                   href={t.href}
-                  className={`mt-7 inline-block self-start rounded-full px-6 py-3 font-semibold transition-colors ${
-                    t.primaria
-                      ? "bg-lime text-petroleo hover:opacity-90"
-                      : "border-2 border-areia/30 text-areia hover:border-lime hover:text-lime"
-                  }`}
+                  className={buttonVariants({
+                    variant: t.primaria ? "default" : "outline",
+                    className: `mt-7 self-start ${
+                      t.primaria ? BOTAO_LIME : BOTAO_CONTORNO_ESCURO
+                    }`,
+                  })}
                 >
                   {t.cta}
                 </Link>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Item 5 — Cursos. Declarado, sem link: a página não existe. */}
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-card border border-dashed border-petroleo/25 px-8 py-6">
+      <Card className="mt-5 flex flex-wrap items-center justify-between gap-4 border-dashed border-petroleo/25 bg-transparent px-8 py-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-petroleo/50">
             Próximo no roadmap
@@ -255,7 +265,7 @@ export default function PainelFuncional() {
           Formação e workshop dentro da plataforma, pra quem quer ensinar e pra
           quem quer aprender. Entra depois que Organizadores estiver redondo.
         </p>
-      </div>
+      </Card>
     </section>
   );
 }

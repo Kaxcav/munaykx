@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MapaDF } from "@/components/MapaDF";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { chipVariants } from "@/components/ui/chip";
+import { cn } from "@/lib/utils";
 import type { EstadoRegiao, RegiaoNoMapa } from "@/lib/mapa";
 import { DIAS, acesaEm, minutosParaHHMM, type MatrizTemporal } from "@/lib/horarios";
 
@@ -80,24 +84,25 @@ export function EixoDeTempo({
     <div>
       <MapaDF regioes={regioes} estados={estados} />
 
-      <div className="mt-6 rounded-2xl border border-petroleo/10 bg-white/60 p-5">
+      <Card className="mt-6 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <p className="eyebrow">Eixo de tempo</p>
-            <p className="mt-1 text-sm text-petroleo/70">
+            <p className="mt-1 text-sm text-foreground/70">
               {ligado
                 ? "Escolha o dia e a hora: o mapa mostra só quem treina nesse horário."
                 : "Dá pra ver o mapa por horário — o que está rolando terça 6h é bem diferente de sábado 8h."}
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setLigado((v) => !v)}
             aria-pressed={ligado}
-            className="shrink-0 rounded-full border border-petroleo/25 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/60"
+            className="shrink-0 text-sm"
           >
             {ligado ? "Ver a semana toda" : "Filtrar por horário"}
-          </button>
+          </Button>
         </div>
 
         {ligado && (
@@ -107,14 +112,18 @@ export function EixoDeTempo({
             <fieldset>
               <legend className="sr-only">Dia da semana</legend>
               <div className="flex flex-wrap gap-2">
+                {/* A pílula é o `chipVariants` do DS (mesma receita da
+                    `/comunidades`); o controle continua sendo um rádio nativo
+                    ESCONDIDO dentro do rótulo. Não vira `<ChipBotao>`: botão
+                    não forma grupo de rádio, e é o grupo que faz o leitor de
+                    tela anunciar "2 de 7" sem truque de ARIA. */}
                 {DIAS.map((d) => (
                   <label
                     key={d.indice}
-                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold capitalize transition-colors ${
-                      dia === d.indice
-                        ? "border-petroleo bg-petroleo text-areia"
-                        : "border-petroleo/20 hover:border-petroleo/50"
-                    }`}
+                    className={cn(
+                      chipVariants({ ativo: dia === d.indice }),
+                      "cursor-pointer py-2 font-semibold capitalize",
+                    )}
                   >
                     <input
                       type="radio"
@@ -151,7 +160,7 @@ export function EixoDeTempo({
                   expediente. Sem elas o slider é uma barra sem referência. */}
               <div
                 aria-hidden="true"
-                className="mt-1 flex justify-between font-mono text-[0.65rem] text-petroleo/45"
+                className="mt-1 flex justify-between font-mono text-[0.65rem] tabular-nums text-foreground/45"
               >
                 <span>00h</span>
                 <span>06h</span>
@@ -167,7 +176,7 @@ export function EixoDeTempo({
                 cor (5-10% da população tem daltonismo). */}
             <p aria-live="polite" className="mt-6 text-sm">
               {acesas.length === 0 ? (
-                <span className="text-petroleo/60">
+                <span className="text-foreground/60">
                   Ninguém cadastrado nesse horário ainda. Tente outro dia — ou{" "}
                   <Link
                     href="/#organizador"
@@ -179,11 +188,11 @@ export function EixoDeTempo({
                 </span>
               ) : (
                 <>
-                  <span className="font-semibold">
+                  <span className="font-semibold tabular-nums">
                     {acesas.length}{" "}
                     {acesas.length === 1 ? "região acesa" : "regiões acesas"}
                   </span>
-                  <span className="text-petroleo/70">
+                  <span className="text-foreground/70">
                     {" "}
                     — {acesas.map((r) => r.regiao).join(" · ")}
                   </span>
@@ -191,14 +200,14 @@ export function EixoDeTempo({
               )}
             </p>
 
-            <p className="mt-4 font-mono text-xs leading-relaxed text-petroleo/50">
+            <p className="mt-4 font-mono text-xs leading-relaxed text-foreground/50">
               O mapa mostra a REGIÃO, nunca o ponto exato de encontro — de
               propósito. Só entram comunidades que cadastraram horário; quem
               descreveu o horário só em texto não aparece aqui.
             </p>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

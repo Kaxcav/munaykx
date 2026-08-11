@@ -1,14 +1,14 @@
 {
   "atualizado": "2026-08-11",
   "contadores": {
-    "cor-hex": 39,
+    "cor-hex": 29,
     "cor-paleta-crua": 0,
     "dark-manual": 0,
-    "controle-cru": 30,
-    "superficie-a-mao": 3
+    "controle-cru": 29,
+    "superficie-a-mao": 1
   },
   "adocao": {
-    "arquivos": 81,
+    "arquivos": 83,
     "de": 113
   }
 }

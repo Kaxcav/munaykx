@@ -29,7 +29,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-petroleo/10 bg-petroleo text-areia">
+      <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">
           <Link href="/admin" className="font-display text-lg font-extrabold">
             MUNAY <span className="text-lime">admin</span>
@@ -39,7 +39,7 @@ export default async function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-areia/80 transition-colors hover:text-lime"
+                className="text-primary-foreground/80 transition-colors hover:text-lime"
               >
                 {item.label}
               </Link>
@@ -47,13 +47,19 @@ export default async function AdminLayout({
           </nav>
           <Link
             href="/"
-            className="ml-auto font-mono text-xs uppercase tracking-wider text-areia/60 hover:text-areia"
+            className="ml-auto font-mono text-xs uppercase tracking-wider text-primary-foreground/60 hover:text-primary-foreground"
           >
             ← site
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-5 py-10">{children}</main>
+      {/*
+        O `<main>` NÃO fica aqui: quem o desenha é o `<PaginaAdmin>` de cada
+        tela (que é o `<Pagina>` do L1 por baixo). Dois `<main>` aninhados
+        seriam HTML inválido, e o container tem que morar junto do cabeçalho
+        da tela — é o par eyebrow + h1 + descrição que dá a régua da rodada.
+      */}
+      {children}
     </div>
   );
 }

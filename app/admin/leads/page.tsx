@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { pendentesDeAviso, jaAvisados, LOTE_MAX } from "@/lib/lancamento";
@@ -16,6 +15,9 @@ import {
 import { BuscaAdmin } from "@/components/admin/BuscaAdmin";
 import { Paginacao } from "@/components/admin/Paginacao";
 import { buttonVariants } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import {
   Table,
   TableBody,
@@ -45,13 +47,6 @@ type SearchParams = Promise<{
 }>;
 
 const href = (f: Filtros) => `/admin/leads${query({ ...f })}`;
-
-const chip = (ativo: boolean) =>
-  `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-    ativo
-      ? "border-primary bg-primary text-primary-foreground"
-      : "border-border hover:border-primary/40"
-  }`;
 
 /** Leads read-only: a métrica dos 500 do edital. Edição não existe de propósito. */
 export default async function AdminLeadsPage({
@@ -102,22 +97,21 @@ export default async function AdminLeadsPage({
   const base = { tipo, origem, q, periodo };
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="eyebrow mb-3">Operação</p>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Leads <span className="text-muted-foreground">({total})</span>
-          </h1>
-        </div>
-        <a
-          href={exportHref}
-          className={buttonVariants({ variant: "outline" })}
-        >
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo={
+        <>
+          Leads{" "}
+          <span className="text-muted-foreground tabular-nums">({total})</span>
+        </>
+      }
+      descricao="A métrica dos 500 do edital. Leitura apenas — editar lead não existe de propósito."
+      acoes={
+        <a href={exportHref} className={buttonVariants({ variant: "outline" })}>
           Exportar CSV
         </a>
-      </div>
-
+      }
+    >
       {/* A ferramenta de lançamento fica aqui, e não numa tela própria, porque
           é aqui que o dono olha a base antes de decidir. Ela NÃO dispara nada
           sozinha — ver lib/lancamento.ts. */}
@@ -137,65 +131,82 @@ export default async function AdminLeadsPage({
 
         <div className="flex flex-wrap items-center gap-2 pt-2">
           <span className="eyebrow mr-1">Tipo</span>
-          <Link href={href({ ...base, tipo: undefined })} className={chip(!tipo)}>
+          <Chip href={href({ ...base, tipo: undefined })} ativo={!tipo} tamanho="sm">
             Todos
-          </Link>
+          </Chip>
           {TIPOS.map((t) => (
-            <Link
+            <Chip
               key={t}
               href={href({ ...base, tipo: t })}
-              className={chip(tipo === t)}
+              ativo={tipo === t}
+              tamanho="sm"
             >
               {t}
-            </Link>
+            </Chip>
           ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Origem</span>
-          <Link
+          <Chip
             href={href({ ...base, origem: undefined })}
-            className={chip(!origem)}
+            ativo={!origem}
+            tamanho="sm"
           >
             Todas
-          </Link>
+          </Chip>
           {ORIGENS.map((o) => (
-            <Link
+            <Chip
               key={o}
               href={href({ ...base, origem: o })}
-              className={chip(origem === o)}
+              ativo={origem === o}
+              tamanho="sm"
             >
               {o}
-            </Link>
+            </Chip>
           ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Período</span>
-          <Link
+          <Chip
             href={href({ ...base, periodo: undefined })}
-            className={chip(!periodo)}
+            ativo={!periodo}
+            tamanho="sm"
           >
             Desde sempre
-          </Link>
+          </Chip>
           {PERIODOS.map((p) => (
-            <Link
+            <Chip
               key={p.valor}
               href={href({ ...base, periodo: p.valor })}
-              className={chip(periodo === p.valor)}
+              ativo={periodo === p.valor}
+              tamanho="sm"
             >
               Últimos {p.label}
-            </Link>
+            </Chip>
           ))}
         </div>
       </div>
 
       {leads.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">
-          {total > 0
-            ? "Essa página não existe nesse recorte."
-            : "Nenhum lead com esse recorte."}
-        </p>
+        <EstadoVazio
+          titulo={
+            total > 0
+              ? "Essa página não existe nesse recorte."
+              : "Nenhum lead com esse recorte."
+          }
+          descricao={
+            total > 0
+              ? `O recorte tem ${total} lead(s), mas não nesta página.`
+              : "Afrouxe um filtro ou amplie o período — os filtros vivem na URL, dá pra voltar."
+          }
+          acao={
+            <Chip href="/admin/leads" tamanho="sm">
+              Limpar filtros
+            </Chip>
+          }
+        />
       ) : (
         <>
           <div className="mt-8">
@@ -214,7 +225,7 @@ export default async function AdminLeadsPage({
               <TableBody>
                 {leads.map((l) => (
                   <TableRow key={l.id}>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs tabular-nums">
                       {formatarDataAdmin(l.createdAt)}
                     </TableCell>
                     <TableCell className="font-semibold">{l.nome}</TableCell>
@@ -246,6 +257,6 @@ export default async function AdminLeadsPage({
           />
         </>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

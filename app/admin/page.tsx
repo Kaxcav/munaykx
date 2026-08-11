@@ -2,9 +2,10 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { desdeQuando } from "@/lib/admin-lista";
 import { statusEmail } from "@/lib/email";
-import { Card } from "@/components/ui/card";
+import { Card, CardNumero } from "@/components/ui/card";
 import { resumoBuscas } from "@/lib/ai/registro";
-import { CardNumero } from "@/components/ui/card";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { Secao } from "@/components/comum/Secao";
 
 /** Dashboard de operação: os números que o time consulta toda semana. */
 export default async function AdminDashboardPage() {
@@ -102,12 +103,11 @@ export default async function AdminDashboardPage() {
   const email = statusEmail();
 
   return (
-    <>
-      <p className="eyebrow mb-3">Operação</p>
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">
-        Dashboard
-      </h1>
-
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo="Dashboard"
+      descricao="Os números que o time consulta toda semana, direto do banco."
+    >
       {email.modo !== "producao" && (
         <Card
           className={
@@ -141,14 +141,18 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
-      <section className="mt-8">
-        <h2 className="font-display text-lg font-bold">O que a cidade procura</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Registro <strong>anônimo</strong> das buscas — sem conta, sem IP, sem
-          sessão. Só a contagem aparece aqui: o texto buscado pode conter
-          desabafo e nunca é exibido individualmente.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <Secao
+        className="mt-10"
+        titulo="O que a cidade procura"
+        descricao={
+          <>
+            Registro <strong>anônimo</strong> das buscas — sem conta, sem IP,
+            sem sessão. Só a contagem aparece aqui: o texto buscado pode conter
+            desabafo e nunca é exibido individualmente.
+          </>
+        }
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
           <CardNumero rotulo="Buscas registradas" valor={buscas.total} />
           <CardNumero rotulo="Últimos 30 dias" valor={buscas.ultimos30} />
           <CardNumero
@@ -162,12 +166,12 @@ export default async function AdminDashboardPage() {
             }
           />
         </div>
-      </section>
+      </Secao>
 
       <p className="mt-8 font-mono text-xs text-muted-foreground">
         Leads é a métrica dos 500 do edital. Contagens direto do banco, sem
         cache. Os recortes de 7 dias contam a partir de agora, não do domingo.
       </p>
-    </>
+    </PaginaAdmin>
   );
 }

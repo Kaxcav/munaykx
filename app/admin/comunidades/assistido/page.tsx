@@ -1,5 +1,8 @@
 import Link from "next/link";
 import CadastroAssistido from "@/components/admin/CadastroAssistido";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { buttonVariants } from "@/components/ui/button";
 import { iaDisponivel } from "@/lib/ai";
 import { salvarComunidade } from "../actions";
 
@@ -14,42 +17,31 @@ export const dynamic = "force-dynamic";
  */
 export default function CadastroAssistidoPage() {
   return (
-    <>
-      <p className="eyebrow mb-3">Comunidades</p>
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">
-        Cadastro assistido
-      </h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        O organizador já escreveu tudo em algum lugar. Cole aqui em vez de
-        digitar campo a campo.
-      </p>
-
+    <PaginaAdmin
+      eyebrow="Comunidades"
+      titulo="Cadastro assistido"
+      descricao="O organizador já escreveu tudo em algum lugar. Cole aqui em vez de digitar campo a campo."
+    >
       {iaDisponivel() ? (
         <div className="mt-8">
           <CadastroAssistido salvar={salvarComunidade.bind(null, null)} />
         </div>
       ) : (
-        <div className="mt-8 max-w-2xl rounded-lg border p-5">
-          <p className="font-semibold">A IA está desligada neste ambiente</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sem <code>ANTHROPIC_API_KEY</code> não há o que assistir. O cadastro
-            manual continua valendo e é o mesmo formulário.
-          </p>
-          <Link
-            href="/admin/comunidades/nova"
-            className="mt-5 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
-          >
-            Cadastrar manualmente
-          </Link>
-        </div>
+        <EstadoVazio
+          titulo="A IA está desligada neste ambiente"
+          descricao={
+            <>
+              Sem <code>ANTHROPIC_API_KEY</code> não há o que assistir. O
+              cadastro manual continua valendo e é o mesmo formulário.
+            </>
+          }
+          acao={
+            <Link href="/admin/comunidades/nova" className={buttonVariants()}>
+              Cadastrar manualmente
+            </Link>
+          }
+        />
       )}
-
-      <Link
-        href="/admin/comunidades"
-        className="mt-10 inline-block font-mono text-xs uppercase tracking-wider text-muted-foreground"
-      >
-        ← Comunidades
-      </Link>
-    </>
+    </PaginaAdmin>
   );
 }

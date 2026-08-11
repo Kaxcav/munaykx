@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { EstadoPublicacao } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { formatarDataAdmin } from "@/lib/admin";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import {
   Table,
   TableBody,
@@ -29,27 +31,29 @@ export default async function AdminEventosPage() {
   const agora = new Date();
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="eyebrow mb-3">Operação</p>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Eventos
-          </h1>
-        </div>
-        <Link
-          href="/admin/eventos/novo"
-          className={buttonVariants()}
-        >
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo="Eventos"
+      descricao="Todos — inclusive os passados, os inativos e os ilustrativos."
+      acoes={
+        <Link href="/admin/eventos/novo" className={buttonVariants()}>
           + Novo evento
         </Link>
-      </div>
-
+      }
+    >
       {eventos.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">Nenhum evento cadastrado ainda.</p>
+        <EstadoVazio
+          titulo="Nenhum evento cadastrado ainda."
+          descricao="Evento precisa de comunidade: quem cria o evento é a comunidade dona dele."
+          acao={
+            <Link href="/admin/eventos/novo" className={buttonVariants()}>
+              Criar o primeiro
+            </Link>
+          }
+        />
       ) : (
         <div className="mt-8">
-            <Table>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Evento</TableHead>
@@ -94,7 +98,7 @@ export default async function AdminEventosPage() {
                         <Link
                           href={`/eventos/${e.slug}`}
                           target="_blank"
-                          className="text-muted-foreground underline underline-offset-4 hover:text-petroleo"
+                          className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
                         >
                           Ver no site ↗
                         </Link>
@@ -113,6 +117,6 @@ export default async function AdminEventosPage() {
           </Table>
         </div>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

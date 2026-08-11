@@ -175,12 +175,20 @@ export default async function GerenciarEvento({
         <h2 className="font-display text-2xl font-bold">
           Inscritos ({inscritos.length})
         </h2>
-        <a
-          href={`/painel/eventos/${evento.id}/csv`}
-          className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
-        >
-          Baixar CSV deste evento
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/painel/eventos/${evento.id}/relatorio`}
+            className="rounded-full bg-petroleo px-5 py-2 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+          >
+            Ver relatório
+          </Link>
+          <a
+            href={`/painel/eventos/${evento.id}/csv`}
+            className="rounded-full border border-petroleo/20 px-5 py-2 text-sm font-semibold transition-colors hover:border-petroleo/50"
+          >
+            Baixar CSV deste evento
+          </a>
+        </div>
       </div>
 
       {inscritos.length === 0 ? (

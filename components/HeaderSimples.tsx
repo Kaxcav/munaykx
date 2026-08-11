@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 
 /**
  * Header sem sessão — para os error boundaries, que são Client Components
@@ -31,7 +32,7 @@ export default function HeaderSimples() {
 
         <Link
           href="/#cadastro"
-          className="rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+          className={buttonVariants()}
         >
           Entrar na lista
         </Link>

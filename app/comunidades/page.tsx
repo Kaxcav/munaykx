@@ -3,7 +3,13 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BuscaIA from "@/components/BuscaIA";
-import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { CardComunidade } from "@/components/comum/CardComunidade";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { buttonVariants } from "@/components/ui/button";
 import { getCommunities, getCommunityFacets } from "@/lib/communities";
 import { recortesComDado, tituloDoRecorte } from "@/lib/descoberta";
 import { iaDisponivel } from "@/lib/ia";
@@ -68,12 +74,10 @@ export default async function ComunidadesPage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-20">
-        <p className="eyebrow mb-3">Descoberta</p>
-        <h1 className="max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Comunidades de Brasília, filtradas do seu jeito.
-        </h1>
-
+      <Pagina
+        eyebrow="Descoberta"
+        titulo="Comunidades de Brasília, filtradas do seu jeito."
+      >
         {iaDisponivel() && (
           <div className="mt-8 max-w-2xl">
             <BuscaIA
@@ -90,141 +94,110 @@ export default async function ComunidadesPage({
           // Mostrar o que foi entendido é obrigatório, não enfeite: sem isso
           // a pessoa não sabe POR QUE está vendo esses resultados, e não tem
           // como corrigir se a interpretação errou.
-          <div className="mt-6 max-w-2xl rounded-card border border-lime/50 bg-lime/10 p-4">
+          // O lime aqui é o uso CERTO dele (regra 7): um destaque só na
+          // dobra, marcando o que o modelo entendeu. Continua sendo a
+          // exceção da tela, não a superfície dela.
+          <Card className="mt-6 max-w-2xl border-lime/50 bg-lime/10 p-4">
             <p className="text-sm font-semibold">{ia}</p>
-            {iaObs && <p className="mt-1 text-sm text-petroleo/70">{iaObs}</p>}
+            {iaObs && <p className="mt-1 text-sm text-foreground/70">{iaObs}</p>}
             <Link
               href="/comunidades"
-              className="mt-2 inline-block text-xs font-medium text-petroleo/60 underline underline-offset-4 hover:text-petroleo"
+              className="mt-2 inline-block text-xs font-medium text-foreground/60 underline underline-offset-4 hover:text-foreground"
             >
               não era isso — limpar
             </Link>
-          </div>
+          </Card>
         )}
 
         <div className="mt-10 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow mr-1">Modalidade</span>
-            <Link
+            <Chip
               href={filtroHref({ regiao, iniciantes: soIniciantes })}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                !modalidade
-                  ? "border-petroleo bg-petroleo text-areia"
-                  : "border-petroleo/15 hover:border-petroleo/40"
-              }`}
+              ativo={!modalidade}
             >
               Todas
-            </Link>
+            </Chip>
             {facets.modalidades.map((m) => (
-              <Link
+              <Chip
                 key={m}
                 href={filtroHref({ modalidade: m, regiao, iniciantes: soIniciantes })}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                  modalidade === m
-                    ? "border-petroleo bg-petroleo text-areia"
-                    : "border-petroleo/15 hover:border-petroleo/40"
-                }`}
+                ativo={modalidade === m}
               >
                 {m}
-              </Link>
+              </Chip>
             ))}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow mr-1">Região</span>
-            <Link
+            <Chip
               href={filtroHref({ modalidade, iniciantes: soIniciantes })}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                !regiao
-                  ? "border-petroleo bg-petroleo text-areia"
-                  : "border-petroleo/15 hover:border-petroleo/40"
-              }`}
+              ativo={!regiao}
             >
               Todas
-            </Link>
+            </Chip>
             {facets.regioes.map((r) => (
-              <Link
+              <Chip
                 key={r}
                 href={filtroHref({ modalidade, regiao: r, iniciantes: soIniciantes })}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                  regiao === r
-                    ? "border-petroleo bg-petroleo text-areia"
-                    : "border-petroleo/15 hover:border-petroleo/40"
-                }`}
+                ativo={regiao === r}
               >
                 {r}
-              </Link>
+              </Chip>
             ))}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="eyebrow mr-1">Pra quem tá começando</span>
-            <Link
+            {/* `aria-pressed` aqui é correto e nos outros chips não seria:
+                este é o único que LIGA e DESLIGA a mesma coisa. */}
+            <Chip
               href={filtroHref({ modalidade, regiao, iniciantes: !soIniciantes })}
+              ativo={soIniciantes}
               aria-pressed={soIniciantes}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                soIniciantes
-                  ? "border-petroleo bg-petroleo text-areia"
-                  : "border-petroleo/15 hover:border-petroleo/40"
-              }`}
             >
               <span aria-hidden>🌱</span>
               Só as que acolhem iniciantes
-            </Link>
+            </Chip>
           </div>
         </div>
 
         {comunidades.length === 0 ? (
-          <div className="mt-16 max-w-xl">
-            <p className="font-display text-xl font-bold">
-              Nada por aqui com esse recorte — ainda.
-            </p>
-            <p className="mt-3 text-petroleo/70">
-              Brasília é grande e a MUNAY está mapeando comunidade por
-              comunidade. Tira um filtro pra ampliar a busca, ou{" "}
-              <Link href="/#cadastro" className="underline underline-offset-4">
-                entra na lista de espera
-              </Link>{" "}
-              que a gente avisa quando algo abrir na sua região.
-            </p>
-            {temFiltro && (
-              <Link
-                href="/comunidades"
-                className="mt-6 inline-block rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-              >
-                Limpar filtros
-              </Link>
-            )}
-          </div>
+          <EstadoVazio
+            titulo="Nada por aqui com esse recorte — ainda."
+            descricao={
+              <>
+                Brasília é grande e a MUNAY está mapeando comunidade por
+                comunidade. Tira um filtro pra ampliar a busca, ou{" "}
+                <Link href="/#cadastro" className="underline underline-offset-4">
+                  entra na lista de espera
+                </Link>{" "}
+                que a gente avisa quando algo abrir na sua região.
+              </>
+            }
+            acao={
+              temFiltro && (
+                <Link href="/comunidades" className={buttonVariants({ size: "sm" })}>
+                  Limpar filtros
+                </Link>
+              )
+            }
+          />
         ) : (
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {comunidades.map((c) => (
-              <Link
+              <CardComunidade
                 key={c.id}
-                href={`/comunidades/${c.slug}`}
-                className="group rounded-card border border-petroleo/10 bg-white/70 p-6 transition-colors hover:border-petroleo/30"
-              >
-                <article>
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
-                    <span className="shrink-0 rounded-full border border-petroleo/15 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-petroleo/60">
-                      {c.regiao}
-                    </span>
-                  </div>
-                  {c.horarios && (
-                    <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
-                      {c.horarios}
-                      {c.local ? ` — ${c.local}` : ""}
-                    </p>
-                  )}
-                  <p className="mt-2 text-sm text-petroleo/60">
-                    {c.nivel ?? c.modalidade}
-                  </p>
-                  {c.acolheIniciante && (
-                    <SeloAcolheIniciante className="mt-3" />
-                  )}
-                </article>
-              </Link>
+                slug={c.slug}
+                nome={c.nome}
+                regiao={c.regiao}
+                modalidade={c.modalidade}
+                nivel={c.nivel}
+                horarios={c.horarios}
+                local={c.local}
+                acolheIniciante={c.acolheIniciante}
+              />
             ))}
           </div>
         )}
@@ -241,27 +214,22 @@ export default async function ComunidadesPage({
         )}
 
         {recortes.length > 0 && (
-          <section className="mt-16 border-t border-petroleo/10 pt-10">
-            <h2 className="eyebrow mb-4">Buscas frequentes</h2>
+          <Secao titulo="Buscas frequentes" regua>
             <div className="flex flex-wrap gap-2">
               {recortes.map((r) => (
-                <Link
-                  key={r.slug}
-                  href={`/descobrir/${r.slug}`}
-                  className="rounded-full border border-petroleo/15 px-4 py-1.5 text-sm font-medium transition-colors hover:border-petroleo/40"
-                >
+                <Chip key={r.slug} href={`/descobrir/${r.slug}`}>
                   {tituloDoRecorte(r)}
-                </Link>
+                </Chip>
               ))}
             </div>
-          </section>
+          </Secao>
         )}
 
-        <p className="mt-10 font-mono text-xs text-petroleo/45">
+        <p className="mt-10 font-mono text-xs text-foreground/45">
           * Comunidades marcadas como exemplo são ilustrativas. As parceiras
           reais serão anunciadas no lançamento.
         </p>
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

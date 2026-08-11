@@ -60,6 +60,15 @@ jobs:
       - name: Aplicar migrations
         run: npx prisma migrate deploy
 
+      # Guardrails do design system. Vêm ANTES do typecheck de propósito:
+      # os dois erros que eles pegam (classe de Tailwind v4 e regressão de
+      # higiene) passam pelo typecheck, pelo lint e pelo build sem uma
+      # reclamação — e chegam em produção como "meio errado" silencioso.
+      # Barato de rodar, e é a trava que impede a migração pro shadcn de
+      # regredir por baixo enquanto os lotes correm em paralelo.
+      - name: Guardrails do design system
+        run: npm run verificar
+
       - name: Typecheck
         run: npm run typecheck
 

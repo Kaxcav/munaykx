@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   enviarAvisoLancamentoAction,
   type EstadoLancamento,
@@ -20,13 +22,9 @@ import {
 function Botao({ desabilitado }: { desabilitado: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending || desabilitado}
-      className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-50"
-    >
+    <Button type="submit" disabled={pending || desabilitado}>
       {pending ? "Enviando…" : "Enviar aviso de lançamento"}
-    </button>
+    </Button>
   );
 }
 
@@ -47,9 +45,9 @@ export default function AvisoLancamento({
   const nesteLote = Math.min(pendentes, lote);
 
   return (
-    <section className="mt-8 rounded-card border border-petroleo/15 bg-white/70 p-6">
+    <Card className="mt-8 p-6">
       <h2 className="font-display text-xl font-bold">Aviso de lançamento</h2>
-      <p className="mt-1 text-sm text-petroleo/80">
+      <p className="mt-1 text-sm text-foreground/80">
         Manda o e-mail “a MUNAY abriu” para quem entrou na lista de espera pelo
         site. Quem está aqui por ter feito inscrição em evento não recebe — não
         foi isso que a pessoa pediu.
@@ -57,21 +55,25 @@ export default function AvisoLancamento({
 
       <dl className="mt-4 flex flex-wrap gap-6 text-sm">
         <div>
-          <dt className="font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
+          <dt className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             ainda não receberam
           </dt>
-          <dd className="font-display text-2xl font-bold">{pendentes}</dd>
+          <dd className="font-display text-2xl font-bold tabular-nums">
+            {pendentes}
+          </dd>
         </div>
         <div>
-          <dt className="font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
+          <dt className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             já receberam
           </dt>
-          <dd className="font-display text-2xl font-bold">{avisados}</dd>
+          <dd className="font-display text-2xl font-bold tabular-nums">
+            {avisados}
+          </dd>
         </div>
       </dl>
 
       {pendentes === 0 ? (
-        <p className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm text-petroleo/80">
+        <p className="mt-4 rounded-card border border-border p-4 text-sm text-foreground/80">
           Não há ninguém na fila. Quem entrar na lista a partir de agora recebe
           a confirmação de cadastro, mas não este aviso — o lançamento já foi
           comunicado.
@@ -83,7 +85,7 @@ export default function AvisoLancamento({
               type="checkbox"
               name="confirmo"
               value="sim"
-              className="mt-1 h-4 w-4 accent-petroleo"
+              className="mt-1 h-4 w-4 accent-primary"
             />
             <span>
               Confirmo que a MUNAY lançou e que este e-mail deve sair agora para{" "}
@@ -97,7 +99,7 @@ export default function AvisoLancamento({
             <Botao desabilitado={false} />
           </div>
           {pendentes > lote ? (
-            <p className="mt-3 text-sm text-petroleo/70">
+            <p className="mt-3 text-sm text-muted-foreground">
               Sai em lotes de {lote} para não bater no limite do provedor.
               Clique de novo para mandar o próximo.
             </p>
@@ -106,32 +108,32 @@ export default function AvisoLancamento({
       )}
 
       {estado.status === "sem-confirmacao" ? (
-        <p className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm">
+        <p className="mt-4 rounded-card border border-border p-4 text-sm">
           Nada foi enviado — marque a confirmação primeiro.
         </p>
       ) : null}
 
       {estado.status === "disputa" ? (
-        <p className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm">
+        <p className="mt-4 rounded-card border border-border p-4 text-sm">
           Outra janela pegou este lote no mesmo instante e nada foi enviado
           daqui. Recarregue a página e clique de novo.
         </p>
       ) : null}
 
       {estado.status === "vazio" ? (
-        <p className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm">
+        <p className="mt-4 rounded-card border border-border p-4 text-sm">
           A fila já estava vazia — ninguém recebeu nada agora.
         </p>
       ) : null}
 
       {estado.status === "enviado" ? (
-        <div className="mt-4 rounded-xl border border-petroleo/15 p-4 text-sm">
+        <div className="mt-4 rounded-card border border-border p-4 text-sm">
           <p className="font-semibold">
             {estado.enviados} de {estado.tentados}{" "}
             {estado.tentados === 1 ? "e-mail saiu" : "e-mails saíram"}.
           </p>
           {estado.falharam > 0 ? (
-            <p className="mt-1 text-petroleo/80">
+            <p className="mt-1 text-foreground/80">
               {estado.falharam}{" "}
               {estado.falharam === 1 ? "falhou" : "falharam"} no envio. Essas
               pessoas ficam marcadas como avisadas mesmo assim, para o lote não
@@ -139,13 +141,13 @@ export default function AvisoLancamento({
               uma.
             </p>
           ) : null}
-          <p className="mt-1 text-petroleo/80">
+          <p className="mt-1 text-foreground/80">
             {estado.restantes === 0
               ? "A fila acabou."
               : `Ainda faltam ${estado.restantes}. Clique de novo para o próximo lote.`}
           </p>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { assertAdmin } from "@/lib/admin-auth";
 import { listarPendentes } from "@/lib/aprovacao";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import { aprovarAction, recusarAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -26,96 +30,88 @@ export default async function AdminAprovacoesPage() {
   const pendentes = await listarPendentes();
 
   return (
-    <>
-      <div>
-        <p className="eyebrow mb-3">Operação</p>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Fila de aprovação
-        </h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo="Fila de aprovação"
+      descricao={
+        <>
           Comunidades cadastradas pelo painel, aguardando revisão.{" "}
           <strong>Aprovar</strong> publica no site na hora;{" "}
           <strong>recusar</strong> mantém fora e avisa o organizador com o
           motivo. Antes de aprovar, confira o texto de autorização aceito.
-        </p>
-      </div>
-
+        </>
+      }
+    >
       {pendentes.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">
-          Nada na fila — nenhuma comunidade pendente de aprovação.
-        </p>
+        <EstadoVazio
+          titulo="Nada na fila."
+          descricao="Nenhuma comunidade pendente de aprovação — o que entrar pelo painel aparece aqui."
+        />
       ) : (
         <ul className="mt-8 space-y-5">
           {pendentes.map((c) => (
-            <li
-              key={c.id}
-              className="rounded-2xl border border-petroleo/10 p-6"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-display text-xl font-bold">{c.nome}</h2>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    /{c.slug}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {c.modalidade} · {c.regiao}
-                    {c.organizacao ? ` · ${c.organizacao}` : ""} · cadastrada em{" "}
-                    {fmtData.format(c.createdAt)}
-                  </p>
+            <li key={c.id}>
+              <Card className="p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      /{c.slug}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {c.modalidade} · {c.regiao}
+                      {c.organizacao ? ` · ${c.organizacao}` : ""} · cadastrada
+                      em {fmtData.format(c.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-4 rounded-xl border border-petroleo/10 bg-areia/40 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Autorização aceita
-                  {c.autorizacaoEm ? ` · ${fmtData.format(c.autorizacaoEm)}` : ""}
-                </p>
-                <p className="mt-1 text-sm">
-                  {c.autorizacaoTexto ?? (
-                    <span className="text-muted-foreground">
-                      — sem texto de autorização registrado —
-                    </span>
-                  )}
-                </p>
-              </div>
+                <Card className="mt-4 bg-muted p-4">
+                  <p className="eyebrow">
+                    Autorização aceita
+                    {c.autorizacaoEm ? ` · ${fmtData.format(c.autorizacaoEm)}` : ""}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    {c.autorizacaoTexto ?? (
+                      <span className="text-muted-foreground">
+                        — sem texto de autorização registrado —
+                      </span>
+                    )}
+                  </p>
+                </Card>
 
-              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end">
-                <form action={aprovarAction}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <button type="submit" className={buttonVariants()}>
-                    Aprovar e publicar
-                  </button>
-                </form>
+                <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <form action={aprovarAction}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <Button type="submit">Aprovar e publicar</Button>
+                  </form>
 
-                <form
-                  action={recusarAction}
-                  className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-end"
-                >
-                  <input type="hidden" name="id" value={c.id} />
-                  <label className="flex-1">
-                    <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Motivo da recusa (vai no e-mail)
-                    </span>
-                    <textarea
-                      name="motivo"
-                      required
-                      rows={2}
-                      placeholder="Ex.: precisamos da autorização assinada do responsável pela marca."
-                      className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-petroleo/30"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className={buttonVariants({ variant: "outline" })}
+                  <form
+                    action={recusarAction}
+                    className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-end"
                   >
-                    Recusar
-                  </button>
-                </form>
-              </div>
+                    <input type="hidden" name="id" value={c.id} />
+                    <label className="flex-1">
+                      <span className="eyebrow mb-1 block">
+                        Motivo da recusa (vai no e-mail)
+                      </span>
+                      <Textarea
+                        name="motivo"
+                        required
+                        rows={2}
+                        placeholder="Ex.: precisamos da autorização assinada do responsável pela marca."
+                      />
+                    </label>
+                    <Button type="submit" variant="outline">
+                      Recusar
+                    </Button>
+                  </form>
+                </div>
+              </Card>
             </li>
           ))}
         </ul>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

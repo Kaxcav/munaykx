@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { EstadoPublicacao } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import {
   Table,
   TableBody,
@@ -19,37 +21,37 @@ export default async function AdminComunidadesPage() {
   });
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="eyebrow mb-3">Operação</p>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Comunidades
-          </h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo="Comunidades"
+      descricao="Todas — inclusive as inativas e as ilustrativas, que não aparecem no site."
+      acoes={
+        <>
           <Link
             href="/admin/comunidades/assistido"
             className={buttonVariants({ variant: "outline" })}
           >
             Colar texto (IA)
           </Link>
-          <Link
-            href="/admin/comunidades/nova"
-            className={buttonVariants()}
-          >
+          <Link href="/admin/comunidades/nova" className={buttonVariants()}>
             + Nova comunidade
           </Link>
-        </div>
-      </div>
-
+        </>
+      }
+    >
       {comunidades.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">
-          Nenhuma comunidade cadastrada ainda.
-        </p>
+        <EstadoVazio
+          titulo="Nenhuma comunidade cadastrada ainda."
+          descricao="Enquanto não houver uma, /comunidades e /mapa respondem vazio pro visitante."
+          acao={
+            <Link href="/admin/comunidades/nova" className={buttonVariants()}>
+              Cadastrar a primeira
+            </Link>
+          }
+        />
       ) : (
         <div className="mt-8">
-            <Table>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
@@ -83,7 +85,7 @@ export default async function AdminComunidadesPage() {
                         <Link
                           href={`/comunidades/${c.slug}`}
                           target="_blank"
-                          className="text-muted-foreground underline underline-offset-4 hover:text-petroleo"
+                          className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
                         >
                           Ver no site ↗
                         </Link>
@@ -102,6 +104,6 @@ export default async function AdminComunidadesPage() {
           </Table>
         </div>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

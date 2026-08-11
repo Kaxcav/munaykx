@@ -4,6 +4,10 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { AdminFormState } from "@/lib/admin";
 import CommunityForm from "@/components/admin/CommunityForm";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   analisarTextoAction,
   type EstadoAssistido,
@@ -25,13 +29,9 @@ import {
 function BotaoAnalisar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Lendo o texto…" : "Analisar texto"}
-    </button>
+    </Button>
   );
 }
 
@@ -48,20 +48,18 @@ export default function CadastroAssistido({
   return (
     <>
       <form action={analisar} className="max-w-2xl">
-        <label className="block text-sm font-semibold" htmlFor="texto">
-          Cole o texto do organizador
-        </label>
+        <Label htmlFor="texto">Cole o texto do organizador</Label>
         <p className="mt-1 text-sm text-muted-foreground">
           Bio do Instagram, convite do grupo de WhatsApp, mensagem solta — o que
           ele já escreveu. A IA lê e propõe o preenchimento;{" "}
           <strong>nada é salvo até você revisar e clicar em Salvar</strong>.
         </p>
-        <textarea
+        <Textarea
           id="texto"
           name="texto"
           rows={6}
           maxLength={2000}
-          className="mt-3 w-full rounded-lg border border-petroleo/20 bg-white/80 px-3 py-2 text-sm focus:border-petroleo/50 focus:outline-none"
+          className="mt-3"
           placeholder="Ex.: Corrida no Parque da Cidade toda terça e quinta às 6h. Iniciantes bem-vindos, a gente espera todo mundo no fim."
         />
         <div className="mt-4">
@@ -70,25 +68,25 @@ export default function CadastroAssistido({
       </form>
 
       {estado.status === "erro" ? (
-        <p className="mt-6 max-w-2xl rounded-lg border border-destructive/40 p-4 text-sm text-destructive">
+        <Card className="mt-6 max-w-2xl border-destructive/40 p-4 text-sm text-destructive">
           {estado.mensagem}
-        </p>
+        </Card>
       ) : null}
 
       {estado.status === "ok" ? (
         <section className="mt-10">
-          <div className="max-w-2xl rounded-lg border border-petroleo/15 bg-white/70 p-4">
+          <Card className="max-w-2xl p-4">
             <p className="text-sm font-semibold">Proposta da IA — revise antes de salvar</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Campo em branco é campo que o texto não informava. A IA não chuta:
               preencha você.
             </p>
             {estado.sugestao.observacao ? (
-              <p className="mt-3 rounded-lg border border-petroleo/15 p-3 text-sm">
+              <p className="mt-3 rounded-card border border-border p-3 text-sm">
                 <strong>Atenção:</strong> {estado.sugestao.observacao}
               </p>
             ) : null}
-          </div>
+          </Card>
 
           <div className="mt-6">
             {/* MESMO formulário e MESMA action do cadastro manual — o

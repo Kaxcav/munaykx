@@ -148,6 +148,16 @@ Por impacto, não por conforto: **L4 (admin)** e **L3 (painel)** primeiro — s�
 76 dos 171 controles crus e as telas onde o organizador trabalha. Depois L5, L2,
 L6, L7.
 
+**L4 fechado em 11/08.** O admin entregou 37 dos 47 controles crus que tinha; os
+10 que sobram têm dono: **6 são caixa de marcar** (esperam o `<Checkbox>` do §5)
+e **4 são falso positivo do grep** — a palavra `<button>`/`<select>` escrita
+dentro de comentário de documentação em `Paginacao.tsx`, `SeletorEvento.tsx`
+(duas) e `CommunityForm.tsx`. Esses três arquivos já são 100% DS no código.
+Não reescrevi o comentário alheio pra baixar o número: mexer em texto só pra
+agradar o contador é o jeito curto de transformar guardrail em teatro. Se o F0
+quiser resolver, o conserto certo é o script pular comentário — e isso é lote
+dele, não meu.
+
 ---
 
 ## 4. Regras da rodada (não negociáveis)
@@ -178,7 +188,7 @@ L1 implementa.
 
 | Quem pediu | O quê | Estado |
 |---|---|---|
-| — | — | — |
+| L4 (admin) | **`<Checkbox>` em `components/ui/`** — caixa de marcar. O admin tem 6 (`ativo`, `demo`, `gratuito` nos dois formulários, e a confirmação do aviso de lançamento) e o L5 vai ter mais, no consentimento do `/perfil`. **Não dá pra reusar `<Input>`**: ele é `h-11 w-full rounded-full`, desenhado pra campo de texto — numa caixa de 16px isso não é ajuste de classe, é outra peça. Enquanto não existir, o admin mantém `<input type="checkbox" className="h-4 w-4 accent-primary">` e esses 6 continuam contados como controle cru, de propósito. | **aberto** — só o dono do L1 implementa |
 
 ---
 
@@ -231,7 +241,8 @@ Atualizado por quem executa, no próprio PR.
 | Lote | Worktree · branch | Estado | Nota |
 |---|---|---|---|
 | F0 + L1 | `C:\munay-043` · `feat/shadcn-fundacao` | **entregue** | 584 testes verdes (8 novos), build e guardrails verdes. Baseline: controle-cru 171→165, superfície-à-mão 93→84, adoção 12→21 arquivos |
-| L2…L7 | — | livre | podem abrir em paralelo agora: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**` |
+| **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. Baseline: controle-cru 165→**128** (−37), superfície-à-mão 84→**82** (−2), adoção 21→**29** arquivos. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
+| L2, L3, L5, L6, L7 | — | livre | podem abrir em paralelo agora: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. O L4 não tocou nenhuma pasta fora de `app/admin/**` e `components/admin/**` |
 
 **Coordenação:** claim e diário em `C:\munay-site\docs\comunicacao\`
 (`S-shadcn.md`), conforme `docs/PROTOCOLO-sessoes.md`. As três frentes de

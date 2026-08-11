@@ -25,6 +25,19 @@ model Lead {
   modalidade  String?
   origem      String   @default("site")
 
+  /// Quando esta pessoa recebeu o aviso de lançamento. `null` = ainda não
+  /// recebeu, e é isso que a ferramenta do /admin usa como fila.
+  ///
+  /// A marca é gravada ANTES do envio, num `updateMany` que só pega quem ainda
+  /// está `null` — a reserva é atômica de propósito. Duas abas do admin
+  /// clicando junto, ou um clique duplo, disputam a MESMA linha e só uma leva;
+  /// a outra recebe zero e não manda nada. O custo dessa escolha é conhecido:
+  /// se o envio falhar depois de reservar, a pessoa não recebe e não é
+  /// tentada de novo. É o lado certo de errar — reenviar em lote para uma
+  /// base inteira é dano que não se desfaz, e o relatório da tela mostra
+  /// quantos falharam para o dono decidir o que fazer.
+  avisadoLancamentoEm DateTime? @map("avisado_lancamento_em")
+
   @@unique([email, tipo])
   @@map("leads")
 }

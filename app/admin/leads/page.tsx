@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { pendentesDeAviso, jaAvisados, LOTE_MAX } from "@/lib/lancamento";
+import AvisoLancamento from "@/components/admin/AvisoLancamento";
 import { formatarDataAdmin } from "@/lib/admin";
 import {
   PERIODOS,
@@ -57,6 +59,11 @@ export default async function AdminLeadsPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const [pendentesLancamento, avisadosLancamento] = await Promise.all([
+    pendentesDeAviso(),
+    jaAvisados(),
+  ]);
+
   const params = await searchParams;
   const tipo = TIPOS.find((t) => t === params.tipo);
   const origem = ORIGENS.find((o) => o === params.origem);
@@ -110,6 +117,15 @@ export default async function AdminLeadsPage({
           Exportar CSV
         </a>
       </div>
+
+      {/* A ferramenta de lançamento fica aqui, e não numa tela própria, porque
+          é aqui que o dono olha a base antes de decidir. Ela NÃO dispara nada
+          sozinha — ver lib/lancamento.ts. */}
+      <AvisoLancamento
+        pendentes={pendentesLancamento}
+        avisados={avisadosLancamento}
+        lote={LOTE_MAX}
+      />
 
       <div className="mt-6 space-y-2">
         <BuscaAdmin

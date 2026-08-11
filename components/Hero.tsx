@@ -1,3 +1,4 @@
+import { buttonVariants } from "@/components/ui/button";
 import PlanoPiloto from "./PlanoPiloto";
 
 /**
@@ -38,15 +39,21 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href="#cadastro"
-              className="rounded-full bg-petroleo px-7 py-3.5 font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-            >
+            {/* Os dois CTAs da primeira dobra agora saem do `buttonVariants`
+                (mesma pílula, mesma altura `lg`, mesmo hover-lime que o resto
+                do site) — o segundo mantém a casca sálvia do briefing item 6,
+                que é decisão de marca e não deriva do DS. */}
+            <a href="#cadastro" className={buttonVariants({ size: "lg" })}>
               Bora, quero entrar
             </a>
             <a
               href="#organizador"
-              className="rounded-full border-2 border-salvia bg-salvia-soft px-7 py-3.5 font-semibold text-salvia-deep transition-colors hover:bg-salvia-deep hover:text-areia"
+              className={buttonVariants({
+                variant: "outline",
+                size: "lg",
+                className:
+                  "border-2 border-salvia bg-salvia-soft text-salvia-deep hover:bg-salvia-deep hover:text-areia",
+              })}
             >
               Eu que organizo
             </a>

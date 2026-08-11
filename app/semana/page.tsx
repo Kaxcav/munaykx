@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { eventosDaSemana, resumoVigente, DIAS_DA_JANELA } from "@/lib/ai/semana";
 import { formatarDataEvento } from "@/lib/events";
 
@@ -56,43 +61,37 @@ export default async function SemanaPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-5 py-20">
-        <p className="eyebrow">Curadoria</p>
-        <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight">
-          A Semana em Brasília
-        </h1>
-        <p className="mt-3 text-petroleo/70">
-          O que acontece nas comunidades nos próximos {DIAS_DA_JANELA} dias.
-        </p>
-
+      {/* `max-w-3xl`: a página é uma coluna de leitura (o resumo da IA é um
+          parágrafo corrido), não uma grade. Vale a mesma razão da
+          `/privacidade`. */}
+      <Pagina
+        className="max-w-3xl"
+        eyebrow="Curadoria"
+        titulo="A Semana em Brasília"
+        descricao={`O que acontece nas comunidades nos próximos ${DIAS_DA_JANELA} dias.`}
+      >
         {eventos.length === 0 ? (
-          <div className="mt-10 rounded-card border border-petroleo/15 bg-white/70 p-8">
-            <p className="font-display text-lg font-bold">
-              Nenhum encontro marcado para esta semana
-            </p>
-            <p className="mt-2 text-petroleo/70">
-              A cidade não para — o que falta é estar mapeado aqui. Se você
-              organiza algo, coloca no ar: leva menos de um minuto.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href="/comunidades"
-                className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-              >
-                Ver as comunidades
-              </Link>
-              <Link
-                href="/#organizador"
-                className="rounded-full border border-petroleo/20 px-6 py-3 text-sm font-semibold transition-colors hover:border-petroleo/50"
-              >
-                Eu que organizo
-              </Link>
-            </div>
-          </div>
+          <EstadoVazio
+            titulo="Nenhum encontro marcado para esta semana"
+            descricao="A cidade não para — o que falta é estar mapeado aqui. Se você organiza algo, coloca no ar: leva menos de um minuto."
+            acao={
+              <>
+                <Link href="/comunidades" className={buttonVariants({ size: "sm" })}>
+                  Ver as comunidades
+                </Link>
+                <Link
+                  href="/#organizador"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  Eu que organizo
+                </Link>
+              </>
+            }
+          />
         ) : (
           <>
             {resumo ? (
-              <section className="mt-10 rounded-card border border-petroleo/10 bg-white/70 p-7">
+              <Card className="mt-10 p-7">
                 {/* Texto da IA: renderizado pelo React, que escapa por
                     construção. `whitespace-pre-line` preserva as quebras do
                     post sem precisar de innerHTML. */}
@@ -103,36 +102,34 @@ export default async function SemanaPage() {
                   curadoria da semana · {resumo.eventos}{" "}
                   {resumo.eventos === 1 ? "encontro" : "encontros"}
                 </p>
-              </section>
+              </Card>
             ) : null}
 
-            <section className="mt-10">
-              <p className="eyebrow mb-3">Os encontros, um a um</p>
+            <Secao titulo="Os encontros, um a um">
               <ul className="grid gap-3">
                 {eventos.map((e) => (
                   <li key={e.slug}>
-                    <Link
-                      href={`/eventos/${e.slug}`}
-                      className="block rounded-card border border-petroleo/10 bg-white/70 p-5 transition-colors hover:border-petroleo/30"
-                    >
-                      <p className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
-                        {formatarDataEvento(e.startsAt)}
-                      </p>
-                      <p className="mt-1 font-display text-lg font-bold">
-                        {e.titulo}
-                      </p>
-                      <p className="mt-1 text-sm text-petroleo/70">
-                        {e.comunidade} · {e.regiao}
-                        {e.local ? ` · ${e.local}` : ""}
-                      </p>
+                    <Link href={`/eventos/${e.slug}`} className="block">
+                      <Card className="p-5 transition-colors hover:border-primary/30">
+                        <p className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
+                          {formatarDataEvento(e.startsAt)}
+                        </p>
+                        <p className="mt-1 font-display text-lg font-bold">
+                          {e.titulo}
+                        </p>
+                        <p className="mt-1 text-sm text-petroleo/70">
+                          {e.comunidade} · {e.regiao}
+                          {e.local ? ` · ${e.local}` : ""}
+                        </p>
+                      </Card>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </section>
+            </Secao>
           </>
         )}
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import SeloAcolheIniciante from "@/components/SeloAcolheIniciante";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { getCommunities } from "@/lib/communities";
 import {
   LEGENDA_FAMILIAS,
@@ -148,9 +151,13 @@ export default async function Vitrine() {
 
               <div className="mt-4 flex items-start justify-between gap-3">
                 <h3 className="font-display text-xl font-bold">{c.nome}</h3>
-                <span className="shrink-0 rounded-full border border-petroleo/15 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-petroleo/60">
+                {/* Mesma etiqueta de região que o `<CardComunidade>` do L1
+                    usa na descoberta — antes eram duas receitas diferentes
+                    pra mesma informação, o que fazia a home e a
+                    `/comunidades` parecerem de sites diferentes. */}
+                <Badge variant="outline" className="shrink-0">
                   {c.regiao}
-                </span>
+                </Badge>
               </div>
 
               <p className={`mt-3 font-mono text-xs uppercase tracking-[0.14em] ${cor.tinta}`}>
@@ -166,9 +173,25 @@ export default async function Vitrine() {
             </>
           );
 
-          const estilo = `group block h-full rounded-card border border-petroleo/10 ${cor.fundo} p-6 transition-all hover:-translate-y-0.5 hover:border-petroleo/25`;
+          // O raio e a borda saem do `<Card>`; a COR DA FAMÍLIA continua no
+          // `<article>`, e essa divisão NÃO é arbitrária.
+          //
+          // A primeira versão desta migração jogou `cor.fundo` no `<Card>` e
+          // deixou o `<article>` sem classe — e `tests/landing.spec.ts` ficou
+          // vermelho na hora ("card sem fundo: rgba(0,0,0,0)"). Aquele teste
+          // é a trava da SAFELIST: o acento é escolhido em runtime, então sem
+          // ele o card sai colorido em dev e cinza em produção. Ele mede o
+          // fundo computado de `#comunidades article` — e mudar o seletor
+          // dele pra acompanhar o refactor teria sido consertar o
+          // instrumento em vez da peça. Com a cor onde sempre esteve, o
+          // teste continua medindo o mesmo lugar, sem uma linha alterada.
+          //
+          // Visualmente é idêntico: o `<article>` preenche o card inteiro
+          // (`h-full` + o padding), e o `overflow-hidden` do `<Card>` recorta
+          // a cor no raio da marca.
+          const estilo = cn("group block h-full p-6", cor.fundo);
 
-          // O `<article>` carrega o estilo NOS DOIS CASOS, e o `<Link>` é só
+          // O `<Card>` carrega o estilo NOS DOIS CASOS, e o `<Link>` é só
           // casca de navegação.
           //
           // Antes não era assim: com slug, a cor ficava no `<Link>` e o
@@ -178,7 +201,11 @@ export default async function Vitrine() {
           // banco vazio e falhar com o banco cheio. Teste que depende do
           // estado do seed é o tipo de verde que o projeto já decidiu não
           // aceitar (ver a nota do handoff de 06/08).
-          const cartao = <article className={estilo}>{conteudo}</article>;
+          const cartao = (
+            <Card className="h-full overflow-hidden transition-all hover:-translate-y-0.5 hover:border-petroleo/25">
+              <article className={estilo}>{conteudo}</article>
+            </Card>
+          );
 
           return c.slug ? (
             <Link key={c.nome} href={`/comunidades/${c.slug}`} className="block">

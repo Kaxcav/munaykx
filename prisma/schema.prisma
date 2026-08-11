@@ -287,6 +287,11 @@ model Rsvp {
   // (não no client) pra backfillar linhas existentes na própria migration.
   token      String     @unique @default(dbgenerated("(gen_random_uuid())::text"))
   canceledAt DateTime?  @map("canceled_at")
+  // Idempotência do lembrete de véspera ("O que esperar", 1 dia antes). O cron
+  // reivindica de forma ATÔMICA (updateMany condicional em `avisadoVesperaEm`),
+  // então rodar o job duas vezes no mesmo dia — ou dois processos em corrida —
+  // manda UM e-mail por inscrito, nunca dois. `null` = ainda não avisado.
+  avisadoVesperaEm DateTime? @map("avisado_vespera_em")
   // Check-in do organizador. Marcar duas vezes é o mesmo que marcar uma —
   // a idempotência mora aqui, não na UI, porque a tela é otimista e a rede
   // de quadra e parque cai no meio da lista.

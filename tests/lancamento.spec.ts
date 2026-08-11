@@ -298,7 +298,7 @@ test.describe("NÃO envia sozinho", () => {
   });
 
   test("a camada não é chamada em módulo nenhum fora do admin", () => {
-    // A varredura de verdade: qualquer arquivo que importe lib/lancamento tem
+    // A varredura de verdade: qualquer arquivo que IMPORTE lib/lancamento tem
     // que ser a página do admin (que só LÊ contadores) ou a action dele.
     const permitidos = [
       "app/admin/leads/actions.ts",
@@ -306,12 +306,26 @@ test.describe("NÃO envia sozinho", () => {
       "lib/lancamento.ts",
       "tests/lancamento.spec.ts",
     ];
+
+    // `--untracked` de propósito: sem ele o `git grep` enxerga só o que já
+    // está no índice, e a suíte rodada ANTES de commitar daria verde por não
+    // ver o arquivo novo. Foi exatamente assim que este teste passou local e
+    // reprovou no CI — verde por acidente de ambiente, a armadilha que o
+    // CLAUDE.md manda reproduzir antes de confiar num verde.
     const saida = execSync(
-      'git grep -l "lib/lancamento" -- "*.ts" "*.tsx" || true',
+      'git grep -l --untracked "lib/lancamento" -- "*.ts" "*.tsx" || true',
       { encoding: "utf8" },
     );
-    const arquivos = saida.split("\n").map((s) => s.trim()).filter(Boolean);
-    for (const a of arquivos) {
+    const candidatos = saida
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    for (const a of candidatos) {
+      // Comentários deste projeto citam `lib/lancamento.ts` para explicar o
+      // mecanismo — e citação não é chamada. O que importa é o import.
+      const codigo = semComentarios(a);
+      if (!codigo.includes("lib/lancamento")) continue;
       expect(permitidos, `${a} importa lib/lancamento`).toContain(a);
     }
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 /**
  * Campo de formulário do perfil — rótulo, dica, erro e acessibilidade num
@@ -60,12 +61,12 @@ export default function Campo({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
+      <Label htmlFor={id} className="mb-1.5 font-medium">
         {rotulo}
         {opcional && (
-          <span className="ml-1.5 font-normal text-petroleo/45">opcional</span>
+          <span className="ml-1.5 font-normal text-foreground/45">opcional</span>
         )}
-      </label>
+      </Label>
 
       <Input
         id={id}
@@ -80,13 +81,16 @@ export default function Campo({
         maxLength={maxLength}
         aria-invalid={erro ? true : undefined}
         aria-describedby={descrito || undefined}
-        className={
-          erro ? "border-coral focus-visible:border-coral" : "border-petroleo/20"
-        }
+        // Sem erro, o campo fica com o `border-input` que o `<Input>` já traz
+        // — que é exatamente o mesmo valor do `border-petroleo/20` que estava
+        // escrito aqui (`input` = areia×petróleo 0.2, em `lib/tema.ts`). Uma
+        // classe a menos e a borda dos campos do perfil passa a andar junto
+        // com a do resto do site.
+        className={erro ? "border-destructive focus-visible:border-destructive" : undefined}
       />
 
       {dica && (
-        <p id={idDica} className="mt-1.5 text-xs leading-relaxed text-petroleo/50">
+        <p id={idDica} className="mt-1.5 text-xs leading-relaxed text-foreground/50">
           {dica}
         </p>
       )}
@@ -94,7 +98,7 @@ export default function Campo({
         <p
           id={idErro}
           role="alert"
-          className="mt-1.5 flex gap-1.5 text-xs font-medium text-coral"
+          className="mt-1.5 flex gap-1.5 text-xs font-medium text-destructive"
         >
           <span aria-hidden>↳</span>
           {erro}

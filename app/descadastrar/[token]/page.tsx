@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Pagina } from "@/components/comum/Pagina";
 import { prisma } from "@/lib/db";
 import { lerTokenDescadastro } from "@/lib/avisos-evento";
 import { lerTokenDescadastroPost } from "@/lib/avisos-post";
@@ -58,15 +59,16 @@ export default async function DescadastrarPage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-5 py-24">
-        <p className="eyebrow">Avisos por e-mail</p>
+      {/*
+        `tamanho` fica no padrão e a largura vem do `max-w-2xl`: é uma tela de
+        uma frase só, e a régua da /mapa (`max-w-6xl`) faria o texto atravessar
+        o monitor inteiro. O container é o mesmo — o que muda é a medida de
+        leitura, que é decisão de conteúdo, não de casca.
+      */}
+      <Pagina eyebrow="Avisos por e-mail" titulo={ok ? "Pronto — avisos desligados" : "Link inválido"} className="max-w-2xl">
         {ok ? (
-          <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Pronto — avisos desligados
-            </h1>
-            <p className="mt-4 text-petroleo/70">
-              Você não recebe mais e-mails
+          <p className="mt-4 text-foreground/70">
+            Você não recebe mais e-mails
               {deEvento ? " de eventos novos" : " de avisos"}
               {comunidade ? (
                 <>
@@ -84,33 +86,27 @@ export default async function DescadastrarPage({
                 Minhas comunidades
               </Link>{" "}
               (é só entrar).
-            </p>
-          </>
+          </p>
         ) : (
-          <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Link inválido
-            </h1>
-            <p className="mt-4 text-petroleo/70">
-              Este link de descadastro não confere — pode ter sido digitado
-              errado ou alterado. Você gerencia os avisos entrando em{" "}
-              <Link
-                href="/minhas-comunidades"
-                className="underline underline-offset-4"
-              >
-                Minhas comunidades
-              </Link>
-              .
-            </p>
-          </>
+          <p className="mt-4 text-foreground/70">
+            Este link de descadastro não confere — pode ter sido digitado
+            errado ou alterado. Você gerencia os avisos entrando em{" "}
+            <Link
+              href="/minhas-comunidades"
+              className="underline underline-offset-4"
+            >
+              Minhas comunidades
+            </Link>
+            .
+          </p>
         )}
         <Link
           href="/"
-          className="mt-12 inline-block font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60 hover:text-petroleo"
+          className="mt-12 inline-block font-mono text-xs uppercase tracking-[0.14em] text-foreground/60 transition-colors hover:text-foreground"
         >
           ← Início
         </Link>
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

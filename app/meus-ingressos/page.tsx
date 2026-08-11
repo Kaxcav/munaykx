@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Ingresso from "@/components/Ingresso";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { sessaoAtual } from "@/lib/sessao";
 import { prisma } from "@/lib/db";
 import { situacaoDe } from "@/lib/inscricoes";
@@ -32,6 +35,20 @@ export const metadata: Metadata = {
  * `Header` ou do `HeaderSimples`: os dois existentes são claros e virariam
  * uma faixa branca colada no topo. Menos navegação aqui também é decisão —
  * quem abre o ingresso quer ver o ingresso.
+ *
+ * ── POR QUE ESTA TELA NÃO USA O `<Pagina>` (lote L5 da rodada shadcn) ─────
+ *
+ * O `<Pagina>` é a régua do site CLARO — `text-foreground` sobre areia. Vestir
+ * a carteira com ele significaria sobrescrever cor em cada elemento até não
+ * sobrar nada do container, e o resultado seria um componente compartilhado
+ * fingindo servir dois temas. A carteira é a exceção que o briefing pediu de
+ * propósito ("o oposto das demais telas"), então ela mantém o `<main>` dela.
+ *
+ * O que ela ADOTA do design system é o que dá pra adotar sem mentir: `<Card>`
+ * (com override de cor por `className`, que é o mecanismo previsto) e
+ * `buttonVariants`. O ganho não é visual — é que o raio, a borda e a forma do
+ * botão passam a vir do mesmo lugar que o resto do site, então mudar o raio da
+ * marca muda aqui também.
  *
  * ── ⚠️ O NOME "INGRESSO" ESTÁ ADIANTADO, DE PROPÓSITO ────────────────────
  *
@@ -90,7 +107,7 @@ export default async function MeusIngressosPage() {
         </div>
 
         {inscricoes.length === 0 ? (
-          <div className="mt-12 max-w-xl rounded-card border border-areia/20 bg-petroleo-soft p-8">
+          <Card className="mt-12 max-w-xl border-areia/20 bg-petroleo-soft p-8">
             <p className="font-display text-2xl font-bold">
               Sua carteira está vazia
             </p>
@@ -98,21 +115,29 @@ export default async function MeusIngressosPage() {
               Confirmou presença em algum evento? Ele vira ingresso aqui na
               hora, com código e tudo.
             </p>
+            {/* Lime CHEIO é o acento raro da regra 7, e este é o lugar certo:
+                uma única ação, numa tela escura, onde petróleo sobre petróleo
+                não existiria. Por isso o `variant` sai do padrão por
+                `className` em vez de virar variante nova no DS — variante que
+                serve uma tela é classe, não peça. */}
             <Link
               href="/comunidades"
-              className="mt-6 inline-block rounded-full bg-lime px-6 py-3 text-sm font-bold text-petroleo transition-opacity hover:opacity-90"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "mt-6 h-auto bg-lime px-6 py-3 text-sm font-bold text-petroleo transition-opacity hover:bg-lime hover:opacity-90",
+              )}
             >
               Achar um rolê
             </Link>
-          </div>
+          </Card>
         ) : (
           <>
-            <Secao
+            <SecaoCarteira
               titulo="Valendo agora"
               vazio="Nenhum ingresso ativo no momento."
               itens={valendo}
             />
-            <Secao titulo="Histórico" vazio="" itens={passados} />
+            <SecaoCarteira titulo="Histórico" vazio="" itens={passados} />
           </>
         )}
       </main>
@@ -138,7 +163,10 @@ function CabecalhoCarteira() {
         </Link>
         <Link
           href="/comunidades"
-          className="rounded-full border border-areia/25 px-5 py-2 text-sm font-semibold transition-colors hover:border-lime hover:text-lime"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "border-areia/25 px-5 text-sm hover:border-lime hover:bg-transparent hover:text-lime",
+          )}
         >
           Descobrir
         </Link>
@@ -147,7 +175,7 @@ function CabecalhoCarteira() {
   );
 }
 
-function Secao({
+function SecaoCarteira({
   titulo,
   itens,
   vazio,

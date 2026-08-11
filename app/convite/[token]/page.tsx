@@ -3,6 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Pagina } from "@/components/comum/Pagina";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { sessaoAtual } from "@/lib/sessao";
 import { convitePorToken } from "@/lib/convites";
 import { aceitarAction } from "./actions";
@@ -48,71 +51,59 @@ export default async function ConvitePage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl px-5 py-24">
-        <p className="eyebrow">Convite</p>
+      <Pagina
+        eyebrow="Convite"
+        titulo={
+          invalido
+            ? "Convite não encontrado"
+            : `Administrar ${convite!.organization.nome}`
+        }
+        descricao={
+          invalido
+            ? "O link pode ter sido revogado ou digitado errado."
+            : jaUsado
+              ? "Este convite já foi usado. Se foi você, sua conta já administra a organização."
+              : expirado
+                ? "Este convite expirou. Peça um novo para quem te convidou."
+                : combina
+                  ? "Aceitando, você passa a gerenciar as comunidades, os eventos e a lista de inscritos desta organização."
+                  : undefined
+        }
+        className="max-w-2xl"
+      >
+        {/* Só o caso "convite de outra pessoa" e o erro de servidor sobram
+            como conteúdo: os outros quatro estados são uma frase, e frase de
+            estado é a `descricao` do `<Pagina>` — não um parágrafo avulso
+            reinventando a hierarquia da tela. */}
+        {!invalido && !jaUsado && !expirado && !combina && (
+          <Card className="mt-4 border-destructive/40 p-4 text-sm text-destructive">
+            Este convite é para <strong>{convite!.email}</strong>, e você está
+            logado como <strong>{sessao.user.email}</strong>. Entre com a conta
+            convidada para aceitar.
+          </Card>
+        )}
 
-        {invalido ? (
+        {!invalido && !jaUsado && !expirado && combina && (
           <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Convite não encontrado
-            </h1>
-            <p className="mt-4 text-petroleo/70">
-              O link pode ter sido revogado ou digitado errado.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight">
-              Administrar {convite!.organization.nome}
-            </h1>
-
-            {jaUsado ? (
-              <p className="mt-4 text-petroleo/70">
-                Este convite já foi usado. Se foi você, sua conta já administra a
-                organização.
-              </p>
-            ) : expirado ? (
-              <p className="mt-4 text-petroleo/70">
-                Este convite expirou. Peça um novo para quem te convidou.
-              </p>
-            ) : !combina ? (
-              <p className="mt-4 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-                Este convite é para <strong>{convite!.email}</strong>, e você
-                está logado como <strong>{sessao.user.email}</strong>. Entre com
-                a conta convidada para aceitar.
-              </p>
-            ) : (
-              <>
-                <p className="mt-4 text-petroleo/70">
-                  Aceitando, você passa a gerenciar as comunidades, os eventos e
-                  a lista de inscritos desta organização.
-                </p>
-                {erro ? (
-                  <p className="mt-6 rounded-xl border border-destructive/40 p-4 text-sm text-destructive">
-                    {erro}
-                  </p>
-                ) : null}
-                <form action={aceitarAction} className="mt-8">
-                  <input type="hidden" name="token" value={token} />
-                  <button
-                    type="submit"
-                    className="rounded-full bg-petroleo px-7 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-                  >
-                    Aceitar convite
-                  </button>
-                </form>
-              </>
-            )}
+            {erro ? (
+              <Card className="mt-6 border-destructive/40 p-4 text-sm text-destructive">
+                {erro}
+              </Card>
+            ) : null}
+            <form action={aceitarAction} className="mt-8">
+              <input type="hidden" name="token" value={token} />
+              <Button type="submit">Aceitar convite</Button>
+            </form>
           </>
         )}
 
         <Link
           href="/"
-          className="mt-14 inline-block font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60 hover:text-petroleo"
+          className="mt-14 inline-block font-mono text-xs uppercase tracking-[0.14em] text-foreground/60 transition-colors hover:text-foreground"
         >
           ← Voltar pro início
         </Link>
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

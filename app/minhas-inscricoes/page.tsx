@@ -3,6 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Pagina } from "@/components/comum/Pagina";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import { sessaoAtual } from "@/lib/sessao";
 import { prisma } from "@/lib/db";
 import { formatarDataEvento } from "@/lib/events";
@@ -35,7 +41,8 @@ export const metadata: Metadata = {
  * JavaScript novo, o botão voltar funciona, o link é compartilhável e
  * recarregar não perde o filtro. É o mesmo padrão dos filtros de
  * `/comunidades` — coerência que também é o motivo de não ter virado
- * `useState`.
+ * `useState`. É por isso que o chip aqui é o `<Chip>` do DS (que É um
+ * `<Link>`) e não o `<ChipBotao>`.
  *
  * A contagem em cada chip vem SEMPRE do conjunto inteiro, nunca do recorte
  * filtrado: chip que mostra "0" só porque você está em outra aba não informa
@@ -69,22 +76,29 @@ export default async function MinhasInscricoesPage({
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-16">
-        <p className="eyebrow">Sua conta</p>
-        <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Minhas inscrições
-        </h1>
-        <p className="mt-4 max-w-xl text-petroleo/70">
-          Tudo que você confirmou com o e-mail <strong>{sessao.user.email}</strong>{" "}
-          — inclusive o que foi feito antes de você criar a conta.
-        </p>
-
+      <Pagina
+        eyebrow="Sua conta"
+        titulo="Minhas inscrições"
+        descricao={
+          <>
+            Tudo que você confirmou com o e-mail{" "}
+            <strong>{sessao.user.email}</strong> — inclusive o que foi feito
+            antes de você criar a conta.
+          </>
+        }
+      >
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
-          <Link href="/perfil" className="font-medium underline underline-offset-4 hover:text-salvia-deep">
+          <Link
+            href="/perfil"
+            className="font-medium underline underline-offset-4 hover:text-salvia-deep"
+          >
             Meu perfil
           </Link>
-          <span aria-hidden className="text-petroleo/25">·</span>
-          <Link href="/meus-ingressos" className="font-medium underline underline-offset-4 hover:text-salvia-deep">
+          <span aria-hidden className="text-foreground/25">·</span>
+          <Link
+            href="/meus-ingressos"
+            className="font-medium underline underline-offset-4 hover:text-salvia-deep"
+          >
             Meus ingressos
           </Link>
         </div>
@@ -97,29 +111,26 @@ export default async function MinhasInscricoesPage({
               const ativo = a.id === aba;
               return (
                 <li key={a.id}>
-                  <Link
+                  <Chip
                     href={`/minhas-inscricoes?aba=${a.id}`}
+                    ativo={ativo}
                     aria-current={ativo ? "page" : undefined}
-                    className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm transition-colors ${
-                      ativo
-                        ? "border-salvia bg-salvia-soft font-semibold text-salvia-deep"
-                        : "border-petroleo/20 bg-white/60 text-petroleo/70 hover:border-petroleo/40"
-                    }`}
+                    className="px-5 py-2.5"
                   >
                     {a.rotulo}
-                    <span
-                      className={`rounded-full px-2 py-0.5 font-mono text-[11px] ${
-                        ativo ? "bg-salvia text-areia" : "bg-petroleo/10 text-petroleo/60"
-                      }`}
-                    >
+                    {/* O contador vira `<Badge>` — e a variante muda com o
+                        chip porque o fundo muda: dentro do chip ativo
+                        (petróleo sólido) um badge `default` seria petróleo
+                        sobre petróleo. */}
+                    <Badge variant={ativo ? "secondary" : "outline"}>
                       {contagem[a.id]}
-                    </span>
-                  </Link>
+                    </Badge>
+                  </Chip>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-3 text-sm text-petroleo/55">
+          <p className="mt-3 text-sm text-foreground/55">
             {ABAS.find((a) => a.id === aba)?.descricao}
           </p>
         </nav>
@@ -133,39 +144,46 @@ export default async function MinhasInscricoesPage({
               const cor = classesDoAcento(acento);
               const s = selo(r, agora);
               return (
-                <li
-                  key={r.id}
-                  className={`rounded-card border border-petroleo/10 p-6 ${cor.fundo}`}
-                >
-                  <span aria-hidden className={`block h-1 w-10 rounded-full ${cor.traco}`} />
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <p className="font-display text-lg font-bold">{r.event.titulo}</p>
+                <li key={r.id}>
+                  {/* O acento de categoria continua vindo de
+                      `lib/modalidades.ts` e sobrescreve o `bg-card` do
+                      `<Card>` — é a cor que identifica a modalidade, e ela é
+                      informação, não decoração. */}
+                  <Card className={`h-full p-6 ${cor.fundo}`}>
                     <span
-                      className={`rounded-full border px-3 py-0.5 font-mono text-[11px] uppercase tracking-wider ${s.classe}`}
-                    >
-                      {s.rotulo}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-petroleo/70">
-                    {formatarDataEvento(r.event.startsAt)} · {r.event.community.nome}
-                  </p>
-                  {!r.event.gratuito && (
-                    <p className={`mt-1 font-mono text-xs uppercase tracking-wider ${cor.tinta}`}>
-                      Evento pago
+                      aria-hidden
+                      className={`block h-1 w-10 rounded-full ${cor.traco}`}
+                    />
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <p className="font-display text-lg font-bold">
+                        {r.event.titulo}
+                      </p>
+                      <Badge className={s.classe}>{s.rotulo}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-foreground/70">
+                      {formatarDataEvento(r.event.startsAt)} ·{" "}
+                      {r.event.community.nome}
                     </p>
-                  )}
-                  <Link
-                    href={`/rsvp/${r.token}`}
-                    className="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
-                  >
-                    Gerenciar inscrição
-                  </Link>
+                    {!r.event.gratuito && (
+                      <p
+                        className={`mt-1 font-mono text-xs uppercase tracking-wider ${cor.tinta}`}
+                      >
+                        Evento pago
+                      </p>
+                    )}
+                    <Link
+                      href={`/rsvp/${r.token}`}
+                      className="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
+                    >
+                      Gerenciar inscrição
+                    </Link>
+                  </Card>
                 </li>
               );
             })}
           </ul>
         )}
-      </main>
+      </Pagina>
       <Footer />
     </>
   );
@@ -199,15 +217,15 @@ function Vazio({ aba, temAlguma }: { aba: AbaInscricoes; temAlguma: boolean }) {
   }[aba];
 
   return (
-    <div className="mt-8 max-w-xl rounded-card border border-petroleo/10 bg-white/70 p-8">
-      <p className="font-display text-xl font-bold">{conteudo.titulo}</p>
-      <p className="mt-2 leading-relaxed text-petroleo/70">{conteudo.texto}</p>
-      <Link
-        href={conteudo.cta.href}
-        className="mt-6 inline-block rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-      >
-        {conteudo.cta.rotulo}
-      </Link>
-    </div>
+    <EstadoVazio
+      className="mt-8"
+      titulo={conteudo.titulo}
+      descricao={<p className="leading-relaxed">{conteudo.texto}</p>}
+      acao={
+        <Link href={conteudo.cta.href} className={buttonVariants()}>
+          {conteudo.cta.rotulo}
+        </Link>
+      }
+    />
   );
 }

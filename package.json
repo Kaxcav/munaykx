@@ -14,7 +14,10 @@
     "purgar-buscas": "node scripts/purgar-buscas.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "tema": "tsx scripts/gerar-tema.mjs"
+    "tema": "tsx scripts/gerar-tema.mjs",
+    "verificar": "npm run verificar:classes && npm run verificar:higiene",
+    "verificar:classes": "node scripts/verificar-classes.mjs",
+    "verificar:higiene": "node scripts/verificar-higiene.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

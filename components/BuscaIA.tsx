@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { ChipBotao } from "@/components/ui/chip";
 
 type Recomendacao = {
   slug: string;
@@ -90,14 +95,11 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
   }
 
   return (
-    <div className="rounded-card border border-petroleo/15 bg-white/70 p-5">
-      <label
-        htmlFor="busca-ia"
-        className="block font-display text-lg font-bold"
-      >
+    <Card className="p-5">
+      <Label htmlFor="busca-ia" destaque>
         Descreve o que você procura
-      </label>
-      <p className="mt-1 text-sm text-petroleo/60">
+      </Label>
+      <p className="mt-1 text-sm text-foreground/60">
         Escreve do seu jeito. A gente entende e filtra.
       </p>
 
@@ -108,26 +110,22 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
           void buscar(texto);
         }}
       >
-        <input
+        <Input
           id="busca-ia"
           type="text"
           value={texto}
           maxLength={300}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="quero correr de manhã perto de Taguatinga"
-          className="min-w-[16rem] flex-1 rounded-full border border-petroleo/20 bg-white px-5 py-3 text-sm outline-none transition-colors placeholder:text-petroleo/35 focus:border-petroleo"
+          className="min-w-[16rem] flex-1"
         />
-        <button
-          type="submit"
-          disabled={carregando || texto.trim().length < 3}
-          className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:cursor-not-allowed disabled:opacity-40"
-        >
+        <Button type="submit" disabled={carregando || texto.trim().length < 3}>
           {carregando ? "Entendendo…" : "Buscar"}
-        </button>
+        </Button>
       </form>
 
       {aviso && (
-        <p className="mt-3 text-sm text-petroleo/70" role="status">
+        <p className="mt-3 text-sm text-foreground/70" role="status">
           {aviso}
         </p>
       )}
@@ -142,19 +140,18 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
           <ul className="grid gap-3">
             {recomendacoes.map((r) => (
               <li key={r.slug}>
-                <Link
-                  href={`/comunidades/${r.slug}`}
-                  className="block rounded-card border border-petroleo/10 bg-white p-5 transition-colors hover:border-petroleo/30"
-                >
-                  <p className="font-display text-lg font-bold">{r.nome}</p>
-                  <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60">
-                    {r.modalidade} · {r.regiao}
-                  </p>
-                  {/* Texto do modelo: renderizado pelo React, que escapa por
-                      construção. Nada de innerHTML aqui. */}
-                  <p className="mt-3 text-sm leading-relaxed text-petroleo/80">
-                    {r.porque}
-                  </p>
+                <Link href={`/comunidades/${r.slug}`} className="block">
+                  <Card className="p-5 transition-colors hover:border-primary/30">
+                    <p className="font-display text-lg font-bold">{r.nome}</p>
+                    <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-foreground/60">
+                      {r.modalidade} · {r.regiao}
+                    </p>
+                    {/* Texto do modelo: renderizado pelo React, que escapa por
+                        construção. Nada de innerHTML aqui. */}
+                    <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+                      {r.porque}
+                    </p>
+                  </Card>
                 </Link>
               </li>
             ))}
@@ -163,23 +160,22 @@ export default function BuscaIA({ exemplos }: { exemplos: string[] }) {
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[11px] uppercase tracking-wider text-petroleo/45">
+        <span className="font-mono text-[11px] uppercase tracking-wider text-foreground/45">
           exemplos
         </span>
         {exemplos.map((ex) => (
-          <button
+          <ChipBotao
             key={ex}
-            type="button"
+            tamanho="sm"
             onClick={() => {
               setTexto(ex);
               void buscar(ex);
             }}
-            className="rounded-full border border-petroleo/15 px-3 py-1 text-xs transition-colors hover:border-petroleo/40"
           >
             {ex}
-          </button>
+          </ChipBotao>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

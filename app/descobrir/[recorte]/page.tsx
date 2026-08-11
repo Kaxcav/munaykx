@@ -3,6 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Pagina } from "@/components/comum/Pagina";
+import { Secao } from "@/components/comum/Secao";
+import { CardComunidade } from "@/components/comum/CardComunidade";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { buttonVariants } from "@/components/ui/button";
 import { getCommunities } from "@/lib/communities";
 import {
   acharRecorte,
@@ -96,130 +102,111 @@ export default async function DescobrirPage({ params }: { params: Params }) {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-5 py-20">
-        <Link
-          href="/comunidades"
-          className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60 hover:text-petroleo"
-        >
-          ← Todas as comunidades
-        </Link>
-
-        <p className="eyebrow mb-3 mt-8">Descoberta</p>
-        <h1 className="max-w-3xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {titulo}
-        </h1>
-        <p className="mt-4 max-w-2xl text-petroleo/70">
-          {comunidades.length === 1
-            ? "1 comunidade mapeada"
-            : `${comunidades.length} comunidades mapeadas`}
-          {recorte.regiao ? ` em ${recorte.regiao}` : " em Brasília"}
-          {eventos.length > 0 &&
-            ` · ${eventos.length} ${eventos.length === 1 ? "treino aberto" : "treinos abertos"} com inscrição`}
-          .
-        </p>
-
+      <Pagina
+        voltar={{ href: "/comunidades", texto: "Todas as comunidades" }}
+        eyebrow="Descoberta"
+        titulo={titulo}
+        descricao={
+          <>
+            {comunidades.length === 1
+              ? "1 comunidade mapeada"
+              : `${comunidades.length} comunidades mapeadas`}
+            {recorte.regiao ? ` em ${recorte.regiao}` : " em Brasília"}
+            {eventos.length > 0 &&
+              ` · ${eventos.length} ${eventos.length === 1 ? "treino aberto" : "treinos abertos"} com inscrição`}
+            .
+          </>
+        }
+      >
         {comunidades.length > 0 && (
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {comunidades.map((c) => (
-              <Link
+              // O selo "acolhe iniciantes" passa a aparecer aqui também.
+              // Não é feature nova: a `/comunidades` já mostrava, e esta
+              // tela não — porque o card estava duplicado e as duas cópias
+              // divergiram. Uma peça só, então a informação é a mesma nas
+              // duas portas de entrada.
+              <CardComunidade
                 key={c.id}
-                href={`/comunidades/${c.slug}`}
-                className="group rounded-card border border-petroleo/10 bg-white/70 p-6 transition-colors hover:border-petroleo/30"
-              >
-                <article>
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="font-display text-xl font-bold">{c.nome}</h2>
-                    <span className="shrink-0 rounded-full border border-petroleo/15 px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-petroleo/60">
-                      {c.regiao}
-                    </span>
-                  </div>
-                  {c.horarios && (
-                    <p className="mt-4 font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
-                      {c.horarios}
-                      {c.local ? ` — ${c.local}` : ""}
-                    </p>
-                  )}
-                  <p className="mt-2 text-sm text-petroleo/60">
-                    {c.nivel ?? c.modalidade}
-                  </p>
-                </article>
-              </Link>
+                slug={c.slug}
+                nome={c.nome}
+                regiao={c.regiao}
+                modalidade={c.modalidade}
+                nivel={c.nivel}
+                horarios={c.horarios}
+                local={c.local}
+                acolheIniciante={c.acolheIniciante}
+              />
             ))}
           </div>
         )}
 
         {eventos.length > 0 && (
-          <section className="mt-16">
-            <h2 className="font-display text-2xl font-extrabold tracking-tight">
-              Próximos treinos abertos
-            </h2>
-            <ul className="mt-6 divide-y divide-petroleo/10 rounded-card border border-petroleo/10 bg-white/70">
-              {eventos.map(({ evento, comunidade }) => (
-                <li key={evento.id}>
-                  <Link
-                    href={`/eventos/${evento.slug}`}
-                    className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-6 py-5 transition-colors hover:bg-petroleo/5"
-                  >
-                    <span>
-                      <span className="font-display text-lg font-bold">
-                        {evento.titulo}
+          <Secao titulo="Próximos treinos abertos" destaque>
+            <Card className="overflow-hidden">
+              <ul className="divide-y divide-border">
+                {eventos.map(({ evento, comunidade }) => (
+                  <li key={evento.id}>
+                    <Link
+                      href={`/eventos/${evento.slug}`}
+                      className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-6 py-5 transition-colors hover:bg-primary/5"
+                    >
+                      <span>
+                        <span className="font-display text-lg font-bold">
+                          {evento.titulo}
+                        </span>
+                        <span className="block text-sm text-foreground/60">
+                          {comunidade.nome}
+                          {evento.local ? ` · ${evento.local}` : ""}
+                        </span>
                       </span>
-                      <span className="block text-sm text-petroleo/60">
-                        {comunidade.nome}
-                        {evento.local ? ` · ${evento.local}` : ""}
+                      <span className="font-mono text-xs uppercase tracking-[0.14em] text-foreground/70">
+                        {formatarDataEvento(evento.startsAt)}
                       </span>
-                    </span>
-                    <span className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/70">
-                      {formatarDataEvento(evento.startsAt)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </Secao>
         )}
 
         {irmaos.length > 0 && (
-          <section className="mt-16">
-            <h2 className="eyebrow mb-4">Outros recortes</h2>
+          <Secao titulo="Outros recortes">
             <div className="flex flex-wrap gap-2">
               {irmaos.map((r) => (
-                <Link
-                  key={r.slug}
-                  href={`/descobrir/${r.slug}`}
-                  className="rounded-full border border-petroleo/15 px-4 py-1.5 text-sm font-medium transition-colors hover:border-petroleo/40"
-                >
+                <Chip key={r.slug} href={`/descobrir/${r.slug}`}>
                   {tituloDoRecorte(r)}
-                </Link>
+                </Chip>
               ))}
             </div>
-          </section>
+          </Secao>
         )}
 
-        <div className="mt-16 max-w-xl rounded-card border border-petroleo/10 bg-white/70 p-6">
+        <Card className="mt-16 max-w-xl p-6">
           <p className="font-display text-lg font-bold">
             Falta a sua comunidade aqui?
           </p>
-          <p className="mt-2 text-sm text-petroleo/70">
+          <p className="mt-2 text-sm text-foreground/70">
             A MUNAY está mapeando Brasília comunidade por comunidade. Se você
             organiza treino{recorte.regiao ? ` em ${recorte.regiao}` : ""},
             cadastra — é gratuito.
           </p>
           <Link
             href="/#cadastro"
-            className="mt-5 inline-block rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+            className={buttonVariants({ size: "sm", className: "mt-5" })}
           >
             Cadastrar comunidade
           </Link>
-        </div>
+        </Card>
 
         {recorte.reais === 0 && (
-          <p className="mt-10 font-mono text-xs text-petroleo/45">
+          <p className="mt-10 font-mono text-xs text-foreground/45">
             * Comunidades marcadas como exemplo são ilustrativas. As parceiras
             reais serão anunciadas no lançamento.
           </p>
         )}
-      </main>
+      </Pagina>
       <Footer />
     </>
   );

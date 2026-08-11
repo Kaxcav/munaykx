@@ -1,0 +1,6 @@
+# Quarentena: código cru da CLI do shadcn nunca entra no repositório.
+# Ele existe pra ser traduzido e virar components/ui/*, e aí morrer.
+# Só o LEIA-ME (que explica isso) e este arquivo ficam versionados.
+*
+!.gitignore
+!LEIA-ME.md

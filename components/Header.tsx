@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sessaoAtual } from "@/lib/sessao";
 import SairButton from "@/components/SairButton";
+import { buttonVariants } from "@/components/ui/button";
 
 export default async function Header() {
   // Sessão lida no servidor, de verdade — não o cookie otimista.
@@ -53,7 +54,7 @@ export default async function Header() {
             </Link>
             <Link
               href="/perfil"
-              className="rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+              className={buttonVariants()}
             >
               Minha conta
             </Link>
@@ -66,7 +67,7 @@ export default async function Header() {
             </Link>
             <Link
               href="/#cadastro"
-              className="rounded-full bg-petroleo px-5 py-2.5 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
+              className={buttonVariants()}
             >
               Entrar na lista
             </Link>

@@ -72,6 +72,17 @@ não só cor: um guardrail só de cor ficaria verde pra sempre sem medir nada.
 paleta de mapa (MapLibre, não Tailwind) e serão tokenizados no Lote 7 — mantê-los
 na conta é o que impede o número de crescer enquanto isso.
 
+**O que o L7 fez com eles (11/08):** 39 → **29**. Tokenizar aqui NÃO era derivar
+de `lib/brand.ts` — a paleta cartográfica ser própria é decisão registrada, e
+tomada justamente depois de o feedback reprovar o basemap tingido pela marca
+("ficou lamacento"). Tokenizar era **dar nome e matar a duplicata**: 29
+ocorrências viraram 20 tons declarados uma vez cada, em `PALETA`
+(`lib/mapa-temas.ts`), mais o branco das vias em `lib/mapa-estilo.ts`. O basemap
+não mudou um pixel — assinatura do estilo gerado medida antes e depois: mesmo
+hash, 67 camadas, 32 cores. Os 20 continuam **contados, não isentos**: cor de
+MapLibre é `paint` de camada, não passa por Tailwind e não tem alias de token —
+está contida, não resolvida.
+
 ---
 
 ## 2. Os lotes
@@ -211,6 +222,7 @@ L1 implementa.
 | L2 (evento) | **`asChild` no `<Card>`** (Slot do Radix, como o `<Button>` do registry faz). O `<Card>` é `<div>` fixa, e a `/agenda` tem DUAS listas onde o card É o item semântico: o aviso é `<article>` e o evento é `<li>` dentro de `<ul>`. Sem `asChild` a saída é `<li><Card>…</Card></li>` — funciona e foi o que entrou, mas empilha uma `<div>` por item e, no caso do `<article>`, faz a região do leitor de tela e a superfície visual serem caixas diferentes. Não é bloqueio: é a diferença entre a peça servir a lista e a lista contornar a peça. O L5 (`/minhas-inscricoes`, `/meus-ingressos`) vai bater no mesmo. | **aberto** — só o dono do L1 implementa |
 | L2 (evento) | **Uma `<Secao>` que aceite eyebrow E chamada display juntos.** Hoje é ou/ou: `destaque={false}` dá `eyebrow` + descrição em `text-sm`, `destaque` dá `h2` display sem eyebrow. A `/eventos/[slug]` precisava dos dois (eyebrow "Confirmar presença" + a chamada "Garante sua vaga…"), e a saída foi manter a chamada como `<p>` display dentro da seção. Ficou correto e o esqueleto de heading até melhorou — mas é o tipo de coisa que, repetida em quatro telas por quatro lotes, volta a virar quatro dialetos. | aberto |
 | L6 (landing) | **Promover `components/landing/Escuro.tsx` pra `components/comum/`** — o vocabulário de superfície ESCURA (`CARD_ESCURO`, `BLOCO_ESCURO`, `CONTROLE_ESCURO`, `BOTAO_LIME`, `<CampoEscuro>`). O DS inteiro assume fundo claro (`<Card>` é `bg-card`, `<Input>` é `bg-card`), e a landing tem três blocos petróleo por decisão de briefing: o card B2B do `<Publicos>`, o Bloco 03 do `<PainelFuncional>` e a dobra de cadastro. **O L5 vai encontrar o mesmo**: a `/meus-ingressos` é "tela escura, densa e verde, de propósito o oposto do resto do site" (STORY-011). Se cada lote escrever o seu, a rodada acaba com duas gramáticas de escuro — que é o defeito que ela existe pra matar. **Não é `dark:`**: o contador `dark-manual` é ZERO de propósito, porque a MUNAY não tem tema por preferência do sistema, tem blocos escuros deliberados. | **aberto** — só o dono do L1 implementa |
+| L7 (mapa) | **Fazer o `verificar:higiene` pular COMENTÁRIO.** Não é conveniência: hoje o contador `controle-cru` conta a tag citada num JSDoc (`EixoDeTempo.tsx` explica por que o slider é `<input type="range">` nativo) e o `cor-hex` conta hex escrito em prosa. Nos dois casos o incentivo que isso cria é errado — ou você apaga a explicação, ou reescreve o texto pra driblar o contador, e as duas coisas pioram o código pra melhorar o número. O L4 já esbarrou nisso em três arquivos e, com razão, não mexeu no comentário alheio. É lote do F0 (`scripts/verificar-*` é dele). Enquanto não existir, as ocorrências ficam contadas e nomeadas nos specs de lote. | aberto — só o dono do F0 |
 | L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
 | **L5 (área do usuário)** | **Reforço do pedido de `<Checkbox>` — TERCEIRA frente a esbarrar.** O `/perfil` tem duas caixas nativas: a de "perfil público" e a chave (`role="switch"`) do consentimento LGPD. Elas ficam contadas de propósito, num arquivo só (`components/perfil/PerfilForm.tsx`), com o número TRAVADO em 2 por `tests/usuario-ds.spec.ts`. **Atenção pra quem for implementar:** a chave de consentimento **não** é o mesmo componente da caixa — ela é `<input type="checkbox">` real só escondido visualmente, e é isso que faz o `<label>` envolvente dar nome acessível e o autofill do navegador funcionar. Se o `<Checkbox>` nascer como div com `role="checkbox"`, ele resolve o L3/L4 e **não** resolve a chave do L5. | aberto |
 | **L5 (área do usuário)** | **`<Secao>` aceitar `id` (e repassar `aria-labelledby` na `<section>`).** As cinco seções do `PerfilForm` são `<section aria-labelledby="sec-…">` com `<h2 id="sec-…">` — o vínculo é o que faz o leitor de tela anunciar "Você no controle, região". Como o `<Secao>` do L1 não expõe `id`, adotar a peça ali significaria **perder** acessibilidade, então mantive os `<h2>` locais e só tokenizei a cor. Duas props, sem mudança visual. | aberto |
@@ -272,7 +284,32 @@ Atualizado por quem executa, no próprio PR.
 | **L5 · Área do usuário** | `C:\munay-048` · `feat/shadcn-l5-usuario` | **entregue** | 9 telas + 4 componentes de perfil + `EntrarForm`/`ConfirmarEntrada`. Dívida do lote: **36 → 6** (22 controles crus → 6, dos quais **4 são comentário** e 2 são a isenção de caixa/chave; 14 superfícies à mão → 0). 616 testes verdes (12 novos, `tests/usuario-ds.spec.ts`). Três pedidos no §5. Achado: bug de layout PRÉ-EXISTENTE (37px de overflow em 375px na `/minhas-comunidades`) medido em `b50c4d7` e consertado — desvio confessado no próprio arquivo |
 | **L2 · Evento + RSVP + agenda** | `C:\munay-046` · `feat/shadcn-l2-evento` | **entregue** | 8 telas + 5 componentes. Dívida do lote: **23 → 1** (12 controles crus → 1, 11 superfícies à mão → 0). 612 testes verdes (7 novos, `tests/evento-ds.spec.ts`), 4 deles validados VERMELHOS contra a `main` antes de entrar. Um pedido novo no §5. |
 | **L6 · Landing + institucional** | `C:\munay-047` · `feat/shadcn-l6-landing` | **entregue** | 12 componentes + 3 telas. Dívida do lote: **24 → 1** (11 controles crus → 1, o honeypot anti-spam; 13 superfícies à mão → 0). `tests/landing-ds.spec.ts` (11 novos, 7 prova + 4 guarda), rodados contra a `main` antes de entrar: 8 vermelhos, 3 verdes. Um pedido no §5 (promover `landing/Escuro.tsx`). |
-| **L7 · Mapa** | — | livre | o último. Nenhum dos lotes entregues (L2, L3, L4, L5, L6) tocou pasta fora da própria raia |
+| **L7 · Mapa** | `C:\munay-049` · `feat/shadcn-l7-mapa` | **entregue** | 630 testes verdes (7 novos, `tests/mapa-ds.spec.ts`), build/lint/typecheck e guardrails verdes. `cor-hex` **39 → 29** (a tokenização do basemap que o §1 deixou marcada), `controle-cru` 62 → 61, `superfície-à-mão` 41 → 39, adoção 50 → 52. Duas mudanças visuais declaradas abaixo. |
+
+**RODADA FECHADA.** O L7 era o último. Do começo ao fim, medido pelo mesmo
+guardrail: `controle-cru` **171 → 29**, `superficie-a-mao` **93 → 1**, `cor-hex`
+**39 → 29**, adoção do DS **12/103 → 83/113**. Nenhum lote tocou pasta fora da
+própria raia, e os três pedidos abertos no §5 seguem abertos — são do L1 e do
+F0, e ficam pra quem for dono deles.
+
+### As duas mudanças visuais do L7 (deliberadas, e só estas)
+
+Nenhuma cor da paleta mudou, e o basemap está byte a byte igual. O que muda:
+
+| | antes (à mão) | agora (peça do DS) |
+|---|---|---|
+| `h1` da `/mapa` no desktop | `sm:text-5xl` | `sm:text-4xl` — é o que o `<Pagina>` do L1 codificou |
+| painel do eixo de tempo | `bg-white/60` sobre areia | `<Card>` = `--card` (branco sólido) + `--border` |
+
+A primeira merece nota. A `/mapa` é a **tela-referência** da rodada, e agora foi
+ela que teve de ceder um ponto pra caber no container que ela mesma inspirou. É
+o certo: uma tela não pode ser a régua **e** a exceção à régua. Se o PO preferir
+o título maior, a troca é no `<Pagina>` — um arquivo, todas as telas.
+
+Fora isso, o chip de dia da semana passou a usar `chipVariants` e ficou
+pixel-idêntico no estado ativo (`bg-primary` = petróleo, `text-primary-foreground`
+= areia, `8px 16px` de padding, peso 600 — tudo conferido com `getComputedStyle`
+na build); só a borda do inativo foi de `petroleo/20` pra `primary/15`.
 
 **Baseline depois de L1+L2+L3+L4+L5+L6** — recontado no merge, e este é o
 procedimento, não um detalhe: lotes paralelos derrubam contadores DIFERENTES, e

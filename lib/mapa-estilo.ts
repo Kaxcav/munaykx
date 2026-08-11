@@ -16,6 +16,14 @@ import { misturar } from "@/lib/cor";
  * função de zoom reaproveitada. Trocar um tom = uma linha.
  */
 
+/**
+ * O único hex que não sai da marca: branco puro. Ele não é cor de marca — é
+ * ausência de cor, o ponto de fuga da escala. Fica nomeado num lugar só (era
+ * digitado duas vezes) porque "a via principal é branca" é UMA decisão, e
+ * decisão escrita duas vezes é decisão que vai divergir.
+ */
+const BRANCO = "#ffffff";
+
 // ── Paleta do mapa, derivada da marca ────────────────────────────────────────
 const C = {
   fundo: brand.areia, //                                       base clara
@@ -29,8 +37,8 @@ const C = {
   predio3d: misturar(brand.areia, brand.petroleo, 0.16), //    prédio extrudado (3D): um tom acima
   predio3dTopo: misturar(brand.areia, brand.petroleo, 0.1), // topo mais claro (gradiente vertical)
   // Vias — herói. Casing escuro + fill claro (Waze-like), contraste alto.
-  viaFill: misturar(brand.areia, "#ffffff", 0.7), //           branco-creme das ruas
-  viaBigFill: "#ffffff", //                                    principais: branco puro, saltam
+  viaFill: misturar(brand.areia, BRANCO, 0.7), //              branco-creme das ruas
+  viaBigFill: BRANCO, //                                       principais: branco puro, saltam
   casingBig: misturar(brand.petroleo, brand.areia, 0.35), //   contorno forte
   casingMed: misturar(brand.petroleo, brand.areia, 0.6),
   casingSmall: misturar(brand.petroleo, brand.areia, 0.78),

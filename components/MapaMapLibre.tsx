@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Card } from "@/components/ui/card";
 import type { RegiaoNoMapa } from "@/lib/mapa";
 import { CENTROIDES, BBOX_DF, CENTRO_DF } from "@/lib/mapa-geo";
 import { estiloMapa } from "@/lib/mapa-temas";
@@ -238,17 +239,28 @@ export default function MapaMapLibre({
 
   return (
     <div className={full ? "absolute inset-0" : "relative"}>
-      <div
-        ref={container}
-        data-testid="mapa-real"
-        className={
-          full
-            ? "h-full w-full bg-areia"
-            : "h-[28rem] w-full overflow-hidden rounded-card border border-petroleo/10 bg-areia sm:h-[34rem]"
-        }
-        role="application"
-        aria-label="Mapa das comunidades no Distrito Federal"
-      />
+      {/* Modo embutido: a moldura é o `<Card>` do DS. `bg-areia` continua
+          sobrescrevendo o `bg-card` branco de propósito — é a cor que aparece
+          no instante entre montar o container e os tiles chegarem, e branco
+          ali daria um flash claro no meio da página de areia.
+          Modo `full`: o mapa É a tela, não tem moldura nenhuma pra ser card. */}
+      {full ? (
+        <div
+          ref={container}
+          data-testid="mapa-real"
+          className="h-full w-full bg-areia"
+          role="application"
+          aria-label="Mapa das comunidades no Distrito Federal"
+        />
+      ) : (
+        <Card
+          ref={container}
+          data-testid="mapa-real"
+          className="h-[28rem] w-full overflow-hidden bg-areia sm:h-[34rem]"
+          role="application"
+          aria-label="Mapa das comunidades no Distrito Federal"
+        />
+      )}
       {selecionada && (
         <div
           className={

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AvisoPublico } from "@/lib/posts";
 import CorpoAviso from "@/components/CorpoAviso";
+import { Card } from "@/components/ui/card";
 
 /**
  * Feed de avisos da comunidade no site público (STORY-010, tarefa 5).
@@ -44,23 +45,22 @@ export default function FeedAvisos({
       ) : (
         <div className="grid gap-4">
           {avisos.map((a) => (
-            <article
-              key={a.id}
-              className="rounded-card border border-petroleo/10 bg-white/70 p-6"
-            >
-              <p className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60">
-                <time dateTime={a.createdAt.toISOString()}>
-                  {a.createdAt.toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                  })}
-                </time>{" "}
-                · {a.autorNome ?? "organizador da comunidade"}
-              </p>
-              <div className="mt-3">
-                <CorpoAviso corpo={a.corpo} />
-              </div>
-            </article>
+            <Card key={a.id} className="p-6">
+              <article>
+                <p className="font-mono text-xs uppercase tracking-[0.14em] text-petroleo/60">
+                  <time dateTime={a.createdAt.toISOString()}>
+                    {a.createdAt.toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "short",
+                    })}
+                  </time>{" "}
+                  · {a.autorNome ?? "organizador da comunidade"}
+                </p>
+                <div className="mt-3">
+                  <CorpoAviso corpo={a.corpo} />
+                </div>
+              </article>
+            </Card>
           ))}
         </div>
       )}

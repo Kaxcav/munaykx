@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+
 /**
  * Briefing 07/08/2026, itens 6 e 7: mais verde sálvia e tom de voz próximo,
  * coloquial, sem corporativês. A copy antiga ("Do primeiro treino à rotina:
@@ -33,16 +35,22 @@ export default function ComoFunciona() {
         Três passos entre você e a sua próxima turma
       </h2>
 
+      {/* `<Card>` por fora, `<article>` por dentro — o mesmo arranjo que o
+          `<CardComunidade>` do L1 usa. O `<Card>` não tem `asChild` (é
+          `<div>` puro, sem Radix Slot, pra não virar client component), e a
+          semântica de artigo não se perde por isso. */}
       <div className="mt-12 grid gap-5 md:grid-cols-3">
         {PASSOS.map((p) => (
-          <article
+          <Card
             key={p.n}
-            className="rounded-card border border-salvia/35 bg-salvia-soft p-7 transition-colors hover:border-salvia"
+            className="border-salvia/35 bg-salvia-soft p-7 transition-colors hover:border-salvia"
           >
-            <p className="font-mono text-sm font-semibold text-salvia-deep">{p.n}</p>
-            <h3 className="mt-3 font-display text-2xl font-bold">{p.titulo}</h3>
-            <p className="mt-3 leading-relaxed text-petroleo/75">{p.texto}</p>
-          </article>
+            <article>
+              <p className="font-mono text-sm font-semibold text-salvia-deep">{p.n}</p>
+              <h3 className="mt-3 font-display text-2xl font-bold">{p.titulo}</h3>
+              <p className="mt-3 leading-relaxed text-petroleo/75">{p.texto}</p>
+            </article>
+          </Card>
         ))}
       </div>
     </section>

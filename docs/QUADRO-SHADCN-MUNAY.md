@@ -200,6 +200,7 @@ L1 implementa.
 | L3 (painel) | **Promover `<Campo>` e `<Aviso>` de `components/painel/` pra `components/comum/`.** `<Campo>` é rótulo+controle+dica (matou 23 cópias em 3 dialetos); `<Aviso>` é a faixa de `?ok=`/`?erro=` (matou 15 cópias em 4 receitas). O L4 já resolveu as mesmas duas dívidas do lado dele, e o L5 vai encontrar de novo — se cada lote escrever a sua, a rodada acaba com três "cabeçalho de campo" diferentes, que é exatamente o que ela existe pra matar. **Não copie: peça a promoção.** | aberto |
 | L2 (evento) | **`asChild` no `<Card>`** (Slot do Radix, como o `<Button>` do registry faz). O `<Card>` é `<div>` fixa, e a `/agenda` tem DUAS listas onde o card É o item semântico: o aviso é `<article>` e o evento é `<li>` dentro de `<ul>`. Sem `asChild` a saída é `<li><Card>…</Card></li>` — funciona e foi o que entrou, mas empilha uma `<div>` por item e, no caso do `<article>`, faz a região do leitor de tela e a superfície visual serem caixas diferentes. Não é bloqueio: é a diferença entre a peça servir a lista e a lista contornar a peça. O L5 (`/minhas-inscricoes`, `/meus-ingressos`) vai bater no mesmo. | **aberto** — só o dono do L1 implementa |
 | L2 (evento) | **Uma `<Secao>` que aceite eyebrow E chamada display juntos.** Hoje é ou/ou: `destaque={false}` dá `eyebrow` + descrição em `text-sm`, `destaque` dá `h2` display sem eyebrow. A `/eventos/[slug]` precisava dos dois (eyebrow "Confirmar presença" + a chamada "Garante sua vaga…"), e a saída foi manter a chamada como `<p>` display dentro da seção. Ficou correto e o esqueleto de heading até melhorou — mas é o tipo de coisa que, repetida em quatro telas por quatro lotes, volta a virar quatro dialetos. | aberto |
+| L6 (landing) | **Promover `components/landing/Escuro.tsx` pra `components/comum/`** — o vocabulário de superfície ESCURA (`CARD_ESCURO`, `BLOCO_ESCURO`, `CONTROLE_ESCURO`, `BOTAO_LIME`, `<CampoEscuro>`). O DS inteiro assume fundo claro (`<Card>` é `bg-card`, `<Input>` é `bg-card`), e a landing tem três blocos petróleo por decisão de briefing: o card B2B do `<Publicos>`, o Bloco 03 do `<PainelFuncional>` e a dobra de cadastro. **O L5 vai encontrar o mesmo**: a `/meus-ingressos` é "tela escura, densa e verde, de propósito o oposto do resto do site" (STORY-011). Se cada lote escrever o seu, a rodada acaba com duas gramáticas de escuro — que é o defeito que ela existe pra matar. **Não é `dark:`**: o contador `dark-manual` é ZERO de propósito, porque a MUNAY não tem tema por preferência do sistema, tem blocos escuros deliberados. | **aberto** — só o dono do L1 implementa |
 | L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
 
 ---
@@ -256,11 +257,24 @@ Atualizado por quem executa, no próprio PR.
 | **L3 · Painel** | `C:\munay-045` · `feat/shadcn-l3-painel` | **entregue** | 11 telas + 9 componentes. Dívida do lote: **108 → 1** (67 controles crus → 1, 41 superfícies à mão → 0). 588 testes verdes (4 novos, `tests/painel-ds.spec.ts`). Três pedidos no §5. |
 | **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
 | **L2 · Evento + RSVP + agenda** | `C:\munay-046` · `feat/shadcn-l2-evento` | **entregue** | 8 telas + 5 componentes. Dívida do lote: **23 → 1** (12 controles crus → 1, 11 superfícies à mão → 0). 612 testes verdes (7 novos, `tests/evento-ds.spec.ts`), 4 deles validados VERMELHOS contra a `main` antes de entrar. Um pedido novo no §5. |
-| L5, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nem o L2, nem o L3, nem o L4 tocaram pasta fora da própria raia |
+| **L6 · Landing + institucional** | `C:\munay-047` · `feat/shadcn-l6-landing` | **entregue** | 12 componentes + 3 telas. Dívida do lote: **24 → 1** (11 controles crus → 1, o honeypot anti-spam; 13 superfícies à mão → 0). `tests/landing-ds.spec.ts` (11 novos, 7 prova + 4 guarda), rodados contra a `main` antes de entrar: 8 vermelhos, 3 verdes. Um pedido no §5 (promover `landing/Escuro.tsx`). |
+| L5, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nenhum dos lotes entregues (L2, L3, L4, L6) tocou pasta fora da própria raia |
 
 **Baseline depois do L3 + L4** (recontado no merge, porque os dois lotes
 derrubaram contadores diferentes e escolher um lado do conflito daria número
 errado): ver `scripts/baseline-higiene.json`.
+
+**Baseline depois do L2 + L6:** `controle-cru` 62 → **41** ·
+`superficie-a-mao` 41 → **17** · adoção 50 → **70** dos 113 arquivos.
+
+E a colisão prevista pelo L3 aconteceu de novo, igualzinha: o **L2 mergeou no
+meio do PR do L6**, e os dois arquivos compartilhados
+(`scripts/baseline-higiene.json` e este quadro) conflitaram no rebase. A regra
+se confirmou pela segunda vez: **o baseline não se resolve escolhendo um
+lado** — o L6 media 52/28 sozinho e o L2 media 51/30 sozinho; qualquer um dos
+dois números deixaria teto frouxo pro próximo lote. O certo é pegar a versão
+da `main`, **recontar** (`-- --atualizar`) e commitar o resultado. Vale
+também pro L5 e pro L7.
 
 **Coordenação:** claim e diário em `C:\munay-site\docs\comunicacao\`
 (`S-shadcn.md`), conforme `docs/PROTOCOLO-sessoes.md`. As três frentes de

@@ -1,3 +1,6 @@
+import { SelectNativo } from "@/components/ui/input";
+import { Campo } from "@/components/painel/Campo";
+
 /**
  * Campo de DURAÇÃO do evento (Frente 1). O organizador escolhe duração, não
  * hora de fim — é como as pessoas pensam ("o treino dura 1h"). A escrita compõe
@@ -25,13 +28,17 @@ export default function CampoDuracao({ defaultValue = "" }: { defaultValue?: str
   // acrescenta a opção para não perdê-la silenciosamente ao reeditar.
   const temNaLista = OPCOES.some((o) => o.valor === defaultValue);
   return (
-    <label className="block">
-      <span className="mb-1 block text-sm font-semibold">Duração (opcional)</span>
-      <select
-        name="duracaoMin"
-        defaultValue={defaultValue}
-        className="w-full rounded-lg border border-petroleo/20 bg-white p-3 text-sm"
-      >
+    <Campo
+      rotulo="Duração"
+      opcional
+      dica={
+        <>
+          Ajuda o mapa a mostrar o que está <em>acontecendo</em> naquele horário —
+          não só o que começa.
+        </>
+      }
+    >
+      <SelectNativo name="duracaoMin" defaultValue={defaultValue}>
         {OPCOES.map((o) => (
           <option key={o.valor} value={o.valor}>
             {o.rotulo}
@@ -40,11 +47,7 @@ export default function CampoDuracao({ defaultValue = "" }: { defaultValue?: str
         {!temNaLista && defaultValue ? (
           <option value={defaultValue}>{defaultValue} minutos</option>
         ) : null}
-      </select>
-      <span className="mt-1 block text-xs text-petroleo/80">
-        Ajuda o mapa a mostrar o que está <em>acontecendo</em> naquele horário — não
-        só o que começa.
-      </span>
-    </label>
+      </SelectNativo>
+    </Campo>
   );
 }

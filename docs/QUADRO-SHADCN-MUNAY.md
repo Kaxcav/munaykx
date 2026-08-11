@@ -188,7 +188,9 @@ L1 implementa.
 
 | Quem pediu | O quê | Estado |
 |---|---|---|
-| L4 (admin) | **`<Checkbox>` em `components/ui/`** — caixa de marcar. O admin tem 6 (`ativo`, `demo`, `gratuito` nos dois formulários, e a confirmação do aviso de lançamento) e o L5 vai ter mais, no consentimento do `/perfil`. **Não dá pra reusar `<Input>`**: ele é `h-11 w-full rounded-full`, desenhado pra campo de texto — numa caixa de 16px isso não é ajuste de classe, é outra peça. Enquanto não existir, o admin mantém `<input type="checkbox" className="h-4 w-4 accent-primary">` e esses 6 continuam contados como controle cru, de propósito. | **aberto** — só o dono do L1 implementa |
+| L3 (painel) + L4 (admin) | **`<Checkbox>` em `components/ui/`** — caixa de marcar. **As duas frentes pediram a mesma peça, sem se falar** (o admin tem 6: `ativo`, `demo`, `gratuito` nos dois formulários e o aviso de lançamento; o painel tem 6: `ativo`, `acolheIniciante`, `gratuito` x2, `modoRota` e o aceite de autorização; e o L5 vai ter mais, no consentimento do `/perfil`). É a evidência de que a peça faz falta de verdade, e não é gosto de um lote. **Não dá pra reusar `<Input>`**: ele é `h-11 w-full rounded-full`, desenhado pra campo de texto — numa caixa de 16px isso não é ajuste de classe, é outra peça. Enquanto não existir, os 12 continuam contados como controle cru, de propósito; no painel eles estão concentrados num arquivo só (`components/painel/Campo.tsx` → `<CampoCheck>`), então a troca lá é de uma linha. | **aberto** — só o dono do L1 implementa |
+| L3 (painel) | **Promover `<Campo>` e `<Aviso>` de `components/painel/` pra `components/comum/`.** `<Campo>` é rótulo+controle+dica (matou 23 cópias em 3 dialetos); `<Aviso>` é a faixa de `?ok=`/`?erro=` (matou 15 cópias em 4 receitas). O L4 já resolveu as mesmas duas dívidas do lado dele, e o L5 vai encontrar de novo — se cada lote escrever a sua, a rodada acaba com três "cabeçalho de campo" diferentes, que é exatamente o que ela existe pra matar. **Não copie: peça a promoção.** | aberto |
+| L3 (painel) | **`tabular-nums` no valor do `<CardNumero>`.** O relatório pós-evento usa a peça em grade de 4 colunas; sem números tabulares os valores dançam de linha em linha (checklist item 6). Uma classe, em `components/ui/card.tsx`. | aberto |
 
 ---
 
@@ -241,8 +243,13 @@ Atualizado por quem executa, no próprio PR.
 | Lote | Worktree · branch | Estado | Nota |
 |---|---|---|---|
 | F0 + L1 | `C:\munay-043` · `feat/shadcn-fundacao` | **entregue** | 584 testes verdes (8 novos), build e guardrails verdes. Baseline: controle-cru 171→165, superfície-à-mão 93→84, adoção 12→21 arquivos |
-| **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. Baseline: controle-cru 165→**128** (−37), superfície-à-mão 84→**82** (−2), adoção 21→**29** arquivos. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
-| L2, L3, L5, L6, L7 | — | livre | podem abrir em paralelo agora: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. O L4 não tocou nenhuma pasta fora de `app/admin/**` e `components/admin/**` |
+| **L3 · Painel** | `C:\munay-045` · `feat/shadcn-l3-painel` | **entregue** | 11 telas + 9 componentes. Dívida do lote: **108 → 1** (67 controles crus → 1, 41 superfícies à mão → 0). 588 testes verdes (4 novos, `tests/painel-ds.spec.ts`). Três pedidos no §5. |
+| **L4 · Admin** | `C:\munay-044` · `feat/shadcn-l4-admin` | **entregue** | 600 testes verdes (16 novos), build/lint/typecheck e guardrails verdes. 11 rotas + 6 componentes migrados. Pedido de `<Checkbox>` aberto no §5. |
+| L2, L5, L6, L7 | — | livre | podem abrir em paralelo: o L1 mergeou e é o único dono de `components/ui/**` e `components/comum/**`. Nem o L3 nem o L4 tocaram pasta fora da própria raia |
+
+**Baseline depois do L3 + L4** (recontado no merge, porque os dois lotes
+derrubaram contadores diferentes e escolher um lado do conflito daria número
+errado): ver `scripts/baseline-higiene.json`.
 
 **Coordenação:** claim e diário em `C:\munay-site\docs\comunicacao\`
 (`S-shadcn.md`), conforme `docs/PROTOCOLO-sessoes.md`. As três frentes de

@@ -1,4 +1,10 @@
 import type { OcorrenciaConcreta } from "@/lib/ocorrencias";
+import { Secao } from "@/components/comum/Secao";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Campo } from "@/components/painel/Campo";
 import {
   cancelarOcorrenciaAction,
   alterarLocalOcorrenciaAction,
@@ -29,60 +35,68 @@ export default function ProximosEncontros({
   if (ocorrencias.length === 0) return null;
 
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl font-bold">Próximos encontros</h2>
-      <p className="mt-2 max-w-2xl text-sm text-petroleo/80">
-        As próximas datas da sua grade. Choveu, feriado, imprevisto? Cancele ou
-        mude o local <strong>só naquele dia</strong> — a grade semanal continua
-        como está.
-      </p>
-
-      <ul className="mt-4 space-y-2">
+    <Secao
+      titulo="Próximos encontros"
+      destaque
+      descricao={
+        <>
+          As próximas datas da sua grade. Choveu, feriado, imprevisto? Cancele ou
+          mude o local <strong>só naquele dia</strong> — a grade semanal continua
+          como está.
+        </>
+      }
+    >
+      <ul className="space-y-2">
         {ocorrencias.map((o) => {
           const rotulo = `${o.diaSemanaRotulo}, ${diaMes(o.dataISO)} às ${o.horaInicio}`;
           return (
-            <li
-              key={`${o.horarioId}-${o.dataISO}`}
-              className="rounded-xl border border-petroleo/10 bg-white/60 px-5 py-3"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span
-                  className={
-                    o.cancelada
-                      ? "font-medium text-petroleo/50 line-through"
-                      : "font-medium"
-                  }
-                >
-                  {rotulo}
-                </span>
-
-                {o.cancelada ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="rounded-full bg-destructive/10 px-3 py-0.5 text-xs font-semibold text-destructive">
-                      Cancelado
-                    </span>
-                    <DesfazerBotao slug={slug} excecaoId={o.excecaoId!} rotulo="Reativar" />
+            <li key={`${o.horarioId}-${o.dataISO}`}>
+              <Card className="px-5 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span
+                    className={
+                      o.cancelada
+                        ? "font-medium tabular-nums text-foreground/50 line-through"
+                        : "font-medium tabular-nums"
+                    }
+                  >
+                    {rotulo}
                   </span>
-                ) : o.localAlterado ? (
-                  <span className="inline-flex items-center gap-2 text-sm">
-                    <span className="text-petroleo/80">
-                      Hoje em: <strong>{o.localAlterado}</strong>
-                    </span>
-                    <DesfazerBotao slug={slug} excecaoId={o.excecaoId!} rotulo="Voltar ao normal" />
-                  </span>
-                ) : (
-                  <AcoesDoDia slug={slug} horarioId={o.horarioId} data={o.dataISO} />
-                )}
-              </div>
 
-              {o.observacao ? (
-                <p className="mt-2 text-sm text-petroleo/80">{o.observacao}</p>
-              ) : null}
+                  {o.cancelada ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Badge variant="demo">Cancelado</Badge>
+                      <DesfazerBotao
+                        slug={slug}
+                        excecaoId={o.excecaoId!}
+                        rotulo="Reativar"
+                      />
+                    </span>
+                  ) : o.localAlterado ? (
+                    <span className="inline-flex items-center gap-2 text-sm">
+                      <span className="text-foreground/80">
+                        Hoje em: <strong>{o.localAlterado}</strong>
+                      </span>
+                      <DesfazerBotao
+                        slug={slug}
+                        excecaoId={o.excecaoId!}
+                        rotulo="Voltar ao normal"
+                      />
+                    </span>
+                  ) : (
+                    <AcoesDoDia slug={slug} horarioId={o.horarioId} data={o.dataISO} />
+                  )}
+                </div>
+
+                {o.observacao ? (
+                  <p className="mt-2 text-sm text-foreground/80">{o.observacao}</p>
+                ) : null}
+              </Card>
             </li>
           );
         })}
       </ul>
-    </section>
+    </Secao>
   );
 }
 
@@ -99,12 +113,9 @@ function DesfazerBotao({
     <form action={desfazerExcecaoAction}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="excecaoId" value={excecaoId} />
-      <button
-        type="submit"
-        className="text-sm font-semibold text-petroleo underline underline-offset-4 hover:opacity-70"
-      >
+      <Button type="submit" variant="link" size="sm" className="h-auto px-0">
         {rotulo}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -122,56 +133,51 @@ function AcoesDoDia({
 }) {
   return (
     <details className="text-sm">
-      <summary className="cursor-pointer font-semibold text-petroleo underline underline-offset-4 hover:opacity-70">
+      <summary className="cursor-pointer font-semibold text-primary underline underline-offset-4 hover:opacity-70">
         Cancelar ou mudar
       </summary>
-      <div className="mt-3 space-y-3 rounded-lg border border-petroleo/10 bg-areia/40 p-4">
-        <form action={cancelarOcorrenciaAction} className="flex flex-wrap items-end gap-2">
+      <Card className="mt-3 space-y-3 bg-secondary p-4">
+        <form
+          action={cancelarOcorrenciaAction}
+          className="flex flex-wrap items-end gap-2"
+        >
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="horarioId" value={horarioId} />
           <input type="hidden" name="data" value={data} />
-          <label className="block flex-1">
-            <span className="mb-1 block text-xs font-semibold">
-              Motivo (opcional, aparece pra quem for)
-            </span>
-            <input
+          <Campo
+            className="flex-1"
+            rotulo="Motivo (opcional, aparece pra quem for)"
+          >
+            <Input
               name="observacao"
               maxLength={200}
               placeholder="Ex.: cancelado por chuva"
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-2 text-sm"
             />
-          </label>
-          <button
-            type="submit"
-            className="rounded-full bg-petroleo px-4 py-2 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo"
-          >
+          </Campo>
+          <Button type="submit" size="sm">
             Cancelar este dia
-          </button>
+          </Button>
         </form>
 
-        <form action={alterarLocalOcorrenciaAction} className="flex flex-wrap items-end gap-2">
+        <form
+          action={alterarLocalOcorrenciaAction}
+          className="flex flex-wrap items-end gap-2"
+        >
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="horarioId" value={horarioId} />
           <input type="hidden" name="data" value={data} />
-          <label className="block flex-1">
-            <span className="mb-1 block text-xs font-semibold">
-              Mudar o local só neste dia
-            </span>
-            <input
+          <Campo className="flex-1" rotulo="Mudar o local só neste dia">
+            <Input
               name="localAlterado"
               maxLength={200}
               placeholder="Ex.: hoje a saída é do portão 3"
-              className="w-full rounded-lg border border-petroleo/20 bg-white p-2 text-sm"
             />
-          </label>
-          <button
-            type="submit"
-            className="rounded-full border border-petroleo/30 px-4 py-2 text-sm font-semibold transition-colors hover:border-petroleo/60"
-          >
+          </Campo>
+          <Button type="submit" variant="outline" size="sm">
             Salvar local
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </details>
   );
 }

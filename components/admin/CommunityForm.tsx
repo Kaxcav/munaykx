@@ -5,21 +5,28 @@ import { useFormStatus } from "react-dom";
 import type { Community } from "@prisma/client";
 import { slugify, type AdminFormState } from "@/lib/admin";
 import { REGIOES_COM_OUTRA } from "@/lib/regioes";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input, SelectNativo } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-const campo =
-  "mt-1 w-full rounded-lg border border-petroleo/20 bg-white/80 px-3 py-2 text-sm focus:border-petroleo/50 focus:outline-none";
-const rotulo = "block text-sm font-semibold";
-
+/**
+ * As duas constantes de classe que moravam aqui (`campo` e `rotulo`) sumiram
+ * de propósito: elas eram um design system particular deste arquivo, copiado
+ * palavra por palavra no `EventForm` e no `CadastroAssistido`. Campo agora é
+ * `<Input>`/`<SelectNativo>`/`<Textarea>` e rótulo é `<Label>` — as peças do
+ * DS, que já carregam o raio, o foco e a borda da marca.
+ *
+ * O `<SelectNativo>` é o `<select>` do navegador estilizado, não o Select do
+ * Radix: ver a nota em `components/ui/input.tsx`.
+ */
 function BotaoSalvar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-full bg-petroleo px-6 py-3 text-sm font-semibold text-areia transition-colors hover:bg-lime hover:text-petroleo disabled:opacity-60"
-    >
+    <Button type="submit" disabled={pending}>
       {pending ? "Salvando…" : "Salvar"}
-    </button>
+    </Button>
   );
 }
 
@@ -39,10 +46,8 @@ export default function CommunityForm({
     <form action={formAction} className="max-w-2xl space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className={rotulo} htmlFor="nome">
-            Nome
-          </label>
-          <input
+          <Label htmlFor="nome">Nome</Label>
+          <Input
             id="nome"
             name="nome"
             required
@@ -50,14 +55,12 @@ export default function CommunityForm({
             onChange={(e) => {
               if (!slugEditado) setSlug(slugify(e.target.value));
             }}
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className={rotulo} htmlFor="slug">
-            Slug (URL: /comunidades/…)
-          </label>
-          <input
+          <Label htmlFor="slug">Slug (URL: /comunidades/…)</Label>
+          <Input
             id="slug"
             name="slug"
             required
@@ -66,32 +69,28 @@ export default function CommunityForm({
               setSlugEditado(true);
               setSlug(e.target.value);
             }}
-            className={`${campo} font-mono`}
+            className="mt-1 font-mono"
           />
         </div>
         <div>
-          <label className={rotulo} htmlFor="modalidade">
-            Modalidade
-          </label>
-          <input
+          <Label htmlFor="modalidade">Modalidade</Label>
+          <Input
             id="modalidade"
             name="modalidade"
             required
             defaultValue={community?.modalidade}
             placeholder="Corrida, Yoga, Jiu-jitsu…"
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div>
-          <label className={rotulo} htmlFor="regiao">
-            Região (RA oficial)
-          </label>
-          <select
+          <Label htmlFor="regiao">Região (RA oficial)</Label>
+          <SelectNativo
             id="regiao"
             name="regiao"
             required
             defaultValue={community?.regiao ?? ""}
-            className={campo}
+            className="mt-1"
           >
             <option value="" disabled>
               Escolha…
@@ -108,75 +107,69 @@ export default function CommunityForm({
                 {r}
               </option>
             ))}
-          </select>
+          </SelectNativo>
         </div>
         <div>
-          <label className={rotulo} htmlFor="city">
-            Cidade
-          </label>
-          <input
+          <Label htmlFor="city">Cidade</Label>
+          <Input
             id="city"
             name="city"
             defaultValue={community?.city ?? "Brasília"}
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className={rotulo} htmlFor="descricao">
-            Descrição
-          </label>
-          <textarea
+          <Label htmlFor="descricao">Descrição</Label>
+          <Textarea
             id="descricao"
             name="descricao"
             rows={4}
             defaultValue={community?.descricao ?? ""}
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div>
-          <label className={rotulo} htmlFor="horarios">
-            Horários
-          </label>
-          <input
+          <Label htmlFor="horarios">Horários</Label>
+          <Input
             id="horarios"
             name="horarios"
             defaultValue={community?.horarios ?? ""}
             placeholder="Ter e qui, 19h"
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div>
-          <label className={rotulo} htmlFor="local">
-            Local
-          </label>
-          <input
+          <Label htmlFor="local">Local</Label>
+          <Input
             id="local"
             name="local"
             defaultValue={community?.local ?? ""}
             placeholder="Parque da Cidade, estac. 10"
-            className={campo}
+            className="mt-1"
           />
         </div>
         <div>
-          <label className={rotulo} htmlFor="nivel">
-            Nível
-          </label>
-          <input
+          <Label htmlFor="nivel">Nível</Label>
+          <Input
             id="nivel"
             name="nivel"
             defaultValue={community?.nivel ?? ""}
             placeholder="Todos os níveis"
-            className={campo}
+            className="mt-1"
           />
         </div>
       </div>
 
+      {/* Caixa de marcar continua NATIVA: o DS ainda não tem `<Checkbox>` e
+          criar peça compartilhada no meio deste lote é justamente o que o
+          quadro proíbe (§5, pedidos entre frentes). Pedido registrado lá. */}
       <div className="flex flex-wrap gap-6 pt-2">
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
             name="ativo"
             defaultChecked={community?.ativo ?? true}
+            className="h-4 w-4 accent-primary"
           />
           Ativa (aparece no site)
         </label>
@@ -185,19 +178,20 @@ export default function CommunityForm({
             type="checkbox"
             name="demo"
             defaultChecked={community?.demo ?? false}
+            className="h-4 w-4 accent-primary"
           />
           Demo (conteúdo ilustrativo)
         </label>
       </div>
-      <p className="font-mono text-xs text-petroleo/50">
+      <p className="font-mono text-xs text-muted-foreground">
         Parceiro real (sem demo) só com autorização formal por escrito — regra
         3 do projeto.
       </p>
 
       {state?.error && (
-        <p className="rounded-lg border border-coral/40 bg-coral/10 px-4 py-3 text-sm font-medium">
+        <Card className="border-destructive/40 bg-destructive/10 px-4 py-3 text-sm font-medium">
           {state.error}
-        </p>
+        </Card>
       )}
 
       <BotaoSalvar />

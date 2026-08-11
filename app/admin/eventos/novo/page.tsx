@@ -1,5 +1,8 @@
 import Link from "next/link";
 import EventForm from "@/components/admin/EventForm";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
+import { buttonVariants } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { salvarEvento } from "../actions";
 
@@ -10,22 +13,23 @@ export default async function NovoEventoPage() {
   });
 
   return (
-    <>
-      <p className="eyebrow mb-3">Eventos</p>
-      <h1 className="font-display text-3xl font-extrabold tracking-tight">
-        Novo evento
-      </h1>
+    <PaginaAdmin
+      eyebrow="Eventos"
+      titulo="Novo evento"
+    >
       {communities.length === 0 ? (
-        <p className="mt-8 text-petroleo/70">
-          Evento precisa de comunidade.{" "}
-          <Link
-            href="/admin/comunidades/nova"
-            className="underline underline-offset-4"
-          >
-            Cadastre uma comunidade primeiro
-          </Link>
-          .
-        </p>
+        <EstadoVazio
+          titulo="Evento precisa de comunidade."
+          descricao="Todo evento pertence a uma comunidade — é por ela que o visitante chega até ele."
+          acao={
+            <Link
+              href="/admin/comunidades/nova"
+              className={buttonVariants()}
+            >
+              Cadastrar uma comunidade primeiro
+            </Link>
+          }
+        />
       ) : (
         <div className="mt-8">
           <EventForm
@@ -34,6 +38,6 @@ export default async function NovoEventoPage() {
           />
         </div>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

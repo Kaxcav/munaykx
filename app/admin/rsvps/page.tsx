@@ -14,7 +14,10 @@ import {
 import { BuscaAdmin } from "@/components/admin/BuscaAdmin";
 import { Paginacao } from "@/components/admin/Paginacao";
 import { buttonVariants } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { SeletorEvento } from "@/components/admin/SeletorEvento";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import {
   Table,
   TableBody,
@@ -43,13 +46,6 @@ type SearchParams = Promise<{
 }>;
 
 const href = (f: Filtros) => `/admin/rsvps${query({ ...f })}`;
-
-const chip = (ativo: boolean) =>
-  `rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-    ativo
-      ? "border-primary bg-primary text-primary-foreground"
-      : "border-border hover:border-primary/40"
-  }`;
 
 /** RSVPs read-only por decisão de escopo — mexer em inscrição é com o próprio
  *  inscrito, via token (STORY-003). */
@@ -101,22 +97,21 @@ export default async function AdminRsvpsPage({
   const base = { status, evento, q, periodo };
 
   return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="eyebrow mb-3">Operação</p>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            RSVPs <span className="text-muted-foreground">({total})</span>
-          </h1>
-        </div>
-        <a
-          href={exportHref}
-          className={buttonVariants({ variant: "outline" })}
-        >
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo={
+        <>
+          RSVPs{" "}
+          <span className="text-muted-foreground tabular-nums">({total})</span>
+        </>
+      }
+      descricao="Leitura apenas: mexer em inscrição é com o próprio inscrito, pelo link com token."
+      acoes={
+        <a href={exportHref} className={buttonVariants({ variant: "outline" })}>
           Exportar CSV
         </a>
-      </div>
-
+      }
+    >
       <div className="mt-6 space-y-2">
         <BuscaAdmin
           action="/admin/rsvps"
@@ -136,49 +131,65 @@ export default async function AdminRsvpsPage({
 
         <div className="flex flex-wrap items-center gap-2 pt-2">
           <span className="eyebrow mr-1">Status</span>
-          <Link
+          <Chip
             href={href({ ...base, status: undefined })}
-            className={chip(!status)}
+            ativo={!status}
+            tamanho="sm"
           >
             Todos
-          </Link>
+          </Chip>
           {STATUS.map((s) => (
-            <Link
+            <Chip
               key={s}
               href={href({ ...base, status: s })}
-              className={chip(status === s)}
+              ativo={status === s}
+              tamanho="sm"
             >
               {s === "lista_espera" ? "fila de espera" : s}
-            </Link>
+            </Chip>
           ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Período</span>
-          <Link
+          <Chip
             href={href({ ...base, periodo: undefined })}
-            className={chip(!periodo)}
+            ativo={!periodo}
+            tamanho="sm"
           >
             Desde sempre
-          </Link>
+          </Chip>
           {PERIODOS.map((p) => (
-            <Link
+            <Chip
               key={p.valor}
               href={href({ ...base, periodo: p.valor })}
-              className={chip(periodo === p.valor)}
+              ativo={periodo === p.valor}
+              tamanho="sm"
             >
               Últimos {p.label}
-            </Link>
+            </Chip>
           ))}
         </div>
       </div>
 
       {rsvps.length === 0 ? (
-        <p className="mt-10 text-muted-foreground">
-          {total > 0
-            ? "Essa página não existe nesse recorte."
-            : "Nenhum RSVP com esse recorte."}
-        </p>
+        <EstadoVazio
+          titulo={
+            total > 0
+              ? "Essa página não existe nesse recorte."
+              : "Nenhum RSVP com esse recorte."
+          }
+          descricao={
+            total > 0
+              ? `O recorte tem ${total} inscrição(ões), mas não nesta página.`
+              : "Afrouxe um filtro ou amplie o período — os filtros vivem na URL, dá pra voltar."
+          }
+          acao={
+            <Chip href="/admin/rsvps" tamanho="sm">
+              Limpar filtros
+            </Chip>
+          }
+        />
       ) : (
         <>
           <div className="mt-8">
@@ -195,7 +206,7 @@ export default async function AdminRsvpsPage({
               <TableBody>
                 {rsvps.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs tabular-nums">
                       {formatarDataAdmin(r.createdAt)}
                     </TableCell>
                     <TableCell className="font-semibold">{r.nome}</TableCell>
@@ -239,6 +250,6 @@ export default async function AdminRsvpsPage({
           />
         </>
       )}
-    </>
+    </PaginaAdmin>
   );
 }

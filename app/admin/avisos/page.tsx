@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { avisosDoAdmin } from "@/lib/posts";
 import CorpoAviso from "@/components/CorpoAviso";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Input } from "@/components/ui/input";
+import { PaginaAdmin } from "@/components/admin/PaginaAdmin";
+import { EstadoVazio } from "@/components/comum/EstadoVazio";
 import { ocultarAvisoAction, reexibirAvisoAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +18,11 @@ export const dynamic = "force-dynamic";
  * precisa existir pro caso de alguém publicar dado pessoal de terceiro às 3h
  * de um sábado, e nesse cenário a decisão certa é tirar do ar agora e revisar
  * depois, não destruir a evidência.
+ *
+ * O par Todos/Só ocultos virou `<Chip>` do DS: era um `<Link>` com
+ * `font-semibold underline` ternário, que é uma pílula de filtro disfarçada de
+ * link de texto. Chip é a peça que a MUNAY já usa pra filtro na descoberta, e
+ * o filtro continua vivendo na URL.
  */
 export default async function AdminAvisos({
   searchParams,
@@ -23,106 +34,105 @@ export default async function AdminAvisos({
   const avisos = await avisosDoAdmin({ apenasOcultos });
 
   return (
-    <>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold">Avisos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Feed das comunidades. Ocultar tira de toda superfície — site, agenda
-            e e-mail — e é reversível.
-          </p>
-        </div>
-        <nav className="flex gap-3 text-sm">
-          <Link
-            href="/admin/avisos"
-            className={apenasOcultos ? "text-muted-foreground" : "font-semibold underline"}
-          >
+    <PaginaAdmin
+      eyebrow="Operação"
+      titulo="Avisos"
+      descricao="Feed das comunidades. Ocultar tira de toda superfície — site, agenda e e-mail — e é reversível."
+      acoes={
+        <>
+          <Chip href="/admin/avisos" ativo={!apenasOcultos} tamanho="sm">
             Todos
-          </Link>
-          <Link
+          </Chip>
+          <Chip
             href="/admin/avisos?filtro=ocultos"
-            className={apenasOcultos ? "font-semibold underline" : "text-muted-foreground"}
+            ativo={apenasOcultos}
+            tamanho="sm"
           >
             Só ocultos
-          </Link>
-        </nav>
-      </div>
-
+          </Chip>
+        </>
+      }
+    >
       {ok === "oculto" ? (
-        <p className="mt-6 rounded-lg border p-4 text-sm">Aviso ocultado ✓</p>
+        <Card className="mt-6 p-4 text-sm">Aviso ocultado ✓</Card>
       ) : null}
       {ok === "reexibido" ? (
-        <p className="mt-6 rounded-lg border p-4 text-sm">Aviso reexibido ✓</p>
+        <Card className="mt-6 p-4 text-sm">Aviso reexibido ✓</Card>
       ) : null}
       {erro ? (
-        <p className="mt-6 rounded-lg border border-destructive/40 p-4 text-sm text-destructive">
+        <Card className="mt-6 border-destructive/40 p-4 text-sm text-destructive">
           {erro}
-        </p>
+        </Card>
       ) : null}
 
       {avisos.length === 0 ? (
-        <p className="mt-10 text-sm text-muted-foreground">
-          {apenasOcultos ? "Nenhum aviso oculto." : "Nenhum aviso publicado ainda."}
-        </p>
+        <EstadoVazio
+          titulo={apenasOcultos ? "Nenhum aviso oculto." : "Nenhum aviso publicado ainda."}
+          descricao={
+            apenasOcultos
+              ? "Nada foi tirado do ar — é o estado saudável desta fila."
+              : "Quando uma comunidade publicar no feed dela, o aviso aparece aqui pra moderação."
+          }
+        />
       ) : (
         <ul className="mt-8 space-y-4">
           {avisos.map((a) => (
-            <li key={a.id} className="rounded-lg border p-5">
-              <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                {a.createdAt.toLocaleString("pt-BR")} ·{" "}
-                <Link
-                  href={`/comunidades/${a.comunidade.slug}`}
-                  className="underline underline-offset-4"
-                >
-                  {a.comunidade.nome}
-                </Link>{" "}
-                · {a.autorNome ?? "autor removido"}
-              </p>
-
-              <div className="mt-3">
-                <CorpoAviso corpo={a.corpo} />
-              </div>
-
-              {a.ocultoEm ? (
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <p className="text-xs text-destructive">
-                    Oculto em {a.ocultoEm.toLocaleString("pt-BR")}
-                    {a.ocultoPor ? ` por ${a.ocultoPor}` : ""}
-                    {a.ocultoMotivo ? ` — ${a.ocultoMotivo}` : ""}
-                  </p>
-                  <form action={reexibirAvisoAction}>
-                    <input type="hidden" name="id" value={a.id} />
-                    <button
-                      type="submit"
-                      className="rounded-full border px-4 py-2 text-xs font-semibold"
-                    >
-                      Reexibir
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <form action={ocultarAvisoAction} className="mt-4 flex flex-wrap gap-2">
-                  <input type="hidden" name="id" value={a.id} />
-                  <input
-                    name="motivo"
-                    required
-                    minLength={3}
-                    maxLength={300}
-                    placeholder="Motivo (obrigatório)"
-                    className="min-w-[240px] flex-1 rounded-lg border p-2 text-sm"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full border px-4 py-2 text-xs font-semibold"
+            <li key={a.id}>
+              <Card className="p-5">
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                  {a.createdAt.toLocaleString("pt-BR")} ·{" "}
+                  <Link
+                    href={`/comunidades/${a.comunidade.slug}`}
+                    className="underline underline-offset-4"
                   >
-                    Ocultar
-                  </button>
-                </form>
-              )}
+                    {a.comunidade.nome}
+                  </Link>{" "}
+                  · {a.autorNome ?? "autor removido"}
+                </p>
+
+                <div className="mt-3">
+                  <CorpoAviso corpo={a.corpo} />
+                </div>
+
+                {a.ocultoEm ? (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <p className="text-xs text-destructive">
+                      Oculto em {a.ocultoEm.toLocaleString("pt-BR")}
+                      {a.ocultoPor ? ` por ${a.ocultoPor}` : ""}
+                      {a.ocultoMotivo ? ` — ${a.ocultoMotivo}` : ""}
+                    </p>
+                    <form action={reexibirAvisoAction}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <Button type="submit" variant="outline" size="sm">
+                        Reexibir
+                      </Button>
+                    </form>
+                  </div>
+                ) : (
+                  <form
+                    action={ocultarAvisoAction}
+                    className="mt-4 flex flex-wrap gap-2"
+                  >
+                    <input type="hidden" name="id" value={a.id} />
+                    <Input
+                      name="motivo"
+                      required
+                      minLength={3}
+                      maxLength={300}
+                      placeholder="Motivo (obrigatório)"
+                      aria-label="Motivo para ocultar"
+                      className="min-w-[15rem] flex-1"
+                    />
+                    <Button type="submit" variant="outline">
+                      Ocultar
+                    </Button>
+                  </form>
+                )}
+              </Card>
             </li>
           ))}
         </ul>
       )}
-    </>
+    </PaginaAdmin>
   );
 }
